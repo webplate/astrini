@@ -1,0 +1,34 @@
+LAUNCH program with:
+ppython main.py
+(requires panda3D SDK)
+
+CAMERA CONTROL (PERSPECTIVAL CHANGES):
+TAB - toggle free camera
+Mouse - move camera
+Z - Move camera
+Q - Move camera
+S - Move camera
+D - Move camera
+T - go up
+G - go down
+
+E - go to and follow earth
+R - go to and follow moon
+F - go to and follow sun
+
+control-E - look at earth
+control-R - look at moon
+control-F - look at sun
+
+A - stop following
+W - stop looking at
+
+FACTUAL CHANGES:
+shift-E	to toggle earth tilt
+shift-R to toggle moon inclination
+
+TIME CONTROL:
+L - Speed x 2
+K - Speed / 2
+I - Inverse speed
+N - start/stop flow of  time

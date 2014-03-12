@@ -39,7 +39,7 @@ from direct.task import Task
 from myCamera import *
 from myInputHandler import InputHandler
 from myDebug import DebugPrint
-import sys,__builtin__
+import __builtin__
 
 #My Global config variables
 from config import *
@@ -54,6 +54,7 @@ class World(ShowBase):
         ShowBase.__init__(self)
         
         #starting all base methods
+        #this dirty hack ables us to directly access app, camera, input...
         __builtin__.myApp = self
         __builtin__.d = DebugPrint()
         __builtin__.myCamera = MyCamera()
@@ -71,7 +72,7 @@ class World(ShowBase):
         self.initScene()
         
         # Define shortcuts etc...
-        self.defineBaseEvents()
+        #~ self.defineBaseEvents()
 
         # Prepare locks (following procedures etc...)
         self.following = None
@@ -80,7 +81,8 @@ class World(ShowBase):
         self.inclined = False
         self.realist = False
         # Add Tasks procedures to the task manager.
-        self.taskMgr.add(self.lockTask, "lockTask")
+        #high priority to prevent jumps of locks
+        self.taskMgr.add(self.lockTask, "lockTask", priority=10)
         self.taskMgr.add(self.printTask, "PrintTask")
 
 
@@ -104,7 +106,7 @@ class World(ShowBase):
         
         base.setBackgroundColor(0, 0, 0)    #Set the background to black
         self.loadPlanets()                #Load and position the models
-        #~ self.loadMarkers()
+        self.loadMarkers()
         self.drawOrbits()
         self.initLight()                # light the scene
         #Finally, we call the rotatePlanets function which puts the planets,
@@ -150,14 +152,13 @@ class World(ShowBase):
 
         # Create a special ambient light specially for the sun
         # so that it appears bright
-        self.lavalight = AmbientLight("AmbientForLava")
-        ambientLava = self.sun.attachNewNode(self.lavalight)
+        self.ambientLava = self.sun.attachNewNode(AmbientLight("AmbientForLava"))
         # Since we do call
         # setLightOff(), we are turning off all the other lights on this
         # object first, and then turning on only the lava light.
         self.sun.setLightOff()
-        self.sun.setLight(ambientLava)
-        self.sky.setLight(ambientLava)
+        self.sun.setLight(self.ambientLava)
+        self.sky.setLight(self.ambientLava)
 
         # Important! Enable the shader generator.
         render.setShaderAuto()
@@ -174,30 +175,6 @@ class World(ShowBase):
         camera.setPos( 0, -c_s_dist,UA/3)          #Set the camera position (X, Y, Z)
         camera.lookAt(0.,0.,0.)
         
-    def defineBaseEvents(self):
-        base.accept("escape", sys.exit)
-        #My shortcuts
-        self.accept("i",self.changeSpeed,[-1])
-        self.accept("k",self.changeSpeed,[1./2])
-        self.accept("l",self.changeSpeed,[2])
-        self.accept("m",self.changeSpeed,[1000])
-        self.accept("n",self.toggleSpeed)
-        
-        self.accept("a",self.follow,[None])
-        self.accept("w",self.look,[None])
-        
-        self.accept("e",self.follow,[self.earth])
-        self.accept("control-e",self.look,[self.earth])
-        self.accept("shift-e",self.unTilt)
-        
-        self.accept("r",self.follow,[self.moon])
-        self.accept("control-r",self.look,[self.moon])
-        self.accept("shift-r",self.unIncl)
-        
-        self.accept("f",self.follow,[self.sun])
-        self.accept("control-f",self.look,[self.sun])
-        
-        self.accept("b",self.realism)
     
     def changeSpeed(self, factor):
         self.simulSpeed *= factor
@@ -211,15 +188,23 @@ class World(ShowBase):
             self.simulSpeed = self.previousSpeed
         self.updateSpeed()
 
-    def follow(self, node):
-        if node != None:
-            self.following = node
+    def follow(self, identity):
+        if identity == "earth" :
+            self.following = self.earth
+        elif identity == "moon" :
+            self.following = self.moon
+        elif identity == "sun" :
+            self.following = self.sun
         else:
             self.following = None
 
-    def look(self, node):
-        if node != None:
-            self.looking = node
+    def look(self, identity):
+        if identity == "earth" :
+            self.looking = self.earth
+        elif identity == "moon" :
+            self.looking = self.moon
+        elif identity == "sun" :
+            self.looking = self.sun
         else:
             self.looking = None
 
@@ -358,7 +343,7 @@ class World(ShowBase):
         self.sunMarker.setScale(self.sunradius + 0.1)
         # markers are not affected by sunlight or unspot
         self.sunMarker.hide(BitMask32.bit(0))
-        self.sunMarker.setLight(ambientLava)
+        #~ self.sunMarker.setLight(self.ambientLava)
         self.sunMarker.setBillboardPointWorld()
 
         #Earth

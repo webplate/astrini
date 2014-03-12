@@ -2,7 +2,7 @@ from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
 from pandac.PandaModules import *
 
-import time
+import sys, time
 
 class InputHandler(DirectObject):
     def __init__(self):
@@ -30,6 +30,30 @@ class InputHandler(DirectObject):
     
     def setActive(self):
         # Main Modifier
+        base.accept("escape", sys.exit)
+        #My shortcuts
+        self.accept("i",myApp.changeSpeed,[-1])
+        self.accept("k",myApp.changeSpeed,[1./2])
+        self.accept("l",myApp.changeSpeed,[2])
+        self.accept("m",myApp.changeSpeed,[1000])
+        self.accept("n",myApp.toggleSpeed)
+        
+        self.accept("a",myApp.follow,[None])
+        self.accept("w",myApp.look,[None])
+        
+        self.accept("e",myApp.follow,["earth"])
+        self.accept("control-e",myApp.look,["earth"])
+        self.accept("shift-e",myApp.unTilt)
+        
+        self.accept("r",myApp.follow,["moon"])
+        self.accept("control-r",myApp.look,["moon"])
+        self.accept("shift-r",myApp.unIncl)
+        
+        self.accept("f",myApp.follow,["sun"])
+        self.accept("control-f",myApp.look,["sun"])
+        
+        self.accept("b",myApp.realism)
+        
         self.accept("p", self.pressKey, ["p"])
         self.accept("p-up", self.releaseKey, ["p"])
         #self.ignore()

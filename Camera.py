@@ -182,7 +182,7 @@ class MouseMover(DirectObject):
         taskMgr.remove("mouseMoverTask")
         base.win.movePointer(0,self.lastCoo[0],self.lastCoo[1])
         
-class MyCamera(DirectObject):
+class Camera(DirectObject):
     def __init__(self, world):
         self.world = world
         #keyboard/mouse mover
@@ -254,10 +254,10 @@ class MyCamera(DirectObject):
     def toggleView(self):
         if self.getState() == "fly":
             #myGui.showAll()  to be removed soon
-            self.world.myInputHandler.setActive()
+            self.world.InputHandler.setActive()
         if self.getState() == "static":
             #myGui.hideAll()  to be removed soon
-            self.world.myInputHandler.setInactive()
+            self.world.InputHandler.setInactive()
         #switching camera in any case
         self.toggleState()
     

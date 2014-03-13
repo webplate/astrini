@@ -61,14 +61,14 @@ class InputHandler(DirectObject):
         taskMgr.add(self.modObjects, "objectModifierTask")
     
     def releaseKey(self,key):
-        self.world.myCamera.ce.keyReleased()
+        self.world.Camera.ce.keyReleased()
         
         if key == "p":
             self.pressedP = False
     
     def pressKey(self,key):
         #default behaviour when hiding camera
-        self.world.myCamera.ce.keyPressed()
+        self.world.Camera.ce.keyPressed()
         
         if key == "p":
             self.pressedP = True

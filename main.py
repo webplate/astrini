@@ -36,8 +36,8 @@ from direct.task import Task
 # Default classes used to handle input and camera behaviour
 # Useful for fast prototyping
 #
-from myCamera import MyCamera
-from myInputHandler import InputHandler
+from Camera import Camera
+from InputHandler import InputHandler
 
 #My Global config variables
 from config import *
@@ -53,13 +53,13 @@ class World(ShowBase):
         
         #starting all base methods
         #this dirty hack ables us to directly access app, camera, input...
-        self.myApp = self
-        self.myCamera = MyCamera(self)
-        self.myInputHandler = InputHandler(self)
+        self.App = self
+        self.Camera = Camera(self)
+        self.InputHandler = InputHandler(self)
         
         #default config when just opened
-        self.myCamera.mm.showMouse()
-        self.myCamera.setUtilsActive()
+        self.Camera.mm.showMouse()
+        self.Camera.setUtilsActive()
         self.mainScene = render.attachNewNode("mainScene")
 
         #Scene initialization
@@ -163,7 +163,7 @@ class World(ShowBase):
         
     def initCamera(self):
         #Camera initialization
-        fov = self.myCamera.getFov()[0]
+        fov = self.Camera.getFov()[0]
         #Compute camera-sun distance from fov
         margin = UA / 3
         c_s_dist = (UA + margin) / tan(radians(fov/2))

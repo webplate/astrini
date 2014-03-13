@@ -36,15 +36,13 @@ from direct.task import Task
 # Default classes used to handle input and camera behaviour
 # Useful for fast prototyping
 #
-from myCamera import *
+from myCamera import MyCamera
 from myInputHandler import InputHandler
-from myDebug import DebugPrint
-import __builtin__
 
 #My Global config variables
 from config import *
 #Drawing functions
-from graphics import *
+import graphics
 
 #Misc imports
 from math import radians, tan
@@ -55,18 +53,15 @@ class World(ShowBase):
         
         #starting all base methods
         #this dirty hack ables us to directly access app, camera, input...
-        __builtin__.myApp = self
-        __builtin__.d = DebugPrint()
-        __builtin__.myCamera = MyCamera()
-        __builtin__.myInputHandler = InputHandler()
+        self.myApp = self
+        self.myCamera = MyCamera(self)
+        self.myInputHandler = InputHandler(self)
         
         #default config when just opened
-        myCamera.mm.showMouse()
-        myCamera.setUtilsActive()
+        self.myCamera.mm.showMouse()
+        self.myCamera.setUtilsActive()
         self.mainScene = render.attachNewNode("mainScene")
-        #example debug line useful when prototyping
-        d.line("sandbox ready for prototyping!")
-        
+
         #Scene initialization
         self.initCamera()
         self.initScene()
@@ -168,7 +163,7 @@ class World(ShowBase):
         
     def initCamera(self):
         #Camera initialization
-        fov = myCamera.getFov()[0]
+        fov = self.myCamera.getFov()[0]
         #Compute camera-sun distance from fov
         margin = UA / 3
         c_s_dist = (UA + margin) / tan(radians(fov/2))
@@ -244,14 +239,14 @@ class World(ShowBase):
     
     def drawOrbits(self):
         #Draw orbits
-        self.earth_orbitline = makeArc(360, 128)
+        self.earth_orbitline = graphics.makeArc(360, 128)
         self.earth_orbitline.reparentTo(self.root_earth)
         self.earth_orbitline.setHpr( 0, 90,0)
         self.earth_orbitline.setScale(UA)
         # orbits are not affected by sunlight
         self.earth_orbitline.hide(BitMask32.bit(0))
         
-        self.moon_orbitline = makeArc(360, 128)
+        self.moon_orbitline = graphics.makeArc(360, 128)
         self.moon_orbitline.reparentTo(self.root_moon)
         self.moon_orbitline.setHpr( 0, 90,0)
         self.moon_orbitline.setScale(MOONAX)
@@ -338,7 +333,7 @@ class World(ShowBase):
     def loadMarkers(self):
         #Sun
         #Create always visible marker
-        self.sunMarker = makeArc()
+        self.sunMarker = graphics.makeArc()
         self.sunMarker.reparentTo(render)
         self.sunMarker.setScale(self.sunradius + 0.1)
         # markers are not affected by sunlight or unspot
@@ -348,25 +343,25 @@ class World(ShowBase):
 
         #Earth
         #Create always visible marker
-        self.earthMarker = makeArc()
+        self.earthMarker = graphics.makeArc()
         self.earthMarker.reparentTo(self.earth_system)
         self.earthMarker.setScale(self.sizescale + 0.1)
         self.earthMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.earthMarker.setBillboardPointWorld()
         #Show orientation
-        self.earthAxMarker = makeCross(4*self.sizescale)
+        self.earthAxMarker = graphics.makeCross(4*self.sizescale)
         self.earthAxMarker.reparentTo(self.earth)
         self.earthAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         #the moon
         #Create always visible marker
-        self.moonMarker = makeArc()
+        self.moonMarker = graphics.makeArc()
         self.moonMarker.reparentTo(self.root_moon)
         self.moonMarker.setScale(MOONRADIUS + 0.1)
         self.moonMarker.setPos(MOONAX, 0, 0)
         self.moonMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.moonMarker.setBillboardPointWorld()
         #Show orientation
-        self.moonAxMarker = makeCross(2*self.sizescale)
+        self.moonAxMarker = graphics.makeCross(2*self.sizescale)
         self.moonAxMarker.reparentTo(self.dummy_moon)
         self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
     ## TASKS :

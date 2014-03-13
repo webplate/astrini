@@ -5,7 +5,8 @@ from pandac.PandaModules import *
 import sys, time
 
 class InputHandler(DirectObject):
-    def __init__(self):
+    def __init__(self, world):
+        self.world = world
         #setting it active by default
         self.setActive()
         
@@ -32,27 +33,27 @@ class InputHandler(DirectObject):
         # Main Modifier
         base.accept("escape", sys.exit)
         #My shortcuts
-        self.accept("i",myApp.changeSpeed,[-1])
-        self.accept("k",myApp.changeSpeed,[1./2])
-        self.accept("l",myApp.changeSpeed,[2])
-        self.accept("m",myApp.changeSpeed,[1000])
-        self.accept("n",myApp.toggleSpeed)
+        self.accept("i",self.world.changeSpeed,[-1])
+        self.accept("k",self.world.changeSpeed,[1./2])
+        self.accept("l",self.world.changeSpeed,[2])
+        self.accept("m",self.world.changeSpeed,[1000])
+        self.accept("n",self.world.toggleSpeed)
         
-        self.accept("a",myApp.follow,[None])
-        self.accept("w",myApp.look,[None])
+        self.accept("a",self.world.follow,[None])
+        self.accept("w",self.world.look,[None])
         
-        self.accept("e",myApp.follow,["earth"])
-        self.accept("control-e",myApp.look,["earth"])
-        self.accept("shift-e",myApp.unTilt)
+        self.accept("e",self.world.follow,["earth"])
+        self.accept("control-e",self.world.look,["earth"])
+        self.accept("shift-e",self.world.unTilt)
         
-        self.accept("r",myApp.follow,["moon"])
-        self.accept("control-r",myApp.look,["moon"])
-        self.accept("shift-r",myApp.unIncl)
+        self.accept("r",self.world.follow,["moon"])
+        self.accept("control-r",self.world.look,["moon"])
+        self.accept("shift-r",self.world.unIncl)
         
-        self.accept("f",myApp.follow,["sun"])
-        self.accept("control-f",myApp.look,["sun"])
+        self.accept("f",self.world.follow,["sun"])
+        self.accept("control-f",self.world.look,["sun"])
         
-        self.accept("b",myApp.realism)
+        self.accept("b",self.world.realism)
         
         self.accept("p", self.pressKey, ["p"])
         self.accept("p-up", self.releaseKey, ["p"])
@@ -60,14 +61,14 @@ class InputHandler(DirectObject):
         taskMgr.add(self.modObjects, "objectModifierTask")
     
     def releaseKey(self,key):
-        myCamera.ce.keyReleased()
+        self.world.myCamera.ce.keyReleased()
         
         if key == "p":
             self.pressedP = False
     
     def pressKey(self,key):
         #default behaviour when hiding camera
-        myCamera.ce.keyPressed()
+        self.world.myCamera.ce.keyPressed()
         
         if key == "p":
             self.pressedP = True

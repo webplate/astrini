@@ -22,10 +22,7 @@
 # Import stuff in order to have a derived ShowBase extension running
 # Remember to use every extension as a DirectObject inheriting class
 #
-
-
 from direct.showbase.ShowBase import ShowBase
-from direct.showbase.DirectObject import DirectObject 
 from panda3d.core import *
 
 #
@@ -38,22 +35,18 @@ from direct.task import Task
 #
 from Camera import Camera
 from InputHandler import InputHandler
-
 #My Global config variables
 from config import *
 #Drawing functions
 import graphics
-
 #Misc imports
 from math import radians, tan
-    
+
 class World(ShowBase):  
     def __init__(self):
         ShowBase.__init__(self)
         
         #starting all base methods
-        #this dirty hack ables us to directly access app, camera, input...
-        self.App = self
         self.Camera = Camera(self)
         self.InputHandler = InputHandler(self)
         
@@ -65,9 +58,6 @@ class World(ShowBase):
         #Scene initialization
         self.initCamera()
         self.initScene()
-        
-        # Define shortcuts etc...
-        #~ self.defineBaseEvents()
 
         # Prepare locks (following procedures etc...)
         self.following = None
@@ -76,8 +66,8 @@ class World(ShowBase):
         self.inclined = False
         self.realist = False
         # Add Tasks procedures to the task manager.
-        #high priority to prevent jumps of locks
-        self.taskMgr.add(self.lockTask, "lockTask", priority=10)
+        #low priority to prevent jitter of camera
+        self.taskMgr.add(self.lockTask, "lockTask", priority=25)
         self.taskMgr.add(self.printTask, "PrintTask")
 
 
@@ -312,7 +302,8 @@ class World(ShowBase):
         #rotatePlanets creates intervals to actually use the hierarchy we created
         #to turn the sun, planets, and moon to give a rough representation of the
         #solar system.
-        self.day_period_sun = self.sun.hprInterval(self.dayscale * SUNROT, Vec3(360, 0, 0))
+        self.day_period_sun = self.sun.hprInterval(self.dayscale * SUNROT,
+        Vec3(360, 0, 0))
 
         self.orbit_period_earthsystem = self.root_earth.hprInterval(
           self.yearscale, Vec3(360, 0, 0))
@@ -365,14 +356,17 @@ class World(ShowBase):
         self.moonAxMarker.reparentTo(self.dummy_moon)
         self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
     ## TASKS :
-    # Define a procedure to move the camera.
-    def printTask(self, task):
+    #
+    def printTask(self, task) :
         #~ print self.camera.getPos()
         #~ print self.simulSpeed
         return Task.cont
 
-    def lockTask(self, task):
+    def lockTask(self, task) :
+        """alignment contraints""" 
+        #lighting follows earth
         self.light.lookAt(self.earth)
+        #align if necessary
         if self.following != None :
             camera.setPos(self.following.getPos(self.render))
         if self.looking != None :

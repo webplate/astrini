@@ -7,13 +7,13 @@ APPX, APPY = 640, 400
 # Show FPS and use utf8 encoding
 # noaudio...
 #
-#~ from pandac.PandaModules import loadPrcFileData 
-#~ loadPrcFileData("", """
-#~ text-encoding utf8
-#~ show-frame-rate-meter 1
-#~ audio-library-name null
-#~ sync-video 1
-#~ """)
+from pandac.PandaModules import loadPrcFileData 
+loadPrcFileData("", """
+text-encoding utf8
+show-frame-rate-meter 1
+audio-library-name null
+sync-video 1
+""")
 
 # PANDA DEBUGTOOLS
 #~ loadPrcFileData("", "want-directtools #t")

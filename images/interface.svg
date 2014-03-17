@@ -190,9 +190,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="54.406596"
-     inkscape:cy="71.403833"
+     inkscape:zoom="22.4"
+     inkscape:cx="68.818592"
+     inkscape:cy="53.730787"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -289,7 +289,7 @@
        transform="translate(0,74)"
        width="102"
        height="108.0128"
-       style="fill:#818181;fill-opacity:1"
+       style="fill:#525252;fill-opacity:1;stroke:none"
        inkscape:export-filename="/home/z/Sync/Divers/programmes/astrini/images/button_disabled.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90" />
@@ -346,5 +346,143 @@
          id="rect3824"
          style="fill:none;stroke:none" />
     </g>
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3791"
+       width="1"
+       height="12"
+       x="45"
+       y="4.0000019"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3793"
+       width="1"
+       height="11"
+       x="43"
+       y="4.0000019"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3795"
+       width="1"
+       height="10"
+       x="41"
+       y="4.0000019"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3797"
+       width="1"
+       height="8"
+       x="39"
+       y="4.0000019"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3799"
+       width="1"
+       height="7"
+       x="37"
+       y="4.0000019"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3801"
+       width="1"
+       height="6"
+       x="35"
+       y="4.0000019"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3803"
+       width="1"
+       height="5"
+       x="33"
+       y="4.0000019"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       y="1015.3622"
+       x="0"
+       height="0.99999976"
+       width="18"
+       id="rect3805"
+       style="fill:#525252;fill-opacity:1;stroke:none" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3807"
+       width="16"
+       height="0.99999976"
+       x="0"
+       y="1013.3622" />
+    <rect
+       y="1011.3622"
+       x="0"
+       height="0.99999976"
+       width="14"
+       id="rect3809"
+       style="fill:#525252;fill-opacity:1;stroke:none" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3811"
+       width="8"
+       height="0.99999976"
+       x="0"
+       y="1005.3622" />
+    <rect
+       y="1007.3622"
+       x="0"
+       height="0.99999976"
+       width="10"
+       id="rect3813"
+       style="fill:#525252;fill-opacity:1;stroke:none" />
+    <rect
+       style="fill:#525252;fill-opacity:1;stroke:none"
+       id="rect3815"
+       width="12"
+       height="0.99999976"
+       x="0"
+       y="1009.3622" />
+    <rect
+       style="fill:#cfcfcf;fill-opacity:1;stroke:none"
+       id="rect3825"
+       width="10"
+       height="9.9999981"
+       x="60"
+       y="48.000004"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#1e1e1e;fill-opacity:1;stroke:none"
+       id="rect3827"
+       width="8"
+       height="8"
+       x="61"
+       y="49.000004"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#d0d0d0;fill-opacity:1;stroke:none"
+       id="rect3829"
+       width="6"
+       height="6"
+       x="62"
+       y="50.000004"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#171717;fill-opacity:1;stroke:none"
+       id="rect3831"
+       width="4"
+       height="4"
+       x="63"
+       y="51.000004"
+       transform="translate(-1,1001.3622)" />
+    <rect
+       style="fill:#d0d0d0;fill-opacity:1;stroke:none"
+       id="rect3833"
+       width="2"
+       height="2"
+       x="64"
+       y="52.000004"
+       transform="translate(-1,1001.3622)" />
   </g>
 </svg>

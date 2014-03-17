@@ -44,7 +44,47 @@ from InputHandler import InputHandler
 #Drawing functions
 import graphics
 #Misc imports
-from math import radians, tan
+from math import radians, tan, log, ceil
+
+cardMaker = CardMaker('CardMaker')
+
+def nextPowOf2(n):
+    return 2**int(ceil(log(n, 2)))
+
+
+def makeGeom(filename):
+    """create geom from png and take care of power of two
+    texture issues to permit pixel perfect blitting"""
+    origImage = PNMImage()
+    assert origImage.read(filename)
+    oldWidth = origImage.getXSize()
+    oldHeight = origImage.getYSize()
+    newWidth = nextPowOf2(oldWidth)
+    newHeight = nextPowOf2(oldHeight)
+
+    newImage = PNMImage(newWidth, newHeight)
+    if origImage.hasAlpha():
+        newImage.addAlpha()
+    newImage.copySubImage(origImage, 0, 0, 0, 0)
+   
+    tex = Texture()
+    tex.load(newImage)
+   
+    cardMaker.setFrame(0, oldWidth, 0, oldHeight)
+
+    fU = float(oldWidth)/newWidth
+    fV = float(oldHeight)/newHeight
+
+    # cardMaker.setHasUvs(True)
+    cardMaker.setUvRange(Point2(0, 0), Point2(fU, fV))
+
+    npCard = NodePath(cardMaker.generate())
+    npCard.setTexture(tex)
+    npCard.setTexOffset(TextureStage.getDefault(), 0, 1-fV)
+    if origImage.hasAlpha():
+        npCard.setTransparency(TransparencyAttrib.MAlpha)
+   
+    return npCard
 
 class World(ShowBase):  
     def __init__(self):
@@ -369,10 +409,11 @@ class World(ShowBase):
         self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
 
     def loadInterface(self) :
-        b_map = ('images/button_ready.png',
+        paths = ('images/button_ready.png',
              'images/button_click.png',
              'images/button_rollover.png',
              'images/button_disabled.png')
+        b_map = [makeGeom(name) for name in paths]
         #Container
         w, h = base.win.getXSize(), base.win.getYSize()
         bw, bh = BUTTONSIZE
@@ -380,29 +421,55 @@ class World(ShowBase):
             frameColor=(1,1,1,0.2),
             pos=(bw+bw/2, -1, -h/2))
         b_cont.reparentTo(pixel2d)
-        
+
         def add_button(name, i, j, command, args, parent) :
             """add button as on a button grid on parent"""
             left, right, bottom, top = parent.bounds
             w, h = right - left, top - bottom
+            pos = (-w/2+bw*i,0,h/2-bh-bh*j)
             b = DirectButton(text = name,
                 text_scale = (bw/3, bh/2),
-                image_scale=(bw/2, 1, bh/2),
-                pos=(-bw+bw*i,0,h/2-bh/2-bh*j),
+                text_pos=(bw/2, bh/2),
+                pos=pos,
                 command=command, extraArgs=args,
-                image=b_map,
+                geom=b_map,
+                relief=None,
+                pressEffect=False,
+                parent=parent)
+            return b
+
+        def add_label(name, i, j, parent) :
+            """add text label as on a button grid on parent"""
+            left, right, bottom, top = parent.bounds
+            w, h = right - left, top - bottom
+            b = DirectLabel(text = name,
+                text_scale=(bw/3, bh/2),
+                text_fg=(1,1,1,1),
+                pos=(-w/2+bw/2+bw*i,0,h/2-bh/2-bh*j),
                 relief=None,
                 parent=parent)
             return b
         
         #Buttons to follow
+        add_label('Go to : ', 1, 0, b_cont)
         add_button('Earth', 0, 1, self.follow, ['earth'], b_cont)
         add_button('Moon', 1, 1, self.follow, ['moon'], b_cont)
         add_button('Sun', 2, 1, self.follow, ['sun'], b_cont)
         #and to look at
+        add_label('Look at : ', 1, 2, b_cont)
         add_button('Earth', 0, 3, self.look, ['earth'], b_cont)
         add_button('Moon', 1, 3, self.look, ['moon'], b_cont)
         add_button('Sun', 2, 3, self.look, ['sun'], b_cont)
+        #and to change speed
+        add_label('Time : ', 1, 4, b_cont)
+        add_button('-', 0, 5, self.changeSpeed, [1./2], b_cont)
+        add_button('+', 1, 5, self.changeSpeed, [2], b_cont)
+        add_button('++', 2, 5, self.changeSpeed, [100], b_cont)
+        #factual changes
+        add_label('Factual changes : ', 1, 6, b_cont)
+        add_button('Moon', 0, 7, self.unIncl, [], b_cont)
+        add_button('Earth', 1, 7, self.unTilt, [], b_cont)
+
 
     ## TASKS :
     #

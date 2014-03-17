@@ -1,17 +1,23 @@
 # -*- coding: utf-8-*- 
 #
+
+APPNAME = 'Astrini'
+APPX, APPY = 640, 400
+
 # Show FPS and use utf8 encoding
 # noaudio...
 #
-from pandac.PandaModules import loadPrcFileData 
-loadPrcFileData("", """
-text-encoding utf8
-show-frame-rate-meter 1
-audio-library-name null
-win-size 600 400
-sync-video 1
-window-title Astrini
-""") 
+#~ from pandac.PandaModules import loadPrcFileData 
+#~ loadPrcFileData("", """
+#~ text-encoding utf8
+#~ show-frame-rate-meter 1
+#~ audio-library-name null
+#~ sync-video 1
+#~ """)
+
+# PANDA DEBUGTOOLS
+#~ loadPrcFileData("", "want-directtools #t")
+#~ loadPrcFileData("", "want-tk #t")
 
 #multiplier to avoid working with very high numbers
 m = 1 / 1000000.

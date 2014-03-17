@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8-*- 
 #
 #  Simulation for astronomical initiation
@@ -19,10 +20,15 @@
 #  MA 02110-1301, USA.
 #  
 
+#My Global config variables
+#import before Showbase to set panda application
+from config import *
+
 # Import stuff in order to have a derived ShowBase extension running
 # Remember to use every extension as a DirectObject inheriting class
 #
 from direct.showbase.ShowBase import ShowBase
+from direct.gui.DirectGui import *
 from panda3d.core import *
 
 #
@@ -35,8 +41,6 @@ from direct.task import Task
 #
 from Camera import Camera
 from InputHandler import InputHandler
-#My Global config variables
-from config import *
 #Drawing functions
 import graphics
 #Misc imports
@@ -44,8 +48,14 @@ from math import radians, tan
 
 class World(ShowBase):  
     def __init__(self):
-        ShowBase.__init__(self)
+        #Set application properties
+        wp = WindowProperties.getDefault()
+        wp.setTitle(APPNAME)
+        wp.setSize(APPX, APPY)
+        WindowProperties.setDefault(wp)
         
+        ShowBase.__init__(self)
+
         #starting all base methods
         self.Camera = Camera(self)
         self.InputHandler = InputHandler(self)
@@ -69,6 +79,8 @@ class World(ShowBase):
         #low priority to prevent jitter of camera
         self.taskMgr.add(self.lockTask, "lockTask", priority=25)
         self.taskMgr.add(self.printTask, "PrintTask")
+        #Interface
+        self.loadInterface()
 
 
     def initScene(self):
@@ -355,6 +367,50 @@ class World(ShowBase):
         self.moonAxMarker = graphics.makeCross(2*self.sizescale)
         self.moonAxMarker.reparentTo(self.dummy_moon)
         self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
+
+    def loadInterface(self) :
+        b_map = ('images/button_ready.png',
+             'images/button_click.png',
+             'images/button_rollover.png',
+             'images/button_disabled.png')
+        #~ b = DirectButton(geom = b_map)
+        #Container
+        w, h = base.win.getXSize(), base.win.getYSize()
+        b_cont = DirectFrame(frameSize=(-0.25, 0.25, -1, 1), pos=(0, -1, 0))
+        b_cont.reparentTo(pixel2d)
+        #Buttons to follow
+        button = DirectButton(text = 'Earth',
+            frameSize = (-51, 51, -12, 13),
+            scale=10, pos=(51,0,-30),
+            command=self.follow, extraArgs=['earth'],
+            image=b_map,
+            relief=None,
+            parent=b_cont)
+        #~ button.reparentTo(pixel2d)
+        DirectButton(text = 'Moon',
+            scale=0.05, pos=(0,0.2,0),
+            command=self.follow, extraArgs=['moon'],
+            image=b_map,
+            relief=None)
+        DirectButton(text = 'Sun',
+            scale=0.05, pos=(0.4,0.2,0),
+            command=self.follow, extraArgs=['sun'],
+            image=b_map,
+            relief=None)
+        #Buttons to lookat
+        DirectButton(text = 'Earth', scale=0.05, pos=(-0.4,0,0.2),
+            command=self.look, extraArgs=['earth'],
+            image=b_map,
+            relief=None)
+        DirectButton(text = 'Moon', scale=0.05, pos=(0,0,0.2),
+            command=self.look, extraArgs=['moon'],
+            image=b_map,
+            relief=None)
+        DirectButton(text = 'Sun', scale=0.05, pos=(0.4,0,0.2),
+            command=self.look, extraArgs=['sun'],
+            image=b_map,
+            relief=None)
+
     ## TASKS :
     #
     def printTask(self, task) :
@@ -377,7 +433,8 @@ class World(ShowBase):
     
         return Task.cont
 
-def main():
+#a virtual argument to bypass packing bug
+def main(arg=None):
     w = World()
     w.run()
     return 0

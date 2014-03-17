@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8-*- 
 #
 #  Simulation for astronomical initiation
@@ -19,13 +20,15 @@
 #  MA 02110-1301, USA.
 #  
 
+#My Global config variables
+#import before Showbase to set panda application
+from config import *
+
 # Import stuff in order to have a derived ShowBase extension running
 # Remember to use every extension as a DirectObject inheriting class
 #
-
-
 from direct.showbase.ShowBase import ShowBase
-from direct.showbase.DirectObject import DirectObject 
+from direct.gui.DirectGui import *
 from panda3d.core import *
 
 #
@@ -36,43 +39,35 @@ from direct.task import Task
 # Default classes used to handle input and camera behaviour
 # Useful for fast prototyping
 #
-from myCamera import *
-from myInputHandler import InputHandler
-from myDebug import DebugPrint
-import __builtin__
-
-#My Global config variables
-from config import *
+from Camera import Camera
+from InputHandler import InputHandler
 #Drawing functions
-from graphics import *
-
+import graphics
 #Misc imports
 from math import radians, tan
-    
+
 class World(ShowBase):  
     def __init__(self):
-        ShowBase.__init__(self)
+        #Set application properties
+        wp = WindowProperties.getDefault()
+        wp.setTitle(APPNAME)
+        wp.setSize(APPX, APPY)
+        WindowProperties.setDefault(wp)
         
+        ShowBase.__init__(self)
+
         #starting all base methods
-        #this dirty hack ables us to directly access app, camera, input...
-        __builtin__.myApp = self
-        __builtin__.d = DebugPrint()
-        __builtin__.myCamera = MyCamera()
-        __builtin__.myInputHandler = InputHandler()
+        self.Camera = Camera(self)
+        self.InputHandler = InputHandler(self)
         
         #default config when just opened
-        myCamera.mm.showMouse()
-        myCamera.setUtilsActive()
+        self.Camera.mm.showMouse()
+        self.Camera.setUtilsActive()
         self.mainScene = render.attachNewNode("mainScene")
-        #example debug line useful when prototyping
-        d.line("sandbox ready for prototyping!")
-        
+
         #Scene initialization
         self.initCamera()
         self.initScene()
-        
-        # Define shortcuts etc...
-        #~ self.defineBaseEvents()
 
         # Prepare locks (following procedures etc...)
         self.following = None
@@ -81,9 +76,11 @@ class World(ShowBase):
         self.inclined = False
         self.realist = False
         # Add Tasks procedures to the task manager.
-        #high priority to prevent jumps of locks
-        self.taskMgr.add(self.lockTask, "lockTask", priority=10)
+        #low priority to prevent jitter of camera
+        self.taskMgr.add(self.lockTask, "lockTask", priority=25)
         self.taskMgr.add(self.printTask, "PrintTask")
+        #Interface
+        self.loadInterface()
 
 
     def initScene(self):
@@ -168,7 +165,7 @@ class World(ShowBase):
         
     def initCamera(self):
         #Camera initialization
-        fov = myCamera.getFov()[0]
+        fov = self.Camera.getFov()[0]
         #Compute camera-sun distance from fov
         margin = UA / 3
         c_s_dist = (UA + margin) / tan(radians(fov/2))
@@ -244,14 +241,14 @@ class World(ShowBase):
     
     def drawOrbits(self):
         #Draw orbits
-        self.earth_orbitline = makeArc(360, 128)
+        self.earth_orbitline = graphics.makeArc(360, 128)
         self.earth_orbitline.reparentTo(self.root_earth)
         self.earth_orbitline.setHpr( 0, 90,0)
         self.earth_orbitline.setScale(UA)
         # orbits are not affected by sunlight
         self.earth_orbitline.hide(BitMask32.bit(0))
         
-        self.moon_orbitline = makeArc(360, 128)
+        self.moon_orbitline = graphics.makeArc(360, 128)
         self.moon_orbitline.reparentTo(self.root_moon)
         self.moon_orbitline.setHpr( 0, 90,0)
         self.moon_orbitline.setScale(MOONAX)
@@ -317,7 +314,8 @@ class World(ShowBase):
         #rotatePlanets creates intervals to actually use the hierarchy we created
         #to turn the sun, planets, and moon to give a rough representation of the
         #solar system.
-        self.day_period_sun = self.sun.hprInterval(self.dayscale * SUNROT, Vec3(360, 0, 0))
+        self.day_period_sun = self.sun.hprInterval(self.dayscale * SUNROT,
+        Vec3(360, 0, 0))
 
         self.orbit_period_earthsystem = self.root_earth.hprInterval(
           self.yearscale, Vec3(360, 0, 0))
@@ -338,7 +336,7 @@ class World(ShowBase):
     def loadMarkers(self):
         #Sun
         #Create always visible marker
-        self.sunMarker = makeArc()
+        self.sunMarker = graphics.makeArc()
         self.sunMarker.reparentTo(render)
         self.sunMarker.setScale(self.sunradius + 0.1)
         # markers are not affected by sunlight or unspot
@@ -348,36 +346,76 @@ class World(ShowBase):
 
         #Earth
         #Create always visible marker
-        self.earthMarker = makeArc()
+        self.earthMarker = graphics.makeArc()
         self.earthMarker.reparentTo(self.earth_system)
         self.earthMarker.setScale(self.sizescale + 0.1)
         self.earthMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.earthMarker.setBillboardPointWorld()
         #Show orientation
-        self.earthAxMarker = makeCross(4*self.sizescale)
+        self.earthAxMarker = graphics.makeCross(4*self.sizescale)
         self.earthAxMarker.reparentTo(self.earth)
         self.earthAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         #the moon
         #Create always visible marker
-        self.moonMarker = makeArc()
+        self.moonMarker = graphics.makeArc()
         self.moonMarker.reparentTo(self.root_moon)
         self.moonMarker.setScale(MOONRADIUS + 0.1)
         self.moonMarker.setPos(MOONAX, 0, 0)
         self.moonMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.moonMarker.setBillboardPointWorld()
         #Show orientation
-        self.moonAxMarker = makeCross(2*self.sizescale)
+        self.moonAxMarker = graphics.makeCross(2*self.sizescale)
         self.moonAxMarker.reparentTo(self.dummy_moon)
         self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
+
+    def loadInterface(self) :
+        b_map = ('images/button_ready.png',
+             'images/button_click.png',
+             'images/button_rollover.png',
+             'images/button_disabled.png')
+        #Container
+        w, h = base.win.getXSize(), base.win.getYSize()
+        bw, bh = BUTTONSIZE
+        b_cont = DirectFrame(frameSize=(-(bw+bw/2), bw+bw/2, -h/2, h/2),
+            frameColor=(1,1,1,0.2),
+            pos=(bw+bw/2, -1, -h/2))
+        b_cont.reparentTo(pixel2d)
+        
+        def add_button(name, i, j, command, args, parent) :
+            """add button as on a button grid on parent"""
+            left, right, bottom, top = parent.bounds
+            w, h = right - left, top - bottom
+            b = DirectButton(text = name,
+                text_scale = (bw/3, bh/2),
+                image_scale=(bw/2, 1, bh/2),
+                pos=(-bw+bw*i,0,h/2-bh/2-bh*j),
+                command=command, extraArgs=args,
+                image=b_map,
+                relief=None,
+                parent=parent)
+            return b
+        
+        #Buttons to follow
+        add_button('Earth', 0, 1, self.follow, ['earth'], b_cont)
+        add_button('Moon', 1, 1, self.follow, ['moon'], b_cont)
+        add_button('Sun', 2, 1, self.follow, ['sun'], b_cont)
+        #and to look at
+        add_button('Earth', 0, 3, self.look, ['earth'], b_cont)
+        add_button('Moon', 1, 3, self.look, ['moon'], b_cont)
+        add_button('Sun', 2, 3, self.look, ['sun'], b_cont)
+
     ## TASKS :
-    # Define a procedure to move the camera.
-    def printTask(self, task):
+    #
+    def printTask(self, task) :
         #~ print self.camera.getPos()
         #~ print self.simulSpeed
         return Task.cont
 
-    def lockTask(self, task):
+    def lockTask(self, task) :
+        """alignment contraints""" 
+        #lighting follows earth
         self.light.lookAt(self.earth)
+        #align if necessary
         if self.following != None :
             camera.setPos(self.following.getPos(self.render))
         if self.looking != None :
@@ -388,7 +426,8 @@ class World(ShowBase):
     
         return Task.cont
 
-def main():
+#a virtual argument to bypass packing bug
+def main(arg=None):
     w = World()
     w.run()
     return 0

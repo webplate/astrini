@@ -2,7 +2,6 @@ from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
 from pandac.PandaModules import *
 
-import libpanda
 import math 
 
 #My Global config variables
@@ -182,8 +181,9 @@ class MouseMover(DirectObject):
         taskMgr.remove("mouseMoverTask")
         base.win.movePointer(0,self.lastCoo[0],self.lastCoo[1])
         
-class MyCamera(DirectObject):
-    def __init__(self):
+class Camera(DirectObject):
+    def __init__(self, world):
+        self.world = world
         #keyboard/mouse mover
         self.km = KeyboardMover()
         self.mm = MouseMover()
@@ -253,10 +253,10 @@ class MyCamera(DirectObject):
     def toggleView(self):
         if self.getState() == "fly":
             #myGui.showAll()  to be removed soon
-            myInputHandler.setActive()
+            self.world.InputHandler.setActive()
         if self.getState() == "static":
             #myGui.hideAll()  to be removed soon
-            myInputHandler.setInactive()
+            self.world.InputHandler.setInactive()
         #switching camera in any case
         self.toggleState()
     

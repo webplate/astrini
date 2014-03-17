@@ -19,6 +19,10 @@ APPX, APPY = 640, 400
 #~ loadPrcFileData("", "want-directtools #t")
 #~ loadPrcFileData("", "want-tk #t")
 
+#Interface sttings
+BUTTONSIZE = 48, 16
+
+
 #multiplier to avoid working with very high numbers
 m = 1 / 1000000.
 

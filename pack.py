@@ -6,7 +6,11 @@ import subprocess
 imdir = 'images/'
 modir = 'models/'
 
+def call(command) :
+    print subprocess.call(command, shell=True)
+    
 def packImages() :
+    #deprecated... now directly loading pngs...
     buttons = ['button_ready.png', 'button_click.png', 'button_rollover.png', 'button_disabled.png']
     buttons = [imdir+b for b in buttons]
     size = '102,25'
@@ -18,8 +22,11 @@ def packImages() :
     #~ print subprocess.call(command)
 
 def deploy() :
-    print subprocess.call('packp3d -o astrini.p3d -d ./', shell=True)
-    print subprocess.call('pdeploy -s -n astrini -N "Astrini" -v 0.0.0 -a glen_lomax -A "Glen Lomax" -e glenlomax@gmail.com -l "GNU Public License" -L gpl.txt -i images/icon.png -P linux_amd64 -P win32 -P osx_i386 astrini.p3d standalone', shell=True)
+    #pack whole app as p3d
+    call('packp3d -o astrini.p3d -d ./')
+    #create deployable executables
+    #some other platforms : linux_amd64
+    call('pdeploy -s -n astrini -N "Astrini" -v 0.0.0 -a glen_lomax -A "Glen Lomax" -e glenlomax@gmail.com -l "GNU Public License" -L gpl.txt -i images/icon.png -P win32 -P osx_i386 astrini.p3d standalone')
 
 def main():
     deploy()

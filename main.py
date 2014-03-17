@@ -373,43 +373,36 @@ class World(ShowBase):
              'images/button_click.png',
              'images/button_rollover.png',
              'images/button_disabled.png')
-        #~ b = DirectButton(geom = b_map)
         #Container
         w, h = base.win.getXSize(), base.win.getYSize()
-        b_cont = DirectFrame(frameSize=(-0.25, 0.25, -1, 1), pos=(0, -1, 0))
+        bw, bh = BUTTONSIZE
+        b_cont = DirectFrame(frameSize=(-(bw+bw/2), bw+bw/2, -h/2, h/2),
+            frameColor=(1,1,1,0.2),
+            pos=(bw+bw/2, -1, -h/2))
         b_cont.reparentTo(pixel2d)
+        
+        def add_button(name, i, j, command, args, parent) :
+            """add button as on a button grid on parent"""
+            left, right, bottom, top = parent.bounds
+            w, h = right - left, top - bottom
+            b = DirectButton(text = name,
+                text_scale = (bw/3, bh/2),
+                image_scale=(bw/2, 1, bh/2),
+                pos=(-bw+bw*i,0,h/2-bh/2-bh*j),
+                command=command, extraArgs=args,
+                image=b_map,
+                relief=None,
+                parent=parent)
+            return b
+        
         #Buttons to follow
-        button = DirectButton(text = 'Earth',
-            frameSize = (-51, 51, -12, 13),
-            scale=10, pos=(51,0,-30),
-            command=self.follow, extraArgs=['earth'],
-            image=b_map,
-            relief=None,
-            parent=b_cont)
-        #~ button.reparentTo(pixel2d)
-        DirectButton(text = 'Moon',
-            scale=0.05, pos=(0,0.2,0),
-            command=self.follow, extraArgs=['moon'],
-            image=b_map,
-            relief=None)
-        DirectButton(text = 'Sun',
-            scale=0.05, pos=(0.4,0.2,0),
-            command=self.follow, extraArgs=['sun'],
-            image=b_map,
-            relief=None)
-        #Buttons to lookat
-        DirectButton(text = 'Earth', scale=0.05, pos=(-0.4,0,0.2),
-            command=self.look, extraArgs=['earth'],
-            image=b_map,
-            relief=None)
-        DirectButton(text = 'Moon', scale=0.05, pos=(0,0,0.2),
-            command=self.look, extraArgs=['moon'],
-            image=b_map,
-            relief=None)
-        DirectButton(text = 'Sun', scale=0.05, pos=(0.4,0,0.2),
-            command=self.look, extraArgs=['sun'],
-            image=b_map,
-            relief=None)
+        add_button('Earth', 0, 1, self.follow, ['earth'], b_cont)
+        add_button('Moon', 1, 1, self.follow, ['moon'], b_cont)
+        add_button('Sun', 2, 1, self.follow, ['sun'], b_cont)
+        #and to look at
+        add_button('Earth', 0, 3, self.look, ['earth'], b_cont)
+        add_button('Moon', 1, 3, self.look, ['moon'], b_cont)
+        add_button('Sun', 2, 3, self.look, ['sun'], b_cont)
 
     ## TASKS :
     #

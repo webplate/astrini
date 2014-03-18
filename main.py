@@ -302,7 +302,7 @@ class World(ShowBase):
         if self.looking != new :
             #store new to get actual position
             self.new = new
-            travel = self.focusSpot.posInterval(0.3,
+            travel = self.focusSpot.posInterval(FREEZELEN,
             self.get_current_rel_pos,
             blendType='easeIn')
             sequence = Sequence(Func(self.unlock_focus),
@@ -312,18 +312,30 @@ class World(ShowBase):
 
     def unTilt(self):
         if self.tilted:
-            self.dummy_earth.setHpr(0, 0, 0)
+            inter = self.dummy_earth.hprInterval(TRAVELLEN,
+            (0, 0, 0),
+            blendType='easeIn')
+            inter.start()
             self.tilted = False
         else:
-            self.dummy_earth.setHpr(0, self.earthTilt, 0)
+            inter = self.dummy_earth.hprInterval(TRAVELLEN,
+            (0, self.earthTilt, 0),
+            blendType='easeIn')
+            inter.start()
             self.tilted = True
 
     def unIncl(self):
         if self.inclined:
-            self.dummy_root_moon.setHpr(0, 0, 0)
+            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
+            (0, 0, 0),
+            blendType='easeIn')
+            inter.start()
             self.inclined = False
         else:
-            self.dummy_root_moon.setHpr(0, self.moonIncli, 0)
+            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
+            (0, self.moonIncli, 0),
+            blendType='easeIn')
+            inter.start()
             self.inclined = True
 
     def realism(self):

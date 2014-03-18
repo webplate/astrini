@@ -109,13 +109,14 @@ class World(ShowBase):
         self.mainScene = render.attachNewNode("mainScene")
 
         #Scene initialization
+        self.initEmpty()
         self.initCamera()
         self.initScene()
 
         # Prepare locks (following procedures etc...)
-        self.on_target = False
-        self.following = None
-        self.looking = None
+        self.travelling = False
+        self.following = self.homeSpot
+        self.looking = self.sun
         self.tilted = False
         self.inclined = False
         self.realist = False
@@ -126,6 +127,17 @@ class World(ShowBase):
         #Interface
         self.loadInterface()
 
+    def initEmpty(self) :
+        #Create the dummy nodes
+        self.homeSpot = render.attachNewNode('homeSpot')
+        self.focusSpot = render.attachNewNode('focusSpot')
+        #Compute camera-sun distance from fov
+        fov = self.Camera.getFov()[0]
+        margin = UA / 3
+        c_s_dist = (UA + margin) / tan(radians(fov/2))
+        self.homeSpot.setPos(0, -c_s_dist,UA/3)
+        #init focus is on the sun
+        self.focusSpot.setPos(0, 0, 0)
 
     def initScene(self):
         self.simulSpeed = 1
@@ -209,21 +221,19 @@ class World(ShowBase):
         
     def initCamera(self):
         #Camera initialization
-        fov = self.Camera.getFov()[0]
-        #Compute camera-sun distance from fov
-        margin = UA / 3
-        c_s_dist = (UA + margin) / tan(radians(fov/2))
-        camera.setPos( 0, -c_s_dist,UA/3)          #Set the camera position (X, Y, Z)
-        camera.lookAt(0.,0.,0.)
-
+        camera.setPos(self.homeSpot.getPos())
+        camera.lookAt(self.focusSpot)
 
     def changeSpeed(self, factor):
-        self.simulSpeed *= factor
-        self.updateSpeed()
+        speed = self.simulSpeed * factor
+        if speed <= MAXSPEED :
+            self.simulSpeed = speed
+            self.updateSpeed()
 
     def setSpeed(self, speed) :
-        self.simulSpeed = speed
-        self.updateSpeed()
+        if speed <= MAXSPEED :
+            self.simulSpeed = speed
+            self.updateSpeed()
 
     def toggleSpeed(self):
         if self.simulSpeed != 0.001:
@@ -240,6 +250,7 @@ class World(ShowBase):
         self.following = None
 
     def start_follow(self, new) :
+        self.travelling = False
         self.following = new
 
     def follow(self, identity):
@@ -249,17 +260,18 @@ class World(ShowBase):
             new = self.moon
         elif identity == "sun" :
             new = self.sun
-        #if new destination 
-        if self.following != new :
+        #if new destination and not already trying to reach another
+        if self.following != new and not self.travelling :
+            self.travelling = True
             prev_speed = self.simulSpeed
             #to be able to capture its position during sequence
             self.new = new
-            slow = LerpFunc(self.setSpeed, 0.5,
+            slow = LerpFunc(self.setSpeed, FREEZELEN,
             prev_speed, 0.001)
-            travel = self.camera.posInterval(1.0,
+            travel = self.camera.posInterval(TRAVELLEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
-            fast = LerpFunc(self.setSpeed, 0.5,
+            fast = LerpFunc(self.setSpeed, FREEZELEN,
             0.001, prev_speed)
             #slow sim, release, travel, lock and resume speed
             sequence = Sequence(slow, Func(self.stop_follow),
@@ -271,6 +283,13 @@ class World(ShowBase):
         
     def start_look(self, new) :
         self.looking = new
+
+    def lock_focus(self) :
+        self.focusSpot.reparentTo(self.looking)
+        self.focusSpot.setPos(0, 0, 0)
+
+    def unlock_focus(self) :
+        self.focusSpot.wrtReparentTo(self.mainScene)
         
     def look(self, identity):
         if identity == "earth" :
@@ -281,12 +300,15 @@ class World(ShowBase):
             new = self.sun
         #if new target
         if self.looking != new :
-            travel = self.camera.hprInterval(1.0,
-            new.getHpr(self.camera),
-            blendType='easeInOut')
-            sequence = Sequence(Func(self.stop_look),
-            travel, Func(self.start_look, new))
+            #store new to get actual position
+            self.new = new
+            travel = self.focusSpot.posInterval(0.3,
+            self.get_current_rel_pos,
+            blendType='easeIn')
+            sequence = Sequence(Func(self.unlock_focus),
+                travel, Func(self.lock_focus))
             sequence.start()
+            self.looking = new
 
     def unTilt(self):
         if self.tilted:
@@ -311,7 +333,7 @@ class World(ShowBase):
         else:
             
             self.realist = True
-    
+
     #Set the simulation play rate
     def updateSpeed(self):
         #prevent complete stop (and reset of simulation)
@@ -494,7 +516,7 @@ class World(ShowBase):
                 relief=None,
                 parent=parent)
             return b
-        
+
         #Buttons to follow
         add_label('Go to : ', 1, 0, b_cont)
         add_button('Earth', 0, 1, self.follow, ['earth'], b_cont)
@@ -531,7 +553,7 @@ class World(ShowBase):
         if self.following != None :
                 camera.setPos(self.following.getPos(self.render))
         if self.looking != None :
-                camera.lookAt(self.looking)
+                camera.lookAt(self.focusSpot)
         return Task.cont
 
     def updateMarkers(self, task):
@@ -542,7 +564,6 @@ class World(ShowBase):
 def main(arg=None):
     w = World()
     w.run()
-    return 0
 
 if __name__ == '__main__':
     main()

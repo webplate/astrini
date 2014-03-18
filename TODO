@@ -1,6 +1,12 @@
-packpanda on windows OR pdeploy !!
-use own images on buttons for packing
 
 class for spheroids, markers, orbits
 
 INTERFACE !!
+prevent looking and following the same
+(when go somewhere look at previous location)
+
+
+make moving empty for smooth lookat
+(camera always tracking this focus)
+
+put empty to go to to see whole system (init and above)

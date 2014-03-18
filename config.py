@@ -22,6 +22,11 @@ sync-video 1
 #Interface sttings
 BUTTONSIZE = 48, 16
 
+#diration in sec of soft transitions
+FREEZELEN = 0.3
+TRAVELLEN = 1.0
+MAXSPEED = 100000000
+
 
 #multiplier to avoid working with very high numbers
 m = 1 / 1000000.

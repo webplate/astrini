@@ -34,7 +34,10 @@ from panda3d.core import *
 #
 # Task declaration import 
 from direct.task import Task
-
+#Sequence and parallel for intervals
+from direct.interval.IntervalGlobal import *
+#interpolate function parameter
+from direct.interval.LerpInterval import LerpFunc
 #
 # Default classes used to handle input and camera behaviour
 # Useful for fast prototyping
@@ -110,6 +113,7 @@ class World(ShowBase):
         self.initScene()
 
         # Prepare locks (following procedures etc...)
+        self.on_target = False
         self.following = None
         self.looking = None
         self.tilted = False
@@ -211,12 +215,16 @@ class World(ShowBase):
         c_s_dist = (UA + margin) / tan(radians(fov/2))
         camera.setPos( 0, -c_s_dist,UA/3)          #Set the camera position (X, Y, Z)
         camera.lookAt(0.,0.,0.)
-        
-    
+
+
     def changeSpeed(self, factor):
         self.simulSpeed *= factor
         self.updateSpeed()
-        
+
+    def setSpeed(self, speed) :
+        self.simulSpeed = speed
+        self.updateSpeed()
+
     def toggleSpeed(self):
         if self.simulSpeed != 0.001:
             self.previousSpeed = self.simulSpeed
@@ -225,25 +233,60 @@ class World(ShowBase):
             self.simulSpeed = self.previousSpeed
         self.updateSpeed()
 
+    def get_current_rel_pos(self) :
+        return self.new.getPos(self.mainScene)
+
+    def stop_follow(self) :
+        self.following = None
+
+    def start_follow(self, new) :
+        self.following = new
+
     def follow(self, identity):
         if identity == "earth" :
-            self.following = self.earth
+            new = self.earth
         elif identity == "moon" :
-            self.following = self.moon
+            new = self.moon
         elif identity == "sun" :
-            self.following = self.sun
-        else:
-            self.following = None
+            new = self.sun
+        #if new destination 
+        if self.following != new :
+            prev_speed = self.simulSpeed
+            #to be able to capture its position during sequence
+            self.new = new
+            slow = LerpFunc(self.setSpeed, 0.5,
+            prev_speed, 0.001)
+            travel = self.camera.posInterval(1.0,
+            self.get_current_rel_pos,
+            blendType='easeInOut')
+            fast = LerpFunc(self.setSpeed, 0.5,
+            0.001, prev_speed)
+            #slow sim, release, travel, lock and resume speed
+            sequence = Sequence(slow, Func(self.stop_follow),
+            travel, Func(self.start_follow, new), fast)
+            sequence.start()
 
+    def stop_look(self) :
+        self.looking = None
+        
+    def start_look(self, new) :
+        self.looking = new
+        
     def look(self, identity):
         if identity == "earth" :
-            self.looking = self.earth
+            new = self.earth
         elif identity == "moon" :
-            self.looking = self.moon
+            new = self.moon
         elif identity == "sun" :
-            self.looking = self.sun
-        else:
-            self.looking = None
+            new = self.sun
+        #if new target
+        if self.looking != new :
+            travel = self.camera.hprInterval(1.0,
+            new.getHpr(self.camera),
+            blendType='easeInOut')
+            sequence = Sequence(Func(self.stop_look),
+            travel, Func(self.start_look, new))
+            sequence.start()
 
     def unTilt(self):
         if self.tilted:
@@ -418,7 +461,7 @@ class World(ShowBase):
         w, h = base.win.getXSize(), base.win.getYSize()
         bw, bh = BUTTONSIZE
         b_cont = DirectFrame(frameSize=(-(bw+bw/2), bw+bw/2, -h/2, h/2),
-            frameColor=(1,1,1,0.2),
+            frameColor=(1,1,1,0.3),
             pos=(bw+bw/2, -1, -h/2))
         b_cont.reparentTo(pixel2d)
 
@@ -428,8 +471,8 @@ class World(ShowBase):
             w, h = right - left, top - bottom
             pos = (-w/2+bw*i,0,h/2-bh-bh*j)
             b = DirectButton(text = name,
-                text_scale = (bw/3, bh/2),
-                text_pos=(bw/2, bh/2),
+                text_scale = (bw/3, bh/1.3),
+                text_pos=(bw/2, bh/3),
                 pos=pos,
                 command=command, extraArgs=args,
                 geom=b_map,
@@ -443,9 +486,11 @@ class World(ShowBase):
             left, right, bottom, top = parent.bounds
             w, h = right - left, top - bottom
             b = DirectLabel(text = name,
-                text_scale=(bw/3, bh/2),
+                text_scale=(bw/3, bh/1.3),
+                text_pos=(bw/2, bh/3),
                 text_fg=(1,1,1,1),
-                pos=(-w/2+bw/2+bw*i,0,h/2-bh/2-bh*j),
+                text_shadow=(0,0,0,0.9),
+                pos = (-w/2+bw*i,0,h/2-bh-bh*j),
                 relief=None,
                 parent=parent)
             return b
@@ -484,9 +529,9 @@ class World(ShowBase):
         self.light.lookAt(self.earth)
         #align if necessary
         if self.following != None :
-            camera.setPos(self.following.getPos(self.render))
+                camera.setPos(self.following.getPos(self.render))
         if self.looking != None :
-            camera.lookAt(self.looking)
+                camera.lookAt(self.looking)
         return Task.cont
 
     def updateMarkers(self, task):

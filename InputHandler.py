@@ -39,8 +39,8 @@ class InputHandler(DirectObject):
         self.accept("m",self.world.changeSpeed,[1000])
         self.accept("n",self.world.toggleSpeed)
         
-        self.accept("a",self.world.follow,[None])
-        self.accept("w",self.world.look,[None])
+        self.accept("a",self.world.stop_follow)
+        self.accept("w",self.world.stop_look)
         
         self.accept("e",self.world.follow,["earth"])
         self.accept("control-e",self.world.look,["earth"])

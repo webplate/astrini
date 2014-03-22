@@ -1,12 +1,7 @@
-
+know actual time and go forward 1 day, 1 month, 1season, 1year
 class for spheroids, markers, orbits
 
 INTERFACE !!
 prevent looking and following the same
 (when go somewhere look at previous location)
 
-
-make moving empty for smooth lookat
-(camera always tracking this focus)
-
-put empty to go to to see whole system (init and above)

@@ -260,6 +260,8 @@ class World(ShowBase):
             new = self.moon
         elif identity == "sun" :
             new = self.sun
+        else :
+            new = self.homeSpot
         #if new destination and not already trying to reach another
         if self.following != new and not self.travelling :
             self.travelling = True
@@ -481,8 +483,8 @@ class World(ShowBase):
         self.moonMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.moonMarker.setBillboardPointWorld()
         #Show orientation
-        self.moonAxMarker = graphics.makeCross(2*self.sizescale)
-        self.moonAxMarker.reparentTo(self.dummy_moon)
+        self.moonAxMarker = graphics.makeCross(4*self.sizescale)
+        self.moonAxMarker.reparentTo(self.moon)
         self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
 
     def loadInterface(self) :
@@ -528,26 +530,31 @@ class World(ShowBase):
                 relief=None,
                 parent=parent)
             return b
-
+        
         #Buttons to follow
-        add_label('Go to : ', 1, 0, b_cont)
-        add_button('Earth', 0, 1, self.follow, ['earth'], b_cont)
-        add_button('Moon', 1, 1, self.follow, ['moon'], b_cont)
-        add_button('Sun', 2, 1, self.follow, ['sun'], b_cont)
+        j = 0
+        add_label('Go to : ', 1, j, b_cont)
+        add_button('Earth', 0, j+1, self.follow, ['earth'], b_cont)
+        add_button('Moon', 1, j+1, self.follow, ['moon'], b_cont)
+        add_button('Sun', 2, j+1, self.follow, ['sun'], b_cont)
+        add_button('Ext', 2, j+2, self.follow, ['home'], b_cont)
         #and to look at
-        add_label('Look at : ', 1, 2, b_cont)
-        add_button('Earth', 0, 3, self.look, ['earth'], b_cont)
-        add_button('Moon', 1, 3, self.look, ['moon'], b_cont)
-        add_button('Sun', 2, 3, self.look, ['sun'], b_cont)
+        j = 4
+        add_label('Look at : ', 1, j, b_cont)
+        add_button('Earth', 0, j+1, self.look, ['earth'], b_cont)
+        add_button('Moon', 1, j+1, self.look, ['moon'], b_cont)
+        add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
         #and to change speed
-        add_label('Time : ', 1, 4, b_cont)
-        add_button('-', 0, 5, self.changeSpeed, [1./2], b_cont)
-        add_button('+', 1, 5, self.changeSpeed, [2], b_cont)
-        add_button('++', 2, 5, self.changeSpeed, [100], b_cont)
+        j = 7
+        add_label('Time : ', 1, j, b_cont)
+        add_button('-', 0, j+1, self.changeSpeed, [1./2], b_cont)
+        add_button('+', 1, j+1, self.changeSpeed, [2], b_cont)
+        add_button('++', 2, j+1, self.changeSpeed, [100], b_cont)
         #factual changes
-        add_label('Factual changes : ', 1, 6, b_cont)
-        add_button('Moon', 0, 7, self.unIncl, [], b_cont)
-        add_button('Earth', 1, 7, self.unTilt, [], b_cont)
+        j = 10
+        add_label('Factual changes : ', 1, j, b_cont)
+        add_button('Moon', 0, j+1, self.unIncl, [], b_cont)
+        add_button('Earth', 1, j+1, self.unTilt, [], b_cont)
 
 
     ## TASKS :

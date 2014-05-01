@@ -49,6 +49,7 @@ import graphics
 #Misc imports
 from math import radians, tan, log, ceil
 
+#conversion of textures (power of 2 problem)
 cardMaker = CardMaker('CardMaker')
 
 def nextPowOf2(n):
@@ -124,6 +125,7 @@ class World(ShowBase):
         #low priority to prevent jitter of camera
         self.taskMgr.add(self.lockTask, "lockTask", priority=25)
         self.taskMgr.add(self.printTask, "PrintTask")
+        self.taskMgr.add(self.interfaceTask, "interfaceTask")
         #Interface
         self.loadInterface()
 
@@ -517,18 +519,29 @@ class World(ShowBase):
                 parent=parent)
             return b
 
-        def add_label(name, i, j, parent) :
+        def add_label(name, i, j, parent, mayChange=False) :
             """add text label as on a button grid on parent"""
             left, right, bottom, top = parent.bounds
             w, h = right - left, top - bottom
-            b = DirectLabel(text = name,
-                text_scale=(bw/3, bh/1.3),
-                text_pos=(bw/2, bh/3),
-                text_fg=(1,1,1,1),
-                text_shadow=(0,0,0,0.9),
-                pos = (-w/2+bw*i,0,h/2-bh-bh*j),
-                relief=None,
-                parent=parent)
+            if not mayChange :
+                b = DirectLabel(text = name,
+                    text_scale=(bw/3, bh/1.3),
+                    text_pos=(bw/2, bh/3),
+                    text_fg=(1,1,1,1),
+                    text_shadow=(0,0,0,0.9),
+                    pos = (-w/2+bw*i,0,h/2-bh-bh*j),
+                    relief=None,
+                    parent=parent)
+            else :
+                b = DirectLabel(text = name,
+                    text_scale=(bw/3, bh/1.3),
+                    text_pos=(bw/2, bh/3),
+                    text_fg=(1,1,1,1),
+                    text_shadow=(0,0,0,0.9),
+                    pos = (-w/2+bw*i,0,h/2-bh-bh*j),
+                    relief=None,
+                    parent=parent,
+                    textMayChange=True)
             return b
         
         #Buttons to follow
@@ -555,7 +568,10 @@ class World(ShowBase):
         add_label('Factual changes : ', 1, j, b_cont)
         add_button('Moon', 0, j+1, self.unIncl, [], b_cont)
         add_button('Earth', 1, j+1, self.unTilt, [], b_cont)
-
+        
+        #date time display
+        j = 14
+        self.timelabel = add_label('UTC Time', 1, j, b_cont, mayChange=True)
 
     ## TASKS :
     #
@@ -573,6 +589,11 @@ class World(ShowBase):
                 camera.setPos(self.following.getPos(self.render))
         if self.looking != None :
                 camera.lookAt(self.focusSpot)
+        return Task.cont
+        
+    def interfaceTask(self, task) :
+        self.timelabel().setText()
+        
         return Task.cont
 
     def updateMarkers(self, task):

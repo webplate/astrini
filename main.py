@@ -48,6 +48,7 @@ from InputHandler import InputHandler
 import graphics
 #Misc imports
 from math import radians, tan, log, ceil
+from datetime import datetime, timedelta
 
 #conversion of textures (power of 2 problem)
 cardMaker = CardMaker('CardMaker')
@@ -108,6 +109,10 @@ class World(ShowBase):
         self.Camera.mm.showMouse()
         self.Camera.setUtilsActive()
         self.mainScene = render.attachNewNode("mainScene")
+        
+        #load fonts
+        self.condensed_font = loader.loadFont('fonts/Ubuntu-C.ttf')
+        self.mono_font = loader.loadFont('fonts/UbuntuMono-R.ttf')
 
         #Scene initialization
         self.initEmpty()
@@ -143,6 +148,7 @@ class World(ShowBase):
 
     def initScene(self):
         self.simulSpeed = 1
+        self.simulTime = datetime.utcnow()
         
         #variables to control the relative speeds of spinning and orbits in the
         #simulation
@@ -509,6 +515,7 @@ class World(ShowBase):
             w, h = right - left, top - bottom
             pos = (-w/2+bw*i,0,h/2-bh-bh*j)
             b = DirectButton(text = name,
+                text_font=self.condensed_font,
                 text_scale = (bw/3, bh/1.3),
                 text_pos=(bw/2, bh/3),
                 pos=pos,
@@ -519,29 +526,19 @@ class World(ShowBase):
                 parent=parent)
             return b
 
-        def add_label(name, i, j, parent, mayChange=False) :
+        def add_label(name, i, j, parent) :
             """add text label as on a button grid on parent"""
             left, right, bottom, top = parent.bounds
             w, h = right - left, top - bottom
-            if not mayChange :
-                b = DirectLabel(text = name,
-                    text_scale=(bw/3, bh/1.3),
-                    text_pos=(bw/2, bh/3),
-                    text_fg=(1,1,1,1),
-                    text_shadow=(0,0,0,0.9),
-                    pos = (-w/2+bw*i,0,h/2-bh-bh*j),
-                    relief=None,
-                    parent=parent)
-            else :
-                b = DirectLabel(text = name,
-                    text_scale=(bw/3, bh/1.3),
-                    text_pos=(bw/2, bh/3),
-                    text_fg=(1,1,1,1),
-                    text_shadow=(0,0,0,0.9),
-                    pos = (-w/2+bw*i,0,h/2-bh-bh*j),
-                    relief=None,
-                    parent=parent,
-                    textMayChange=True)
+            b = DirectLabel(text = name,
+                text_font=self.condensed_font,
+                text_scale=(bw/3, bh/1.3),
+                text_pos=(bw/2, bh/3),
+                text_fg=(1,1,1,1),
+                text_shadow=(0,0,0,0.9),
+                pos = (-w/2+bw*i,0,h/2-bh-bh*j),
+                relief=None,
+                parent=parent)
             return b
         
         #Buttons to follow
@@ -570,8 +567,9 @@ class World(ShowBase):
         add_button('Earth', 1, j+1, self.unTilt, [], b_cont)
         
         #date time display
-        j = 14
-        self.timelabel = add_label('UTC Time', 1, j, b_cont, mayChange=True)
+        j = 15
+        self.timelabel = add_label('UTC Time', 1, j, b_cont)
+        self.timelabel['text_font'] = self.mono_font
 
     ## TASKS :
     #
@@ -592,7 +590,10 @@ class World(ShowBase):
         return Task.cont
         
     def interfaceTask(self, task) :
-        self.timelabel().setText()
+        #keep simulation time updated each frame
+        dt = globalClock.getDt() * self.simulSpeed
+        self.simulTime +=  timedelta(seconds=dt)
+        self.timelabel['text'] = self.simulTime.strftime('%d/%m/%y %H:%M')
         
         return Task.cont
 

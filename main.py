@@ -223,10 +223,7 @@ class World(ShowBase):
 
         # Important! Enable the shader generator.
         render.setShaderAuto()
-        
-    def getSceneNode(self):
-        return self.mainScene
-        
+
     def initCamera(self):
         #Camera initialization
         camera.setPos(self.homeSpot.getPos())
@@ -234,7 +231,7 @@ class World(ShowBase):
 
     def changeSpeed(self, factor):
         speed = self.simulSpeed * factor
-        if speed <= MAXSPEED :
+        if abs(speed) <= MAXSPEED :
             self.simulSpeed = speed
             self.updateSpeed()
 
@@ -603,6 +600,7 @@ class World(ShowBase):
             else :
                 self.simulTime = datetime.max
             self.simulSpeed = MINSPEED
+            self.updateSpeed()
         new_time = self.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]

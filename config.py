@@ -25,8 +25,7 @@ BUTTONSIZE = 48, 16
 #diration in sec of soft transitions
 FREEZELEN = 0.3
 TRAVELLEN = 1.0
-MAXSPEED = 100000000
-MAXSPEED = 1000000000000000000000
+MAXSPEED = 70000000
 MINSPEED = 0.001
 
 #multiplier to avoid working with very high numbers

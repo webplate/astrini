@@ -1,3 +1,5 @@
+support years before 1900 and 
+
 know actual time and go forward 1 day, 1 month, 1season, 1year
 class for spheroids, markers, orbits
 
@@ -5,3 +7,4 @@ INTERFACE !!
 prevent looking and following the same
 (when go somewhere look at previous location)
 
+support dates defore christ (datautil.date)

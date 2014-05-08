@@ -244,9 +244,9 @@ class World(ShowBase):
             self.updateSpeed()
 
     def toggleSpeed(self):
-        if self.simulSpeed != 0.001:
+        if self.simulSpeed != MINSPEED:
             self.previousSpeed = self.simulSpeed
-            self.simulSpeed = 0.001
+            self.simulSpeed = MINSPEED
         else:
             self.simulSpeed = self.previousSpeed
         self.updateSpeed()
@@ -277,12 +277,12 @@ class World(ShowBase):
             #to be able to capture its position during sequence
             self.new = new
             slow = LerpFunc(self.setSpeed, FREEZELEN,
-            prev_speed, 0.001)
+            prev_speed, MINSPEED)
             travel = self.camera.posInterval(TRAVELLEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
             fast = LerpFunc(self.setSpeed, FREEZELEN,
-            0.001, prev_speed)
+            MINSPEED, prev_speed)
             #slow sim, release, travel, lock and resume speed
             sequence = Sequence(slow, Func(self.stop_follow),
             travel, Func(self.start_follow, new), fast)
@@ -568,7 +568,9 @@ class World(ShowBase):
         
         #date time display
         j = 15
-        self.timelabel = add_label('UTC Time', 1, j, b_cont)
+        self.datelabel = add_label('UTC Time', 1, j, b_cont)
+        self.datelabel['text_font'] = self.mono_font
+        self.timelabel = add_label('UTC Time', 1, j+1, b_cont)
         self.timelabel['text_font'] = self.mono_font
 
     ## TASKS :
@@ -592,8 +594,18 @@ class World(ShowBase):
     def interfaceTask(self, task) :
         #keep simulation time updated each frame
         dt = globalClock.getDt() * self.simulSpeed
-        self.simulTime +=  timedelta(seconds=dt)
-        self.timelabel['text'] = self.simulTime.strftime('%d/%m/%y %H:%M')
+        #datetime object is limited between year 1 and year 9999
+        try :
+            self.simulTime +=  timedelta(seconds=dt)
+        except OverflowError :
+            if self.simulSpeed < 0 :
+                self.simulTime =  datetime.min
+            else :
+                self.simulTime = datetime.max
+            self.simulSpeed = MINSPEED
+        new_time = self.simulTime.isoformat().split("T")
+        self.datelabel['text'] = new_time[0]
+        self.timelabel['text'] = new_time[1].split(".")[0]
         
         return Task.cont
 

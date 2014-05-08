@@ -23,73 +23,31 @@
 #My Global config variables
 #import before Showbase to set panda application
 from config import *
-
 # Import stuff in order to have a derived ShowBase extension running
 # Remember to use every extension as a DirectObject inheriting class
-#
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.DirectGui import *
 from panda3d.core import *
-
-#
 # Task declaration import 
 from direct.task import Task
 #Sequence and parallel for intervals
 from direct.interval.IntervalGlobal import *
 #interpolate function parameter
 from direct.interval.LerpInterval import LerpFunc
-#
 # Default classes used to handle input and camera behaviour
 # Useful for fast prototyping
-#
 from Camera import Camera
 from InputHandler import InputHandler
 #Drawing functions
 import graphics
+#a pypi package to get precise planetoids positions
+import astronomia.calendar as calendar
+import astronomia.lunar as lunar
+import astronomia.planets as planets
 #Misc imports
-from math import radians, tan, log, ceil
+from math import radians, degrees, tan
 from datetime import datetime, timedelta
 
-#conversion of textures (power of 2 problem)
-cardMaker = CardMaker('CardMaker')
-
-def nextPowOf2(n):
-    return 2**int(ceil(log(n, 2)))
-
-
-def makeGeom(filename):
-    """create geom from png and take care of power of two
-    texture issues to permit pixel perfect blitting"""
-    origImage = PNMImage()
-    assert origImage.read(filename)
-    oldWidth = origImage.getXSize()
-    oldHeight = origImage.getYSize()
-    newWidth = nextPowOf2(oldWidth)
-    newHeight = nextPowOf2(oldHeight)
-
-    newImage = PNMImage(newWidth, newHeight)
-    if origImage.hasAlpha():
-        newImage.addAlpha()
-    newImage.copySubImage(origImage, 0, 0, 0, 0)
-   
-    tex = Texture()
-    tex.load(newImage)
-   
-    cardMaker.setFrame(0, oldWidth, 0, oldHeight)
-
-    fU = float(oldWidth)/newWidth
-    fV = float(oldHeight)/newHeight
-
-    # cardMaker.setHasUvs(True)
-    cardMaker.setUvRange(Point2(0, 0), Point2(fU, fV))
-
-    npCard = NodePath(cardMaker.generate())
-    npCard.setTexture(tex)
-    npCard.setTexOffset(TextureStage.getDefault(), 0, 1-fV)
-    if origImage.hasAlpha():
-        npCard.setTransparency(TransparencyAttrib.MAlpha)
-   
-    return npCard
 
 class World(ShowBase):  
     def __init__(self):
@@ -119,7 +77,7 @@ class World(ShowBase):
         self.initCamera()
         self.initScene()
 
-        # Prepare locks (following procedures etc...)
+        #Prepare locks (following procedures etc...)
         self.travelling = False
         self.following = self.homeSpot
         self.looking = self.sun
@@ -129,7 +87,6 @@ class World(ShowBase):
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
         self.taskMgr.add(self.lockTask, "lockTask", priority=25)
-        self.taskMgr.add(self.printTask, "PrintTask")
         self.taskMgr.add(self.interfaceTask, "interfaceTask")
         #Interface
         self.loadInterface()
@@ -150,14 +107,15 @@ class World(ShowBase):
         self.simulSpeed = 1
         self.simulTime = datetime.utcnow()
         
+        #computations of planetoids positions
+        self.moon_coord = lunar.Lunar()
+        self.system_coord = planets.VSOP87d()
+        
         #variables to control the relative speeds of spinning and orbits in the
         #simulation
-        #Number of seconds a full rotation of Earth around the sun should take
-        secondsInDay = SECONDSINDAY
-        self.yearscale = EARTHREVO * secondsInDay
-        #Number of seconds a day rotation of Earth should take.
-        self.dayscale = secondsInDay
-        
+        #Number of days a full rotation of Earth around the sun should take
+        self.yearscale = EARTHREVO
+
         self.orbitscale =  UA              #Orbit scale
         self.sizescale = EARTHRADIUS              #Planet size scale
         self.sunradius = SUNRADIUS
@@ -170,10 +128,7 @@ class World(ShowBase):
         self.loadMarkers()
         self.drawOrbits()
         self.initLight()                # light the scene
-        #Finally, we call the rotatePlanets function which puts the planets,
-        #sun, and moon into motion.
-        self.rotatePlanets()
-        self.updateSpeed()
+
 
     def initLight(self):
         #invisible spotlight to activate shadow casting (bypass bug)
@@ -233,12 +188,10 @@ class World(ShowBase):
         speed = self.simulSpeed * factor
         if abs(speed) <= MAXSPEED :
             self.simulSpeed = speed
-            self.updateSpeed()
 
     def setSpeed(self, speed) :
         if speed <= MAXSPEED :
             self.simulSpeed = speed
-            self.updateSpeed()
 
     def toggleSpeed(self):
         if self.simulSpeed != MINSPEED:
@@ -246,7 +199,6 @@ class World(ShowBase):
             self.simulSpeed = MINSPEED
         else:
             self.simulSpeed = self.previousSpeed
-        self.updateSpeed()
 
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)
@@ -345,24 +297,6 @@ class World(ShowBase):
             inter.start()
             self.inclined = True
 
-    def realism(self):
-        if self.realist:
-            
-            self.realist = False
-        else:
-            
-            self.realist = True
-
-    #Set the simulation play rate
-    def updateSpeed(self):
-        #prevent complete stop (and reset of simulation)
-        if self.simulSpeed != 0 :
-            self.day_period_sun.setPlayRate(self.simulSpeed)
-            self.orbit_period_earthsystem.setPlayRate(self.simulSpeed)
-            self.day_period_earth.setPlayRate(self.simulSpeed)
-            self.orbit_period_moon.setPlayRate(self.simulSpeed)
-            self.day_period_moon.setPlayRate(self.simulSpeed)
-    
     def drawOrbits(self):
         #Draw orbits
         self.earth_orbitline = graphics.makeArc(360, 128)
@@ -381,18 +315,17 @@ class World(ShowBase):
         
     def loadPlanets(self):
         #Create the dummy nodes
-        self.root_earth = render.attachNewNode('root_earth')
+        self.dummy_root_earth = render.attachNewNode('dummy_root_earth')
+        self.root_earth = self.dummy_root_earth.attachNewNode('root_earth')
         
         self.earth_system = self.root_earth.attachNewNode('earth_system')
         self.earth_system.setPos(self.orbitscale,0,0)
         
         self.dummy_earth = self.earth_system.attachNewNode('dummy_earth')
-        #self.dummy_earth.setHpr(0, self.earthTilt, 0)
         self.dummy_earth.setEffect(CompassEffect.make(render))
         
         #The moon orbits Earth, not the sun
         self.dummy_root_moon = self.earth_system.attachNewNode('dummy_root_moon')
-        #self.dummy_root_moon.setHpr(0, self.moonIncli, 0)
         self.dummy_root_moon.setEffect(CompassEffect.make(render))
         
         self.root_moon = self.dummy_root_moon.attachNewNode('root_moon')
@@ -433,29 +366,34 @@ class World(ShowBase):
         self.moon.setTexture(self.moon_tex, 1)
         self.moon.reparentTo(self.dummy_moon)
         self.moon.setScale(MOONRADIUS)
-
-    def rotatePlanets(self):
-        #rotatePlanets creates intervals to actually use the hierarchy we created
-        #to turn the sun, planets, and moon to give a rough representation of the
-        #solar system.
-        self.day_period_sun = self.sun.hprInterval(self.dayscale * SUNROT,
-        Vec3(360, 0, 0))
-
-        self.orbit_period_earthsystem = self.root_earth.hprInterval(
-          self.yearscale, Vec3(360, 0, 0))
-        self.day_period_earth = self.earth.hprInterval(
-          self.dayscale, Vec3(360, 0, 0))
-
-        self.orbit_period_moon = self.root_moon.hprInterval(
-          (self.dayscale * MOONREVO), Vec3(360, 0, 0))
-        self.day_period_moon = self.moon.hprInterval(
-          (self.dayscale * MOONROT), Vec3(360, 0, 0))
-
-        self.day_period_sun.loop()
-        self.orbit_period_earthsystem.loop()
-        self.day_period_earth.loop()
-        self.orbit_period_moon.loop()
-        self.day_period_moon.loop()
+    
+    def placePlanets(self) :
+        #positions planetoids according to time of simulation
+        
+        #time in days
+        now = self.simulTime
+        julian_time = calendar.cal_to_jde(now.year, now.month, now.day,
+        now.hour, now.minute, now.second, gregorian=True)
+        
+        #SIMPLISTIC MODEL
+        self.sun.setHpr((360 / SUNROT) * julian_time % 360, 0, 0)
+        self.root_earth.setHpr((360 / self.yearscale) * julian_time % 360, 0, 0)
+        self.earth.setHpr(360 * julian_time % 360, 0, 0)
+        
+        self.root_moon.setHpr((360 / MOONREVO) * julian_time % 360, 0, 0)
+        self.moon.setHpr((360 / MOONROT) * julian_time % 360, 0, 0)
+        
+        
+        #REALIST MODE (BUT SLOW!!)
+        #~ longi, lati, rad = self.system_coord.dimension3(julian_time, 'Earth')
+        #~ self.dummy_root_earth.setHpr(0, degrees(lati), 0)
+        #~ self.root_earth.setHpr(degrees(longi), 0, 0)
+        #~ self.earth.setHpr(360 * julian_time, 0, 0)
+        #~ 
+        #~ longi, lati, rad = self.moon_coord.dimension3(julian_time)
+        #~ self.dummy_root_moon.setHpr(0, degrees(lati), 0)
+        #~ self.root_moon.setHpr(degrees(longi), 0, 0)
+        #~ self.moon.setHpr((360 / MOONROT) * julian_time, 0, 0)
 
     def loadMarkers(self):
         #Sun
@@ -497,7 +435,7 @@ class World(ShowBase):
              'images/button_click.png',
              'images/button_rollover.png',
              'images/button_disabled.png')
-        b_map = [makeGeom(name) for name in paths]
+        b_map = [graphics.makeGeom(name) for name in paths]
         #Container
         w, h = base.win.getXSize(), base.win.getYSize()
         bw, bh = BUTTONSIZE
@@ -570,13 +508,10 @@ class World(ShowBase):
         self.timelabel = add_label('UTC Time', 1, j+1, b_cont)
         self.timelabel['text_font'] = self.mono_font
 
+    #
+    #
     ## TASKS :
     #
-    def printTask(self, task) :
-        #~ print self.camera.getPos()
-        #~ print self.simulSpeed
-        return Task.cont
-
     def lockTask(self, task) :
         """alignment contraints""" 
         #lighting follows earth
@@ -600,10 +535,12 @@ class World(ShowBase):
             else :
                 self.simulTime = datetime.max
             self.simulSpeed = MINSPEED
-            self.updateSpeed()
         new_time = self.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]
+        
+        #update planetoids positions
+        self.placePlanets()
         
         return Task.cont
 

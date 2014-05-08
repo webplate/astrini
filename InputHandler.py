@@ -52,9 +52,7 @@ class InputHandler(DirectObject):
         
         self.accept("f",self.world.follow,["sun"])
         self.accept("control-f",self.world.look,["sun"])
-        
-        self.accept("b",self.world.realism)
-        
+                
         self.accept("p", self.pressKey, ["p"])
         self.accept("p-up", self.releaseKey, ["p"])
         #self.ignore()

@@ -1,4 +1,10 @@
-support years before 1900 and 
+stop movement when changing gaze direction
+when changing orbital parameters...
+
+support years before 1 and 9999
+
+show correct moon face when realist
+
 
 know actual time and go forward 1 day, 1 month, 1season, 1year
 class for spheroids, markers, orbits

@@ -79,8 +79,8 @@ class World(ShowBase):
 
         #Prepare locks (following procedures etc...)
         self.travelling = False
-        self.following = self.homeSpot
         self.looking = self.sun
+        self.following = self.homeSpot
         self.tilted = False
         self.inclined = False
         self.realist = False
@@ -90,6 +90,11 @@ class World(ShowBase):
         self.taskMgr.add(self.interfaceTask, "interfaceTask")
         #Interface
         self.loadInterface()
+        
+        #DebugInit
+        self.look('moon')
+        self.follow('earth')
+        self.simulTime = datetime(1999, 8, 11)
 
     def initEmpty(self) :
         #Create the dummy nodes
@@ -202,6 +207,15 @@ class World(ShowBase):
 
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)
+    
+    def generate_speed_fade(self) :
+        #generate intervals to fade in and out from previous speed
+        prev_speed = self.simulSpeed
+        slow = LerpFunc(self.setSpeed, FREEZELEN,
+        prev_speed, MINSPEED)
+        fast = LerpFunc(self.setSpeed, FREEZELEN,
+        MINSPEED, prev_speed)
+        return slow, fast
 
     def stop_follow(self) :
         self.following = None
@@ -222,16 +236,13 @@ class World(ShowBase):
         #if new destination and not already trying to reach another
         if self.following != new and not self.travelling :
             self.travelling = True
-            prev_speed = self.simulSpeed
+            #stop flow of time while traveling
+            slow, fast = self.generate_speed_fade()
             #to be able to capture its position during sequence
             self.new = new
-            slow = LerpFunc(self.setSpeed, FREEZELEN,
-            prev_speed, MINSPEED)
             travel = self.camera.posInterval(TRAVELLEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
-            fast = LerpFunc(self.setSpeed, FREEZELEN,
-            MINSPEED, prev_speed)
             #slow sim, release, travel, lock and resume speed
             sequence = Sequence(slow, Func(self.stop_follow),
             travel, Func(self.start_follow, new), fast)
@@ -259,13 +270,15 @@ class World(ShowBase):
             new = self.sun
         #if new target
         if self.looking != new :
+            #stop flow of tim while changing focus
+            slow, fast = self.generate_speed_fade()
             #store new to get actual position
             self.new = new
             travel = self.focusSpot.posInterval(FREEZELEN,
             self.get_current_rel_pos,
             blendType='easeIn')
-            sequence = Sequence(Func(self.unlock_focus),
-                travel, Func(self.lock_focus))
+            sequence = Sequence(slow, Func(self.unlock_focus),
+                travel, Func(self.lock_focus), fast)
             sequence.start()
             self.looking = new
 
@@ -368,32 +381,35 @@ class World(ShowBase):
         self.moon.setScale(MOONRADIUS)
     
     def placePlanets(self) :
-        #positions planetoids according to time of simulation
-        
+        '''positions planetoids according to time of simulation'''
         #time in days
         now = self.simulTime
         julian_time = calendar.cal_to_jde(now.year, now.month, now.day,
         now.hour, now.minute, now.second, gregorian=True)
         
-        #SIMPLISTIC MODEL
         self.sun.setHpr((360 / SUNROT) * julian_time % 360, 0, 0)
-        self.root_earth.setHpr((360 / self.yearscale) * julian_time % 360, 0, 0)
-        self.earth.setHpr(360 * julian_time % 360, 0, 0)
         
-        self.root_moon.setHpr((360 / MOONREVO) * julian_time % 360, 0, 0)
-        self.moon.setHpr((360 / MOONROT) * julian_time % 360, 0, 0)
+        #SIMPLISTIC MODEL
+        #~ self.root_earth.setHpr((360 / self.yearscale) * julian_time % 360, 0, 0)
+        #~ self.earth.setHpr(360 * julian_time % 360, 0, 0)
+        #~ 
+        #~ self.root_moon.setHpr((360 / MOONREVO) * julian_time % 360, 0, 0)
+        #correction of 25 degrees to align correct moon face
+        #~ self.moon.setHpr((360 / MOONROT) * julian_time % 360 - 25, 0, 0) 
         
         
         #REALIST MODE (BUT SLOW!!)
-        #~ longi, lati, rad = self.system_coord.dimension3(julian_time, 'Earth')
-        #~ self.dummy_root_earth.setHpr(0, degrees(lati), 0)
-        #~ self.root_earth.setHpr(degrees(longi), 0, 0)
-        #~ self.earth.setHpr(360 * julian_time, 0, 0)
-        #~ 
-        #~ longi, lati, rad = self.moon_coord.dimension3(julian_time)
-        #~ self.dummy_root_moon.setHpr(0, degrees(lati), 0)
-        #~ self.root_moon.setHpr(degrees(longi), 0, 0)
-        #~ self.moon.setHpr((360 / MOONROT) * julian_time, 0, 0)
+        longi = self.system_coord.dimension(julian_time, 'Earth', 'L')
+        lati = self.system_coord.dimension(julian_time, 'Earth', 'B')
+        self.dummy_root_earth.setHpr(0, degrees(lati), 0)
+        self.root_earth.setHpr(degrees(longi), 0, 0)
+        self.earth.setHpr(360 * julian_time % 360, 0, 0)
+        
+        longi = self.moon_coord.dimension(julian_time, 'L')
+        lati = self.moon_coord.dimension(julian_time, 'B')
+        self.dummy_root_moon.setHpr(0, degrees(lati), 0)
+        self.root_moon.setHpr(degrees(longi), 0, 0)
+        self.moon.setHpr((360 / MOONROT) * julian_time % 360 + 110, 0, 0)
 
     def loadMarkers(self):
         #Sun

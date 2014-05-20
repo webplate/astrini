@@ -2,7 +2,7 @@
 #
 
 APPNAME = 'Astrini'
-APPX, APPY = 640, 400
+APPX, APPY = 1024, 768
 
 # Show FPS and use utf8 encoding
 # noaudio...

@@ -76,7 +76,9 @@ class World(ShowBase):
         self.initEmpty()
         self.initCamera()
         self.initScene()
-
+        #Interface
+        self.loadInterface()
+        
         #Prepare locks (following procedures etc...)
         self.travelling = False
         self.looking = self.sun
@@ -87,9 +89,10 @@ class World(ShowBase):
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
         self.taskMgr.add(self.lockTask, "lockTask", priority=25)
-        self.taskMgr.add(self.interfaceTask, "interfaceTask")
-        #Interface
-        self.loadInterface()
+        self.taskMgr.add(self.timeTask, "timeTask")
+        #do not update interface every frame (no use slowdown)
+        self.taskMgr.doMethodLater(INTERFACEDELAY, self.interfaceTask, "interfaceTask")
+        self.taskMgr.add(self.positionTask, "positionTask")
         
         #DebugInit
         self.look('moon')
@@ -388,28 +391,28 @@ class World(ShowBase):
         now.hour, now.minute, now.second, gregorian=True)
         
         self.sun.setHpr((360 / SUNROT) * julian_time % 360, 0, 0)
-        
-        #SIMPLISTIC MODEL
-        #~ self.root_earth.setHpr((360 / self.yearscale) * julian_time % 360, 0, 0)
-        #~ self.earth.setHpr(360 * julian_time % 360, 0, 0)
-        #~ 
-        #~ self.root_moon.setHpr((360 / MOONREVO) * julian_time % 360, 0, 0)
-        #correction of 25 degrees to align correct moon face
-        #~ self.moon.setHpr((360 / MOONROT) * julian_time % 360 - 25, 0, 0) 
-        
-        
-        #REALIST MODE (BUT SLOW!!)
-        longi = self.system_coord.dimension(julian_time, 'Earth', 'L')
-        lati = self.system_coord.dimension(julian_time, 'Earth', 'B')
-        self.dummy_root_earth.setHpr(0, degrees(lati), 0)
-        self.root_earth.setHpr(degrees(longi), 0, 0)
-        self.earth.setHpr(360 * julian_time % 360, 0, 0)
-        
-        longi = self.moon_coord.dimension(julian_time, 'L')
-        lati = self.moon_coord.dimension(julian_time, 'B')
-        self.dummy_root_moon.setHpr(0, degrees(lati), 0)
-        self.root_moon.setHpr(degrees(longi), 0, 0)
-        self.moon.setHpr((360 / MOONROT) * julian_time % 360 + 110, 0, 0)
+
+        if USEEPHEM :
+            #REALIST MODE (BUT SLOW!!)
+            longi = self.system_coord.dimension(julian_time, 'Earth', 'L')
+            lati = self.system_coord.dimension(julian_time, 'Earth', 'B')
+            self.dummy_root_earth.setHpr(0, degrees(lati), 0)
+            self.root_earth.setHpr(degrees(longi), 0, 0)
+            self.earth.setHpr(360 * julian_time % 360, 0, 0)
+            
+            longi = self.moon_coord.dimension(julian_time, 'L')
+            lati = self.moon_coord.dimension(julian_time, 'B')
+            self.dummy_root_moon.setHpr(0, degrees(lati), 0)
+            self.root_moon.setHpr(degrees(longi), 0, 0)
+            self.moon.setHpr((360 / MOONROT) * julian_time % 360 + 110, 0, 0)
+        else :
+            #SIMPLISTIC MODEL
+            self.root_earth.setHpr((360 / self.yearscale) * julian_time % 360, 0, 0)
+            self.earth.setHpr(360 * julian_time % 360, 0, 0)
+            
+            self.root_moon.setHpr((360 / MOONREVO) * julian_time % 360, 0, 0)
+            #correction of 25 degrees to align correct moon face
+            self.moon.setHpr((360 / MOONROT) * julian_time % 360 - 25, 0, 0)
 
     def loadMarkers(self):
         #Sun
@@ -539,7 +542,7 @@ class World(ShowBase):
                 camera.lookAt(self.focusSpot)
         return Task.cont
         
-    def interfaceTask(self, task) :
+    def timeTask(self, task) :
         #keep simulation time updated each frame
         dt = globalClock.getDt() * self.simulSpeed
         #datetime object is limited between year 1 and year 9999
@@ -551,17 +554,20 @@ class World(ShowBase):
             else :
                 self.simulTime = datetime.max
             self.simulSpeed = MINSPEED
+        return Task.cont
+
+    def interfaceTask(self, task) :
+        #update clock display
         new_time = self.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]
-        
+        if PRINTTIMING :
+            print self.taskMgr
+        return Task.again
+
+    def positionTask(self, task) :    
         #update planetoids positions
         self.placePlanets()
-        
-        return Task.cont
-
-    def updateMarkers(self, task):
-    
         return Task.cont
 
 #a virtual argument to bypass packing bug

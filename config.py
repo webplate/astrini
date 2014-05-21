@@ -13,13 +13,19 @@ text-encoding utf8
 show-frame-rate-meter 1
 audio-library-name null
 sync-video 1
+task-timer-verbose #t
 """)
 
 # PANDA DEBUGTOOLS
 #~ loadPrcFileData("", "want-directtools #t")
 #~ loadPrcFileData("", "want-tk #t")
 
+#use slow realistic ephemeris for positionning planetoids
+USEEPHEM = False
+
 #Interface sttings
+PRINTTIMING = False #show Task manager statistics
+INTERFACEDELAY = 0.5
 BUTTONSIZE = 48, 16
 
 #diration in sec of soft transitions

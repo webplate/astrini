@@ -4,6 +4,7 @@ ppython main.py
 requires :
     panda3D SDK (panda3d.org)
     astronomia (on pypi)
+	numpy
 
 CAMERA CONTROL (PERSPECTIVAL CHANGES):
     TAB - toggle free camera

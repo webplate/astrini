@@ -54,12 +54,11 @@ cardMaker = CardMaker('CardMaker')
 def nextPowOf2(n):
     return 2**int(ceil(log(n, 2)))
 
-
 def makeGeom(filename):
     """create geom from png and take care of power of two
     texture issues to permit pixel perfect blitting"""
     origImage = PNMImage()
-    assert origImage.read(filename)
+    origImage.read(filename)
     oldWidth = origImage.getXSize()
     oldHeight = origImage.getYSize()
     newWidth = nextPowOf2(oldWidth)

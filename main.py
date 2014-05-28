@@ -276,7 +276,7 @@ class World(ShowBase):
             self.new = new
             travel = self.focusSpot.posInterval(FREEZELEN,
             self.get_current_rel_pos,
-            blendType='easeIn')
+            blendType='easeInOut')
             sequence = Sequence(slow, Func(self.unlock_focus),
                 travel, Func(self.lock_focus), fast)
             sequence.start()

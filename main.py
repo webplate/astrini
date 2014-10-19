@@ -1,13 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8-*- 
-#
-#  Simulation for astronomical initiation
-#  by Glen Lomax
+##  
+#~ Astrini. An Open source project for educational astronomy
+#~ Version 1.0
+#~ Design: Roberto Casati and Glen Lomax.
+#~ Based on ideas from Roberto Casati, Dov'è il Sole di notte, Milano: Raffaello Cortina 2013, partly developed during Glen Lomax CogMaster internship, École des Hautes Études en Sciences Sociales, 2011-2012.
+#~ 
+#~ 
+#~ Code: Glen Lomax
+#~ Engine: Panda3D (https://www.panda3d.org)
+#~ Licence: GPL v3
+#~ Contact: glenlomax@gmail.com
+#~ 
+#~ 
+#~ The source code is available at: https://github.com/webplate/astrini
 #  
 #  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
+#  it under the terms of the GNU General Public License version 3 as published by
+#  the Free Software Foundation.
 #  
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -238,20 +248,24 @@ class World(ShowBase):
             new = self.homeSpot
         #if new destination and not already trying to reach another
         if self.following != new and not self.travelling :
-            self.travelling = True
-            #buttons should reflect what you're looking at and what you're following
-            self.update_buttons('follow', identity)
-            #stop flow of time while traveling
-            slow, fast = self.generate_speed_fade()
-            #to be able to capture its position during sequence
-            self.new = new
-            travel = self.camera.posInterval(TRAVELLEN,
-            self.get_current_rel_pos,
-            blendType='easeInOut')
-            #slow sim, release, travel, lock and resume speed
-            sequence = Sequence(slow, Func(self.stop_follow),
-            travel, Func(self.start_follow, new), fast)
-            sequence.start()
+            #prevent following and looking the same object
+            if self.looking != new :
+                self.travelling = True
+                #buttons should reflect what you're looking at and what you're following
+                self.update_buttons('follow', identity)
+                #stop flow of time while traveling
+                slow, fast = self.generate_speed_fade()
+                #to be able to capture its position during sequence
+                self.new = new
+                travel = self.camera.posInterval(TRAVELLEN,
+                self.get_current_rel_pos,
+                blendType='easeInOut')
+                #slow sim, release, travel, lock and resume speed
+                sequence = Sequence(slow, Func(self.stop_follow),
+                travel, Func(self.start_follow, new), fast)
+                sequence.start()
+                
+            
 
     def stop_look(self) :
         self.looking = None
@@ -575,22 +589,29 @@ class World(ShowBase):
                 self.ext_b['geom'] = self.b_map_acti
         elif action == 'look' :
             if identity == 'earth' :
+                #disable buttons to prevent going at looked object
+                self.earth_b['state'] = DGG.DISABLED
+                self.moon_b['state'] = DGG.NORMAL
+                self.sun_b['state'] = DGG.NORMAL
                 #show activated button for looked object
                 self.earth_lb['geom'] = self.b_map_acti
                 self.moon_lb['geom'] = self.b_map
                 self.sun_lb['geom'] = self.b_map
             elif identity == 'moon' :
+                self.earth_b['state'] = DGG.NORMAL
+                self.moon_b['state'] = DGG.DISABLED
+                self.sun_b['state'] = DGG.NORMAL
                 self.earth_lb['geom'] = self.b_map
                 self.moon_lb['geom'] = self.b_map_acti
                 self.sun_lb['geom'] = self.b_map
             elif identity == 'sun' :
+                self.earth_b['state'] = DGG.NORMAL
+                self.moon_b['state'] = DGG.NORMAL
+                self.sun_b['state'] = DGG.DISABLED
                 self.earth_lb['geom'] = self.b_map
                 self.moon_lb['geom'] = self.b_map
                 self.sun_lb['geom'] = self.b_map_acti
-            else :
-                self.earth_lb['geom'] = self.b_map
-                self.moon_lb['geom'] = self.b_map
-                self.sun_lb['geom'] = self.b_map
+
     #
     #
     ## TASKS :

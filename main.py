@@ -239,6 +239,8 @@ class World(ShowBase):
         #if new destination and not already trying to reach another
         if self.following != new and not self.travelling :
             self.travelling = True
+            #buttons should reflect what you're looking at and what you're following
+            self.update_buttons('follow', identity)
             #stop flow of time while traveling
             slow, fast = self.generate_speed_fade()
             #to be able to capture its position during sequence
@@ -273,6 +275,7 @@ class World(ShowBase):
             new = self.sun
         #if new target
         if self.looking != new :
+            self.update_buttons('look', identity)
             #stop flow of tim while changing focus
             slow, fast = self.generate_speed_fade()
             #store new to get actual position
@@ -454,7 +457,13 @@ class World(ShowBase):
              'images/button_click.png',
              'images/button_rollover.png',
              'images/button_disabled.png')
-        b_map = [graphics.makeGeom(name) for name in paths]
+        self.b_map = [graphics.makeGeom(name) for name in paths]
+        #an alternate map to show activated buttons
+        paths = ('images/button_activated.png',
+             'images/button_click.png',
+             'images/button_activated.png',
+             'images/button_disabled.png')
+        self.b_map_acti = [graphics.makeGeom(name) for name in paths]
         #Container
         w, h = base.win.getXSize(), base.win.getYSize()
         bw, bh = BUTTONSIZE
@@ -474,7 +483,7 @@ class World(ShowBase):
                 text_pos=(bw/2, bh/3),
                 pos=pos,
                 command=command, extraArgs=args,
-                geom=b_map,
+                geom=self.b_map,
                 relief=None,
                 pressEffect=False,
                 parent=parent)
@@ -498,16 +507,16 @@ class World(ShowBase):
         #Buttons to follow
         j = 0
         add_label('Go to : ', 1, j, b_cont)
-        add_button('Earth', 0, j+1, self.follow, ['earth'], b_cont)
-        add_button('Moon', 1, j+1, self.follow, ['moon'], b_cont)
-        add_button('Sun', 2, j+1, self.follow, ['sun'], b_cont)
-        add_button('Ext', 2, j+2, self.follow, ['home'], b_cont)
+        self.earth_b = add_button('Earth', 0, j+1, self.follow, ['earth'], b_cont)
+        self.moon_b = add_button('Moon', 1, j+1, self.follow, ['moon'], b_cont)
+        self.sun_b = add_button('Sun', 2, j+1, self.follow, ['sun'], b_cont)
+        self.ext_b = add_button('Ext', 2, j+2, self.follow, ['home'], b_cont)
         #and to look at
         j = 4
         add_label('Look at : ', 1, j, b_cont)
-        add_button('Earth', 0, j+1, self.look, ['earth'], b_cont)
-        add_button('Moon', 1, j+1, self.look, ['moon'], b_cont)
-        add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
+        self.earth_lb = add_button('Earth', 0, j+1, self.look, ['earth'], b_cont)
+        self.moon_lb = add_button('Moon', 1, j+1, self.look, ['moon'], b_cont)
+        self.sun_lb = add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
         #and to change speed
         j = 7
         add_label('Time : ', 1, j, b_cont)
@@ -526,7 +535,62 @@ class World(ShowBase):
         self.datelabel['text_font'] = self.mono_font
         self.timelabel = add_label('UTC Time', 1, j+1, b_cont)
         self.timelabel['text_font'] = self.mono_font
-
+    
+    def update_buttons(self, action, identity) :
+        """buttons should reflect what you're looking at and what you're following"""
+        if action == 'follow' :
+            if identity == 'earth' :
+                #disable buttons to prevent looking at own position
+                self.earth_lb['state'] = DGG.DISABLED
+                self.moon_lb['state'] = DGG.NORMAL
+                self.sun_lb['state'] = DGG.NORMAL
+                #show activated button for followed object
+                self.earth_b['geom'] = self.b_map_acti
+                self.moon_b['geom'] = self.b_map
+                self.sun_b['geom'] = self.b_map
+                self.ext_b['geom'] = self.b_map
+            elif identity == 'moon' :
+                self.earth_lb['state'] = DGG.NORMAL
+                self.moon_lb['state'] = DGG.DISABLED
+                self.sun_lb['state'] = DGG.NORMAL
+                self.earth_b['geom'] = self.b_map
+                self.moon_b['geom'] = self.b_map_acti
+                self.sun_b['geom'] = self.b_map
+                self.ext_b['geom'] = self.b_map
+            elif identity == 'sun' :
+                self.earth_lb['state'] = DGG.NORMAL
+                self.moon_lb['state'] = DGG.NORMAL
+                self.sun_lb['state'] = DGG.DISABLED
+                self.earth_b['geom'] = self.b_map
+                self.moon_b['geom'] = self.b_map
+                self.sun_b['geom'] = self.b_map_acti
+                self.ext_b['geom'] = self.b_map
+            else :
+                self.earth_lb['state'] = DGG.NORMAL
+                self.moon_lb['state'] = DGG.NORMAL
+                self.sun_lb['state'] = DGG.NORMAL
+                self.earth_b['geom'] = self.b_map
+                self.moon_b['geom'] = self.b_map
+                self.sun_b['geom'] = self.b_map
+                self.ext_b['geom'] = self.b_map_acti
+        elif action == 'look' :
+            if identity == 'earth' :
+                #show activated button for looked object
+                self.earth_lb['geom'] = self.b_map_acti
+                self.moon_lb['geom'] = self.b_map
+                self.sun_lb['geom'] = self.b_map
+            elif identity == 'moon' :
+                self.earth_lb['geom'] = self.b_map
+                self.moon_lb['geom'] = self.b_map_acti
+                self.sun_lb['geom'] = self.b_map
+            elif identity == 'sun' :
+                self.earth_lb['geom'] = self.b_map
+                self.moon_lb['geom'] = self.b_map
+                self.sun_lb['geom'] = self.b_map_acti
+            else :
+                self.earth_lb['geom'] = self.b_map
+                self.moon_lb['geom'] = self.b_map
+                self.sun_lb['geom'] = self.b_map
     #
     #
     ## TASKS :
@@ -561,6 +625,7 @@ class World(ShowBase):
         new_time = self.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]
+        #show task timing for debug
         if PRINTTIMING :
             print self.taskMgr
         return Task.again

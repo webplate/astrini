@@ -15,10 +15,25 @@
    height="108.0128"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.3.1 r9886"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="interface.svg">
   <defs
      id="defs4">
+    <linearGradient
+       id="linearGradient3804">
+      <stop
+         style="stop-color:#fffad0;stop-opacity:1;"
+         offset="0"
+         id="stop3806" />
+      <stop
+         id="stop3814"
+         offset="0.42857149"
+         style="stop-color:#ff9776;stop-opacity:0.3537415;" />
+      <stop
+         style="stop-color:#ff341c;stop-opacity:0.07058824;"
+         offset="1"
+         id="stop3808" />
+    </linearGradient>
     <linearGradient
        id="linearGradient3814">
       <stop
@@ -182,6 +197,26 @@
        x2="25"
        y2="981.36218"
        gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3752"
+       id="linearGradient3800"
+       x1="25"
+       y1="1002.3622"
+       x2="25"
+       y2="983.36218"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3804"
+       id="radialGradient3810"
+       cx="24"
+       cy="100.00001"
+       fx="24.072655"
+       fy="99.610458"
+       r="22.5"
+       gradientTransform="matrix(2.3111111,-5.5984366e-8,1.1267437e-8,0.62222225,-31.466669,26.777775)"
+       gradientUnits="userSpaceOnUse" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -190,16 +225,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="11.2"
-     inkscape:cx="23.437222"
-     inkscape:cy="93.634042"
+     inkscape:zoom="2.8"
+     inkscape:cx="72.611867"
+     inkscape:cy="46.377461"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
-     inkscape:window-width="1024"
-     inkscape:window-height="580"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
      inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-y="25"
      inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -289,8 +324,8 @@
        transform="translate(0,74)"
        width="102"
        height="108.0128"
-       style="fill:#525252;fill-opacity:1;stroke:none"
-       inkscape:export-filename="/home/z/Sync/Divers/programmes/astrini/images/button_disabled.png"
+       style="fill:#383838;fill-opacity:1;stroke:none"
+       inkscape:export-filename="/home/g/Sync/Divers/programmes/astrini/images/button_disabled.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90" />
     <g
@@ -345,6 +380,30 @@
          width="48"
          id="rect3824"
          style="fill:none;stroke:none" />
+    </g>
+    <g
+       id="g3816"
+       inkscape:export-filename="/home/g/Sync/Divers/programmes/astrini/images/button_activated.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90">
+      <use
+         style="fill-opacity:1;fill:url(#linearGradient3800)"
+         height="108.0128"
+         width="500"
+         transform="translate(0,92)"
+         id="use3023"
+         xlink:href="#rect2987"
+         y="0"
+         x="0" />
+      <rect
+         ry="0"
+         transform="translate(-1,1001.3622)"
+         y="75"
+         x="1"
+         height="13.999998"
+         width="46"
+         id="rect3802"
+         style="fill:url(#radialGradient3810);fill-opacity:1;fill-rule:evenodd;stroke:none" />
     </g>
   </g>
 </svg>

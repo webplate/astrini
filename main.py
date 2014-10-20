@@ -211,7 +211,11 @@ class World(ShowBase):
     
     def changeSpeed(self, factor):
         speed = self.simulSpeed * factor
-        if abs(speed) <= MAXSPEED :
+        if speed > MAXSPEED :
+            self.simulSpeed = MAXSPEED
+        elif speed < -MAXSPEED :
+            self.simulSpeed = -MAXSPEED
+        else :
             self.simulSpeed = speed
 
     def setSpeed(self, speed) :

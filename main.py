@@ -210,13 +210,23 @@ class World(ShowBase):
         self.simulTime = datetime.utcnow()
     
     def changeSpeed(self, factor):
-        speed = self.simulSpeed * factor
-        if speed > MAXSPEED :
-            self.simulSpeed = MAXSPEED
-        elif speed < -MAXSPEED :
-            self.simulSpeed = -MAXSPEED
+        #if simulation is paused change previous speed
+        if not self.paused :
+            speed = self.simulSpeed * factor
+            if speed > MAXSPEED :
+                self.simulSpeed = MAXSPEED
+            elif speed < -MAXSPEED :
+                self.simulSpeed = -MAXSPEED
+            else :
+                self.simulSpeed = speed
         else :
-            self.simulSpeed = speed
+            speed = self.previousSpeed * factor
+            if speed > MAXSPEED :
+                self.previousSpeed = MAXSPEED
+            elif speed < -MAXSPEED :
+                self.previousSpeed = -MAXSPEED
+            else :
+                self.previousSpeed = speed
 
     def setSpeed(self, speed) :
         if speed <= MAXSPEED :

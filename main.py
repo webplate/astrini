@@ -98,7 +98,6 @@ class World(ShowBase):
         self.tilted = False
         self.inclined = False
         self.inclinedHard = False
-        self.realist = False
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
         self.taskMgr.add(self.lockTask, "lockTask", priority=25)
@@ -236,11 +235,24 @@ class World(ShowBase):
         if not self.paused :
             self.previousSpeed = self.simulSpeed
             self.simulSpeed = MINSPEED
+            #change button appearance
+            self.pause_b['geom'] = self.b_map_acti
             self.paused = True
         else:
             self.simulSpeed = self.previousSpeed
+            self.pause_b['geom'] = self.b_map
             self.paused = False
 
+    def reverseSpeed(self) :
+        self.changeSpeed(-1)
+        #button appearance should reflect reversed state
+        if not self.reverse :
+            self.reverse_b['geom'] = self.b_map_acti
+            self.reverse = True
+        else :
+            self.reverse_b['geom'] = self.b_map
+            self.reverse = False
+        
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)
     
@@ -329,12 +341,14 @@ class World(ShowBase):
             (0, 0, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_earth_b['geom'] = self.b_map
             self.tilted = False
         else:
             inter = self.dummy_earth.hprInterval(TRAVELLEN,
             (0, self.earthTilt, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_earth_b['geom'] = self.b_map_acti
             self.tilted = True
 
     def toggleIncl(self):
@@ -344,6 +358,8 @@ class World(ShowBase):
             (0, 0, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_moon_b['geom'] = self.b_map
+            self.fact_moon2_b['geom'] = self.b_map
             self.inclined = False
             self.inclinedHard = False
         else:
@@ -351,6 +367,7 @@ class World(ShowBase):
             (0, self.moonIncli, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_moon_b['geom'] = self.b_map_acti
             self.inclined = True
             
     def toggleInclHard(self):
@@ -360,6 +377,8 @@ class World(ShowBase):
             (0, 0, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_moon_b['geom'] = self.b_map
+            self.fact_moon2_b['geom'] = self.b_map
             self.inclined = False
             self.inclinedHard = False
         else:
@@ -367,6 +386,7 @@ class World(ShowBase):
             (0, self.moonIncliHard, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_moon2_b['geom'] = self.b_map_acti
             self.inclinedHard = True
 
     def drawOrbits(self):
@@ -579,7 +599,7 @@ class World(ShowBase):
         add_button('-', 0, j+1, self.changeSpeed, [1./2], b_cont)
         add_button('+', 1, j+1, self.changeSpeed, [2], b_cont)
         add_button('++', 2, j+1, self.changeSpeed, [100], b_cont)
-        add_button('-1', 0, j+2, self.changeSpeed, [-1], b_cont)
+        self.reverse_b = add_button('-1', 0, j+2, self.reverseSpeed, [], b_cont)
         self.pause_b = add_button('Pause', 1, j+2, self.toggleSpeed, [], b_cont)
         add_button('Now', 2, j+2, self.time_is_now, [], b_cont)
 
@@ -593,9 +613,10 @@ class World(ShowBase):
         #factual changes
         j = 15
         add_label('Factual changes : ', 1, j, b_cont)
-        add_button('Moon', 0, j+1, self.toggleIncl, [], b_cont)
-        add_button('Moon+', 1, j+1, self.toggleInclHard, [], b_cont)
-        add_button('Earth', 2, j+1, self.toggleTilt, [], b_cont)
+        self.fact_moon_b = add_button('Moon', 0, j+1, self.toggleIncl, [], b_cont)
+        self.fact_moon2_b = add_button('Moon+', 1, j+1, self.toggleInclHard, [], b_cont)
+        self.fact_earth_b = add_button('Earth', 2, j+1, self.toggleTilt, [], b_cont)
+        self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleTilt, [], b_cont)
 
     
     def update_buttons(self, action, identity='earth') :
@@ -660,6 +681,7 @@ class World(ShowBase):
                 self.earth_lb['geom'] = self.b_map
                 self.moon_lb['geom'] = self.b_map
                 self.sun_lb['geom'] = self.b_map_acti
+
 
     #
     #

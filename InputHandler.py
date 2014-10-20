@@ -44,11 +44,11 @@ class InputHandler(DirectObject):
         
         self.accept("e",self.world.follow,["earth"])
         self.accept("control-e",self.world.look,["earth"])
-        self.accept("shift-e",self.world.unTilt)
+        self.accept("shift-e",self.world.toggleTilt)
         
         self.accept("r",self.world.follow,["moon"])
         self.accept("control-r",self.world.look,["moon"])
-        self.accept("shift-r",self.world.unIncl)
+        self.accept("shift-r",self.world.toggleIncl)
         
         self.accept("f",self.world.follow,["sun"])
         self.accept("control-f",self.world.look,["sun"])

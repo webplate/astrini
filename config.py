@@ -62,5 +62,5 @@ EARTHRADIUS = 1
 SUNRADIUS = 1.5
 MOONRADIUS = 0.2
 MOONAX = 8
-#~ MOONINCL = 0
+MOONINCLHARD = 15 #an exagerated inclination to avoid moon eclipses in fantasist scale
 #~ EARTHTILT = 0

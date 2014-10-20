@@ -95,6 +95,7 @@ class World(ShowBase):
         self.following = self.homeSpot
         self.tilted = False
         self.inclined = False
+        self.inclinedHard = False
         self.realist = False
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
@@ -140,6 +141,7 @@ class World(ShowBase):
         self.earthTilt = EARTHTILT
         self.moonTilt = MOONTILT
         self.moonIncli = MOONINCL
+        self.moonIncliHard = MOONINCLHARD
         
         base.setBackgroundColor(0, 0, 0)    #Set the background to black
         self.loadPlanets()                #Load and position the models
@@ -302,7 +304,8 @@ class World(ShowBase):
             sequence.start()
             self.looking = new
 
-    def unTilt(self):
+    def toggleTilt(self):
+        """earth tilt"""
         if self.tilted:
             inter = self.dummy_earth.hprInterval(TRAVELLEN,
             (0, 0, 0),
@@ -316,19 +319,37 @@ class World(ShowBase):
             inter.start()
             self.tilted = True
 
-    def unIncl(self):
-        if self.inclined:
+    def toggleIncl(self):
+        """moon realist inclination"""
+        if self.inclinedHard or self.inclined :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
             (0, 0, 0),
             blendType='easeIn')
             inter.start()
             self.inclined = False
+            self.inclinedHard = False
         else:
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
             (0, self.moonIncli, 0),
             blendType='easeIn')
             inter.start()
             self.inclined = True
+            
+    def toggleInclHard(self):
+        """moon exagerated inclination"""
+        if self.inclinedHard or self.inclined :
+            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
+            (0, 0, 0),
+            blendType='easeIn')
+            inter.start()
+            self.inclined = False
+            self.inclinedHard = False
+        else:
+            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
+            (0, self.moonIncliHard, 0),
+            blendType='easeIn')
+            inter.start()
+            self.inclinedHard = True
 
     def drawOrbits(self):
         #Draw orbits
@@ -554,8 +575,9 @@ class World(ShowBase):
         #factual changes
         j = 15
         add_label('Factual changes : ', 1, j, b_cont)
-        add_button('Moon', 0, j+1, self.unIncl, [], b_cont)
-        add_button('Earth', 1, j+1, self.unTilt, [], b_cont)
+        add_button('Moon', 0, j+1, self.toggleIncl, [], b_cont)
+        add_button('Moon+', 1, j+1, self.toggleInclHard, [], b_cont)
+        add_button('Earth', 2, j+1, self.toggleTilt, [], b_cont)
 
     
     def update_buttons(self, action, identity='earth') :

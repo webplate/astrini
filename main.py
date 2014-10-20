@@ -91,8 +91,10 @@ class World(ShowBase):
         
         #Prepare locks (following procedures etc...)
         self.travelling = False
-        self.looking = self.sun
-        self.following = self.homeSpot
+        self.paused = False
+        self.reverse = False
+        self.looking = None
+        self.following = None
         self.tilted = False
         self.inclined = False
         self.inclinedHard = False
@@ -105,7 +107,7 @@ class World(ShowBase):
         self.taskMgr.doMethodLater(INTERFACEDELAY, self.interfaceTask, "interfaceTask")
         self.taskMgr.add(self.positionTask, "positionTask")
         
-        #DebugInit
+        #InitialSettings
         self.look('sun')
         self.follow('home')
         self.simulTime = datetime(2014, 3, 20)
@@ -217,11 +219,13 @@ class World(ShowBase):
             self.simulSpeed = speed
 
     def toggleSpeed(self):
-        if self.simulSpeed != MINSPEED:
+        if not self.paused :
             self.previousSpeed = self.simulSpeed
             self.simulSpeed = MINSPEED
+            self.paused = True
         else:
             self.simulSpeed = self.previousSpeed
+            self.paused = False
 
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)

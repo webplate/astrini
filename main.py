@@ -105,9 +105,9 @@ class World(ShowBase):
         self.taskMgr.add(self.positionTask, "positionTask")
         
         #DebugInit
-        self.look('moon')
-        self.follow('earth')
-        self.simulTime = datetime(1999, 8, 11)
+        self.look('sun')
+        self.follow('home')
+        self.simulTime = datetime(2014, 3, 20)
 
     def initEmpty(self) :
         #Create the dummy nodes
@@ -247,7 +247,7 @@ class World(ShowBase):
             new = self.moon
         elif identity == "sun" :
             new = self.sun
-        else :
+        elif identity == "home" :
             new = self.homeSpot
         #if new destination and not already trying to reach another
         if self.following != new and not self.travelling :
@@ -265,7 +265,6 @@ class World(ShowBase):
             sequence = Sequence(slow, Func(self.stop_follow),
             travel, Func(self.start_follow, new), fast)
             sequence.start()
-                
             
 
     def stop_look(self) :
@@ -425,7 +424,9 @@ class World(ShowBase):
             self.moon.setHpr((360 / MOONROT) * julian_time % 360 + 110, 0, 0)
         else :
             #SIMPLISTIC MODEL
-            self.root_earth.setHpr((360 / self.yearscale) * julian_time % 360, 0, 0)
+            self.root_earth.setHpr(
+            ((360 / self.yearscale) * julian_time % 360) -EPHEMSIMPLESET,
+            0, 0)
             self.earth.setHpr(360 * julian_time % 360, 0, 0)
             
             self.root_moon.setHpr((360 / MOONREVO) * julian_time % 360, 0, 0)
@@ -587,7 +588,7 @@ class World(ShowBase):
                 self.moon_b['geom'] = self.b_map
                 self.sun_b['geom'] = self.b_map_acti
                 self.ext_b['geom'] = self.b_map
-            else :
+            elif identity == 'home' :
                 self.earth_lb['state'] = DGG.NORMAL
                 self.moon_lb['state'] = DGG.NORMAL
                 self.sun_lb['state'] = DGG.NORMAL

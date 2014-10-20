@@ -22,6 +22,7 @@ task-timer-verbose #t
 
 #use slow realistic ephemeris for positionning planetoids
 USEEPHEM = False
+EPHEMSIMPLESET = 18.7399468035 #correction to align equinox in simple model
 
 #Interface sttings
 PRINTTIMING = False #show Task manager statistics

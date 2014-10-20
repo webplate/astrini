@@ -121,9 +121,9 @@ class World(ShowBase):
         #init focus is on the sun
         self.focusSpot.setPos(0, 0, 0)
 
-    def initScene(self):
+    def initScene(self) :
         self.simulSpeed = 1
-        self.simulTime = datetime.utcnow()
+        self.time_is_now
         
         #computations of planetoids positions
         self.moon_coord = lunar.Lunar()
@@ -201,7 +201,10 @@ class World(ShowBase):
         #Camera initialization
         camera.setPos(self.homeSpot.getPos())
         camera.lookAt(self.focusSpot)
-
+    
+    def time_is_now(self) :
+        self.simulTime = datetime.utcnow()
+    
     def changeSpeed(self, factor):
         speed = self.simulSpeed * factor
         if abs(speed) <= MAXSPEED :
@@ -248,22 +251,20 @@ class World(ShowBase):
             new = self.homeSpot
         #if new destination and not already trying to reach another
         if self.following != new and not self.travelling :
-            #prevent following and looking the same object
-            if self.looking != new :
-                self.travelling = True
-                #buttons should reflect what you're looking at and what you're following
-                self.update_buttons('follow', identity)
-                #stop flow of time while traveling
-                slow, fast = self.generate_speed_fade()
-                #to be able to capture its position during sequence
-                self.new = new
-                travel = self.camera.posInterval(TRAVELLEN,
-                self.get_current_rel_pos,
-                blendType='easeInOut')
-                #slow sim, release, travel, lock and resume speed
-                sequence = Sequence(slow, Func(self.stop_follow),
-                travel, Func(self.start_follow, new), fast)
-                sequence.start()
+            self.travelling = True
+            #buttons should reflect what you're looking at and what you're following
+            self.update_buttons('follow', identity)
+            #stop flow of time while traveling
+            slow, fast = self.generate_speed_fade()
+            #to be able to capture its position during sequence
+            self.new = new
+            travel = self.camera.posInterval(TRAVELLEN,
+            self.get_current_rel_pos,
+            blendType='easeInOut')
+            #slow sim, release, travel, lock and resume speed
+            sequence = Sequence(slow, Func(self.stop_follow),
+            travel, Func(self.start_follow, new), fast)
+            sequence.start()
                 
             
 
@@ -533,25 +534,32 @@ class World(ShowBase):
         self.sun_lb = add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
         #and to change speed
         j = 7
-        add_label('Time : ', 1, j, b_cont)
+        add_label('Speed : ', 0, j, b_cont)
+        self.speedlabel = add_label('Speed', 1, j, b_cont)
         add_button('-', 0, j+1, self.changeSpeed, [1./2], b_cont)
         add_button('+', 1, j+1, self.changeSpeed, [2], b_cont)
         add_button('++', 2, j+1, self.changeSpeed, [100], b_cont)
-        #factual changes
-        j = 10
-        add_label('Factual changes : ', 1, j, b_cont)
-        add_button('Moon', 0, j+1, self.unIncl, [], b_cont)
-        add_button('Earth', 1, j+1, self.unTilt, [], b_cont)
-        
+        add_button('-1', 0, j+2, self.changeSpeed, [-1], b_cont)
+        self.pause_b = add_button('Pause', 1, j+2, self.toggleSpeed, [], b_cont)
+        add_button('Now', 2, j+2, self.time_is_now, [], b_cont)
+
         #date time display
-        j = 15
+        j = 11
         self.datelabel = add_label('UTC Time', 1, j, b_cont)
         self.datelabel['text_font'] = self.mono_font
         self.timelabel = add_label('UTC Time', 1, j+1, b_cont)
         self.timelabel['text_font'] = self.mono_font
+        
+        #factual changes
+        j = 15
+        add_label('Factual changes : ', 1, j, b_cont)
+        add_button('Moon', 0, j+1, self.unIncl, [], b_cont)
+        add_button('Earth', 1, j+1, self.unTilt, [], b_cont)
+
     
-    def update_buttons(self, action, identity) :
-        """buttons should reflect what you're looking at and what you're following"""
+    def update_buttons(self, action, identity='earth') :
+        """set buttons states and appearances according to user input
+        buttons should reflect what you're looking at and what you're following"""
         if action == 'follow' :
             if identity == 'earth' :
                 #disable buttons to prevent looking at own position
@@ -642,6 +650,9 @@ class World(ShowBase):
         return Task.cont
 
     def interfaceTask(self, task) :
+        #update simulton speed indicator 
+        #(in scientific notation with limied significant digits)
+        self.speedlabel['text'] = '%.1e' % self.simulSpeed, 2
         #update clock display
         new_time = self.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]

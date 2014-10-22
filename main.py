@@ -2,7 +2,7 @@
 # -*- coding: utf-8-*- 
 ##  
 #~ Astrini. An Open source project for educational astronomy
-#~ Version 1.0
+#~ Version ...
 #~ Design: Roberto Casati and Glen Lomax.
 #~ Based on ideas from Roberto Casati, Dov'è il Sole di notte, Milano: Raffaello Cortina 2013, partly developed during Glen Lomax CogMaster internship, École des Hautes Études en Sciences Sociales, 2011-2012.
 #~ 
@@ -539,7 +539,7 @@ class World(ShowBase):
              'images/button_activated.png',
              'images/button_disabled.png')
         self.b_map_acti = [graphics.makeGeom(name) for name in paths]
-        #Container
+        #Container for main interface
         w, h = base.win.getXSize(), base.win.getYSize()
         bw, bh = BUTTONSIZE
         b_cont = DirectFrame(frameSize=(-(bw+bw/2), bw+bw/2, -h/2, h/2),
@@ -578,22 +578,80 @@ class World(ShowBase):
                 relief=None,
                 parent=parent)
             return b
+
+        def add_textarea(lines, parent) :
+            """add text area filling parent
+            lines is a list of strings, one str per line"""
+            left, right, bottom, top = parent.bounds
+            w, h = right - left, top - bottom
+            out = []
+            for i, line in enumerate(lines) :
+                t = DirectLabel(text = line,
+                    text_font=self.condensed_font,
+                    text_scale=(bw/3, bh/1.3),
+                    text_pos=(bw/2, bh/3),
+                    text_fg=(0,0,0,1),
+                    text_shadow=(1,1,1,0.7),
+                    pos = (-bw/2, 0, h/2-bh-bh*i),
+                    relief=None,
+                    parent=parent)
+                out.append(t)
+            return out
+        
+        def add_dialog(size) :
+            '''a frame with a close button
+            the size must be set according to button sizes'''
+            cont = DirectFrame(frameSize=size,
+            frameColor=(1,1,1,0.8),
+            pos=(w/2, -1, -h/2))
+            close_button_coordinate = (-size[0] + size[1])/bw - 1
+            add_button('X', close_button_coordinate, 0,
+            self.hide_dialog, [cont], cont)
+            return cont
+            
+        #about dialog
+        text = [
+'',
+'',
+'Astrini',
+'',
+'An Open source project for educational astronomy',
+'Version 0.1',
+'',
+'Design : Roberto Casati and Glen Lomax.',
+'Based on ideas from Roberto Casati,',
+'Dov\'è il Sole di notte, Milano : Raffaello Cortina 2013,',
+'partly developed during Glen Lomax CogMaster internship,',
+'École des Hautes Études en Sciences Sociales, 2011-2012.',
+'',
+'Code : Glen Lomax',
+'Engine : Panda3D (https://www.panda3d.org)',
+'Licence : GPL v3',
+'Contact : glenlomax@gmail.com',
+'The source code is available at : https://github.com/webplate/astrini']
+        
+        self.about_dialog = add_dialog((-5*bw, 5*bw, -10*bh, 10*bh))
+        add_textarea(text, self.about_dialog)
+        
+        #An informational dialog
+        self.info_dialog = add_dialog((-3*bw, 3*bw, -3*bh, 3*bh))
+        add_textarea(['','Stars are purely decorative and unrealistic'], self.info_dialog)
         
         #Buttons to follow
-        j = 0
+        j = 1
         add_label('Go to : ', 1, j, b_cont)
         self.earth_b = add_button('Earth', 0, j+1, self.follow, ['earth'], b_cont)
         self.moon_b = add_button('Moon', 1, j+1, self.follow, ['moon'], b_cont)
         self.sun_b = add_button('Sun', 2, j+1, self.follow, ['sun'], b_cont)
         self.ext_b = add_button('Ext', 2, j+2, self.follow, ['home'], b_cont)
         #and to look at
-        j = 4
+        j += 4
         add_label('Look at : ', 1, j, b_cont)
         self.earth_lb = add_button('Earth', 0, j+1, self.look, ['earth'], b_cont)
         self.moon_lb = add_button('Moon', 1, j+1, self.look, ['moon'], b_cont)
         self.sun_lb = add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
         #and to change speed
-        j = 7
+        j += 3
         add_label('Speed : ', 0, j, b_cont)
         self.speedlabel = add_label('Speed', 1, j, b_cont)
         add_button('-', 0, j+1, self.changeSpeed, [1./2], b_cont)
@@ -604,21 +662,33 @@ class World(ShowBase):
         add_button('Now', 2, j+2, self.time_is_now, [], b_cont)
 
         #date time display
-        j = 11
+        j += 4
         self.datelabel = add_label('UTC Time', 1, j, b_cont)
         self.datelabel['text_font'] = self.mono_font
         self.timelabel = add_label('UTC Time', 1, j+1, b_cont)
         self.timelabel['text_font'] = self.mono_font
         
         #factual changes
-        j = 15
+        j += 3
         add_label('Factual changes : ', 1, j, b_cont)
         self.fact_moon_b = add_button('Moon', 0, j+1, self.toggleIncl, [], b_cont)
         self.fact_moon2_b = add_button('Moon+', 1, j+1, self.toggleInclHard, [], b_cont)
         self.fact_earth_b = add_button('Earth', 2, j+1, self.toggleTilt, [], b_cont)
-        self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleTilt, [], b_cont)
+        #~ self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleTilt, [], b_cont)
+        
+        #hidden dialogs
+        j += 20
+        add_button('Info', 0, j, self.show_dialog, [self.info_dialog], b_cont)
+        add_button('About', 2, j, self.show_dialog, [self.about_dialog], b_cont)
+        
 
+    def show_dialog(self, frame) :
+        '''show a given frame'''
+        frame.reparentTo(pixel2d)
     
+    def hide_dialog(self, frame) :
+        frame.detachNode()
+        
     def update_buttons(self, action, identity='earth') :
         """set buttons states and appearances according to user input
         buttons should reflect what you're looking at and what you're following"""

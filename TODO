@@ -5,6 +5,7 @@ realist scales
 
 
 support years before 1 and 9999
+support dates defore christ (datautil.date)
 
 show correct moon face when realist
 
@@ -16,4 +17,3 @@ INTERFACE !!
 prevent looking and following the same
 (when go somewhere look at previous location)
 
-support dates defore christ (datautil.date)

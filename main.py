@@ -1,13 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8-*- 
-#
-#  Simulation for astronomical initiation
-#  by Glen Lomax
+##  
+#~ Astrini. An Open source project for educational astronomy
+#~ Version ...
+#~ Design: Roberto Casati and Glen Lomax.
+#~ Based on ideas from Roberto Casati, Dov'è il Sole di notte, Milano: Raffaello Cortina 2013, partly developed during Glen Lomax CogMaster internship, École des Hautes Études en Sciences Sociales, 2011-2012.
+#~ 
+#~ 
+#~ Code: Glen Lomax
+#~ Engine: Panda3D (https://www.panda3d.org)
+#~ Licence: GPL v3
+#~ Contact: glenlomax@gmail.com
+#~ 
+#~ 
+#~ The source code is available at: https://github.com/webplate/astrini
 #  
 #  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
+#  it under the terms of the GNU General Public License version 3 as published by
+#  the Free Software Foundation.
 #  
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,70 +33,30 @@
 #My Global config variables
 #import before Showbase to set panda application
 from config import *
-
 # Import stuff in order to have a derived ShowBase extension running
 # Remember to use every extension as a DirectObject inheriting class
-#
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.DirectGui import *
 from panda3d.core import *
-
-#
 # Task declaration import 
 from direct.task import Task
 #Sequence and parallel for intervals
 from direct.interval.IntervalGlobal import *
 #interpolate function parameter
 from direct.interval.LerpInterval import LerpFunc
-#
 # Default classes used to handle input and camera behaviour
 # Useful for fast prototyping
-#
 from Camera import Camera
 from InputHandler import InputHandler
 #Drawing functions
 import graphics
+#a pypi package to get precise planetoids positions
+import astronomia.calendar as calendar
+import astronomia.lunar as lunar
+import astronomia.planets as planets
 #Misc imports
-from math import radians, tan, log, ceil
-
-cardMaker = CardMaker('CardMaker')
-
-def nextPowOf2(n):
-    return 2**int(ceil(log(n, 2)))
-
-def makeGeom(filename):
-    """create geom from png and take care of power of two
-    texture issues to permit pixel perfect blitting"""
-    origImage = PNMImage()
-    origImage.read(filename)
-    oldWidth = origImage.getXSize()
-    oldHeight = origImage.getYSize()
-    newWidth = nextPowOf2(oldWidth)
-    newHeight = nextPowOf2(oldHeight)
-
-    newImage = PNMImage(newWidth, newHeight)
-    if origImage.hasAlpha():
-        newImage.addAlpha()
-    newImage.copySubImage(origImage, 0, 0, 0, 0)
-   
-    tex = Texture()
-    tex.load(newImage)
-   
-    cardMaker.setFrame(0, oldWidth, 0, oldHeight)
-
-    fU = float(oldWidth)/newWidth
-    fV = float(oldHeight)/newHeight
-
-    # cardMaker.setHasUvs(True)
-    cardMaker.setUvRange(Point2(0, 0), Point2(fU, fV))
-
-    npCard = NodePath(cardMaker.generate())
-    npCard.setTexture(tex)
-    npCard.setTexOffset(TextureStage.getDefault(), 0, 1-fV)
-    if origImage.hasAlpha():
-        npCard.setTransparency(TransparencyAttrib.MAlpha)
-   
-    return npCard
+from math import radians, degrees, tan
+from datetime import datetime, timedelta
 
 class World(ShowBase):  
     def __init__(self):
@@ -106,25 +76,39 @@ class World(ShowBase):
         self.Camera.mm.showMouse()
         self.Camera.setUtilsActive()
         self.mainScene = render.attachNewNode("mainScene")
+        
+        #load fonts
+        self.condensed_font = loader.loadFont('fonts/Ubuntu-C.ttf')
+        self.mono_font = loader.loadFont('fonts/UbuntuMono-R.ttf')
 
         #Scene initialization
         self.initEmpty()
         self.initCamera()
         self.initScene()
-
-        # Prepare locks (following procedures etc...)
+        #Interface
+        self.loadInterface()
+        
+        #Prepare locks (following procedures etc...)
         self.travelling = False
-        self.following = self.homeSpot
-        self.looking = self.sun
+        self.paused = False
+        self.reverse = False
+        self.looking = None
+        self.following = None
         self.tilted = False
         self.inclined = False
-        self.realist = False
+        self.inclinedHard = False
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
         self.taskMgr.add(self.lockTask, "lockTask", priority=25)
-        self.taskMgr.add(self.printTask, "PrintTask")
-        #Interface
-        self.loadInterface()
+        self.taskMgr.add(self.timeTask, "timeTask")
+        #do not update interface every frame (no use slowdown)
+        self.taskMgr.doMethodLater(INTERFACEDELAY, self.interfaceTask, "interfaceTask")
+        self.taskMgr.add(self.positionTask, "positionTask")
+        
+        #InitialSettings
+        self.look('sun')
+        self.follow('home')
+        self.simulTime = datetime(2014, 3, 20)
 
     def initEmpty(self) :
         #Create the dummy nodes
@@ -138,33 +122,33 @@ class World(ShowBase):
         #init focus is on the sun
         self.focusSpot.setPos(0, 0, 0)
 
-    def initScene(self):
+    def initScene(self) :
         self.simulSpeed = 1
+        self.time_is_now
+        
+        #computations of planetoids positions
+        self.moon_coord = lunar.Lunar()
+        self.system_coord = planets.VSOP87d()
         
         #variables to control the relative speeds of spinning and orbits in the
         #simulation
-        #Number of seconds a full rotation of Earth around the sun should take
-        secondsInDay = SECONDSINDAY
-        self.yearscale = EARTHREVO * secondsInDay
-        #Number of seconds a day rotation of Earth should take.
-        self.dayscale = secondsInDay
-        
+        #Number of days a full rotation of Earth around the sun should take
+        self.yearscale = EARTHREVO
+
         self.orbitscale =  UA              #Orbit scale
         self.sizescale = EARTHRADIUS              #Planet size scale
         self.sunradius = SUNRADIUS
         self.earthTilt = EARTHTILT
         self.moonTilt = MOONTILT
         self.moonIncli = MOONINCL
+        self.moonIncliHard = MOONINCLHARD
         
         base.setBackgroundColor(0, 0, 0)    #Set the background to black
         self.loadPlanets()                #Load and position the models
         self.loadMarkers()
         self.drawOrbits()
         self.initLight()                # light the scene
-        #Finally, we call the rotatePlanets function which puts the planets,
-        #sun, and moon into motion.
-        self.rotatePlanets()
-        self.updateSpeed()
+
 
     def initLight(self):
         #invisible spotlight to activate shadow casting (bypass bug)
@@ -214,36 +198,71 @@ class World(ShowBase):
 
         # Important! Enable the shader generator.
         render.setShaderAuto()
-        
-    def getSceneNode(self):
-        return self.mainScene
-        
+
     def initCamera(self):
         #Camera initialization
         camera.setPos(self.homeSpot.getPos())
         camera.lookAt(self.focusSpot)
-
+    
+    def time_is_now(self) :
+        self.simulTime = datetime.utcnow()
+    
     def changeSpeed(self, factor):
-        speed = self.simulSpeed * factor
-        if speed <= MAXSPEED :
-            self.simulSpeed = speed
-            self.updateSpeed()
+        #if simulation is paused change previous speed
+        if not self.paused :
+            speed = self.simulSpeed * factor
+            if speed > MAXSPEED :
+                self.simulSpeed = MAXSPEED
+            elif speed < -MAXSPEED :
+                self.simulSpeed = -MAXSPEED
+            else :
+                self.simulSpeed = speed
+        else :
+            speed = self.previousSpeed * factor
+            if speed > MAXSPEED :
+                self.previousSpeed = MAXSPEED
+            elif speed < -MAXSPEED :
+                self.previousSpeed = -MAXSPEED
+            else :
+                self.previousSpeed = speed
 
     def setSpeed(self, speed) :
         if speed <= MAXSPEED :
             self.simulSpeed = speed
-            self.updateSpeed()
 
     def toggleSpeed(self):
-        if self.simulSpeed != 0.001:
+        if not self.paused :
             self.previousSpeed = self.simulSpeed
-            self.simulSpeed = 0.001
+            self.simulSpeed = MINSPEED
+            #change button appearance
+            self.pause_b['geom'] = self.b_map_acti
+            self.paused = True
         else:
             self.simulSpeed = self.previousSpeed
-        self.updateSpeed()
+            self.pause_b['geom'] = self.b_map
+            self.paused = False
 
+    def reverseSpeed(self) :
+        self.changeSpeed(-1)
+        #button appearance should reflect reversed state
+        if not self.reverse :
+            self.reverse_b['geom'] = self.b_map_acti
+            self.reverse = True
+        else :
+            self.reverse_b['geom'] = self.b_map
+            self.reverse = False
+        
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)
+    
+    def generate_speed_fade(self) :
+        #generate intervals to fade in and out from previous speed
+        prev_speed = self.simulSpeed
+        slow = LerpFunc(self.setSpeed, FREEZELEN,
+        prev_speed, MINSPEED)
+        fast = LerpFunc(self.setSpeed, FREEZELEN,
+        MINSPEED, prev_speed)
+        return slow, fast
 
     def stop_follow(self) :
         self.following = None
@@ -259,25 +278,25 @@ class World(ShowBase):
             new = self.moon
         elif identity == "sun" :
             new = self.sun
-        else :
+        elif identity == "home" :
             new = self.homeSpot
         #if new destination and not already trying to reach another
         if self.following != new and not self.travelling :
             self.travelling = True
-            prev_speed = self.simulSpeed
+            #buttons should reflect what you're looking at and what you're following
+            self.update_buttons('follow', identity)
+            #stop flow of time while traveling
+            slow, fast = self.generate_speed_fade()
             #to be able to capture its position during sequence
             self.new = new
-            slow = LerpFunc(self.setSpeed, FREEZELEN,
-            prev_speed, 0.001)
             travel = self.camera.posInterval(TRAVELLEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
-            fast = LerpFunc(self.setSpeed, FREEZELEN,
-            0.001, prev_speed)
             #slow sim, release, travel, lock and resume speed
             sequence = Sequence(slow, Func(self.stop_follow),
             travel, Func(self.start_follow, new), fast)
             sequence.start()
+            
 
     def stop_look(self) :
         self.looking = None
@@ -301,62 +320,74 @@ class World(ShowBase):
             new = self.sun
         #if new target
         if self.looking != new :
+            self.update_buttons('look', identity)
+            #stop flow of tim while changing focus
+            slow, fast = self.generate_speed_fade()
             #store new to get actual position
             self.new = new
             travel = self.focusSpot.posInterval(FREEZELEN,
             self.get_current_rel_pos,
-            blendType='easeIn')
-            sequence = Sequence(Func(self.unlock_focus),
-                travel, Func(self.lock_focus))
+            blendType='easeInOut')
+            sequence = Sequence(slow, Func(self.unlock_focus),
+                travel, Func(self.lock_focus), fast)
             sequence.start()
             self.looking = new
 
-    def unTilt(self):
+    def toggleTilt(self):
+        """earth tilt"""
         if self.tilted:
             inter = self.dummy_earth.hprInterval(TRAVELLEN,
             (0, 0, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_earth_b['geom'] = self.b_map
             self.tilted = False
         else:
             inter = self.dummy_earth.hprInterval(TRAVELLEN,
             (0, self.earthTilt, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_earth_b['geom'] = self.b_map_acti
             self.tilted = True
 
-    def unIncl(self):
-        if self.inclined:
+    def toggleIncl(self):
+        """moon realist inclination"""
+        if self.inclinedHard or self.inclined :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
             (0, 0, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_moon_b['geom'] = self.b_map
+            self.fact_moon2_b['geom'] = self.b_map
             self.inclined = False
+            self.inclinedHard = False
         else:
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
             (0, self.moonIncli, 0),
             blendType='easeIn')
             inter.start()
+            self.fact_moon_b['geom'] = self.b_map_acti
             self.inclined = True
-
-    def realism(self):
-        if self.realist:
             
-            self.realist = False
+    def toggleInclHard(self):
+        """moon exagerated inclination"""
+        if self.inclinedHard or self.inclined :
+            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
+            (0, 0, 0),
+            blendType='easeIn')
+            inter.start()
+            self.fact_moon_b['geom'] = self.b_map
+            self.fact_moon2_b['geom'] = self.b_map
+            self.inclined = False
+            self.inclinedHard = False
         else:
-            
-            self.realist = True
+            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
+            (0, self.moonIncliHard, 0),
+            blendType='easeIn')
+            inter.start()
+            self.fact_moon2_b['geom'] = self.b_map_acti
+            self.inclinedHard = True
 
-    #Set the simulation play rate
-    def updateSpeed(self):
-        #prevent complete stop (and reset of simulation)
-        if self.simulSpeed != 0 :
-            self.day_period_sun.setPlayRate(self.simulSpeed)
-            self.orbit_period_earthsystem.setPlayRate(self.simulSpeed)
-            self.day_period_earth.setPlayRate(self.simulSpeed)
-            self.orbit_period_moon.setPlayRate(self.simulSpeed)
-            self.day_period_moon.setPlayRate(self.simulSpeed)
-    
     def drawOrbits(self):
         #Draw orbits
         self.earth_orbitline = graphics.makeArc(360, 128)
@@ -375,18 +406,17 @@ class World(ShowBase):
         
     def loadPlanets(self):
         #Create the dummy nodes
-        self.root_earth = render.attachNewNode('root_earth')
+        self.dummy_root_earth = render.attachNewNode('dummy_root_earth')
+        self.root_earth = self.dummy_root_earth.attachNewNode('root_earth')
         
         self.earth_system = self.root_earth.attachNewNode('earth_system')
         self.earth_system.setPos(self.orbitscale,0,0)
         
         self.dummy_earth = self.earth_system.attachNewNode('dummy_earth')
-        #self.dummy_earth.setHpr(0, self.earthTilt, 0)
         self.dummy_earth.setEffect(CompassEffect.make(render))
         
         #The moon orbits Earth, not the sun
         self.dummy_root_moon = self.earth_system.attachNewNode('dummy_root_moon')
-        #self.dummy_root_moon.setHpr(0, self.moonIncli, 0)
         self.dummy_root_moon.setEffect(CompassEffect.make(render))
         
         self.root_moon = self.dummy_root_moon.attachNewNode('root_moon')
@@ -427,29 +457,39 @@ class World(ShowBase):
         self.moon.setTexture(self.moon_tex, 1)
         self.moon.reparentTo(self.dummy_moon)
         self.moon.setScale(MOONRADIUS)
+    
+    def placePlanets(self) :
+        '''positions planetoids according to time of simulation'''
+        #time in days
+        now = self.simulTime
+        julian_time = calendar.cal_to_jde(now.year, now.month, now.day,
+        now.hour, now.minute, now.second, gregorian=True)
+        
+        self.sun.setHpr((360 / SUNROT) * julian_time % 360, 0, 0)
 
-    def rotatePlanets(self):
-        #rotatePlanets creates intervals to actually use the hierarchy we created
-        #to turn the sun, planets, and moon to give a rough representation of the
-        #solar system.
-        self.day_period_sun = self.sun.hprInterval(self.dayscale * SUNROT,
-        Vec3(360, 0, 0))
-
-        self.orbit_period_earthsystem = self.root_earth.hprInterval(
-          self.yearscale, Vec3(360, 0, 0))
-        self.day_period_earth = self.earth.hprInterval(
-          self.dayscale, Vec3(360, 0, 0))
-
-        self.orbit_period_moon = self.root_moon.hprInterval(
-          (self.dayscale * MOONREVO), Vec3(360, 0, 0))
-        self.day_period_moon = self.moon.hprInterval(
-          (self.dayscale * MOONROT), Vec3(360, 0, 0))
-
-        self.day_period_sun.loop()
-        self.orbit_period_earthsystem.loop()
-        self.day_period_earth.loop()
-        self.orbit_period_moon.loop()
-        self.day_period_moon.loop()
+        if USEEPHEM :
+            #REALIST MODE (BUT SLOW!!)
+            longi = self.system_coord.dimension(julian_time, 'Earth', 'L')
+            lati = self.system_coord.dimension(julian_time, 'Earth', 'B')
+            self.dummy_root_earth.setHpr(0, degrees(lati), 0)
+            self.root_earth.setHpr(degrees(longi), 0, 0)
+            self.earth.setHpr(360 * julian_time % 360, 0, 0)
+            
+            longi = self.moon_coord.dimension(julian_time, 'L')
+            lati = self.moon_coord.dimension(julian_time, 'B')
+            self.dummy_root_moon.setHpr(0, degrees(lati), 0)
+            self.root_moon.setHpr(degrees(longi), 0, 0)
+            self.moon.setHpr((360 / MOONROT) * julian_time % 360 + 110, 0, 0)
+        else :
+            #SIMPLISTIC MODEL
+            self.root_earth.setHpr(
+            ((360 / self.yearscale) * julian_time % 360) -EPHEMSIMPLESET,
+            0, 0)
+            self.earth.setHpr(360 * julian_time % 360, 0, 0)
+            
+            self.root_moon.setHpr((360 / MOONREVO) * julian_time % 360, 0, 0)
+            #correction of 25 degrees to align correct moon face
+            self.moon.setHpr((360 / MOONROT) * julian_time % 360 - 25, 0, 0)
 
     def loadMarkers(self):
         #Sun
@@ -491,8 +531,14 @@ class World(ShowBase):
              'images/button_click.png',
              'images/button_rollover.png',
              'images/button_disabled.png')
-        b_map = [makeGeom(name) for name in paths]
-        #Container
+        self.b_map = [graphics.makeGeom(name) for name in paths]
+        #an alternate map to show activated buttons
+        paths = ('images/button_activated.png',
+             'images/button_click.png',
+             'images/button_activated.png',
+             'images/button_disabled.png')
+        self.b_map_acti = [graphics.makeGeom(name) for name in paths]
+        #Container for main interface
         w, h = base.win.getXSize(), base.win.getYSize()
         bw, bh = BUTTONSIZE
         b_cont = DirectFrame(frameSize=(-(bw+bw/2), bw+bw/2, -h/2, h/2),
@@ -506,11 +552,12 @@ class World(ShowBase):
             w, h = right - left, top - bottom
             pos = (-w/2+bw*i,0,h/2-bh-bh*j)
             b = DirectButton(text = name,
+                text_font=self.condensed_font,
                 text_scale = (bw/3, bh/1.3),
                 text_pos=(bw/2, bh/3),
                 pos=pos,
                 command=command, extraArgs=args,
-                geom=b_map,
+                geom=self.b_map,
                 relief=None,
                 pressEffect=False,
                 parent=parent)
@@ -521,6 +568,7 @@ class World(ShowBase):
             left, right, bottom, top = parent.bounds
             w, h = right - left, top - bottom
             b = DirectLabel(text = name,
+                text_font=self.condensed_font,
                 text_scale=(bw/3, bh/1.3),
                 text_pos=(bw/2, bh/3),
                 text_fg=(1,1,1,1),
@@ -529,40 +577,185 @@ class World(ShowBase):
                 relief=None,
                 parent=parent)
             return b
+
+        def add_textarea(lines, parent) :
+            """add text area filling parent
+            lines is a list of strings, one str per line"""
+            left, right, bottom, top = parent.bounds
+            w, h = right - left, top - bottom
+            out = []
+            for i, line in enumerate(lines) :
+                t = DirectLabel(text = line,
+                    text_font=self.condensed_font,
+                    text_scale=(bw/3, bh/1.3),
+                    text_pos=(bw/2, bh/3),
+                    text_fg=(0,0,0,1),
+                    text_shadow=(1,1,1,0.7),
+                    pos = (-bw/2, 0, h/2-bh-bh*i),
+                    relief=None,
+                    parent=parent)
+                out.append(t)
+            return out
+        
+        def add_dialog(size) :
+            '''a frame with a close button
+            the size must be set according to button sizes'''
+            cont = DirectFrame(frameSize=size,
+            frameColor=(1,1,1,0.8),
+            pos=(w/2, -1, -h/2))
+            close_button_coordinate = (-size[0] + size[1])/bw - 1
+            add_button('X', close_button_coordinate, 0,
+            self.hide_dialog, [cont], cont)
+            return cont
+            
+        #about dialog
+        text = [
+'',
+'',
+'Astrini',
+'',
+'An Open source project for educational astronomy',
+'Version 0.1',
+'',
+'Design : Roberto Casati and Glen Lomax.',
+'Based on ideas from Roberto Casati,',
+'Dov\'è il Sole di notte, Milano : Raffaello Cortina 2013,',
+'partly developed during Glen Lomax CogMaster internship,',
+'École des Hautes Études en Sciences Sociales, 2011-2012.',
+'',
+'Code : Glen Lomax',
+'Engine : Panda3D (https://www.panda3d.org)',
+'Licence : GPL v3',
+'Contact : glenlomax@gmail.com',
+'The source code is available at : https://github.com/webplate/astrini']
+        
+        self.about_dialog = add_dialog((-5*bw, 5*bw, -10*bh, 10*bh))
+        add_textarea(text, self.about_dialog)
+        
+        #An informational dialog
+        self.info_dialog = add_dialog((-3*bw, 3*bw, -3*bh, 3*bh))
+        add_textarea(['','Stars are purely decorative and unrealistic'], self.info_dialog)
         
         #Buttons to follow
-        j = 0
+        j = 1
         add_label('Go to : ', 1, j, b_cont)
-        add_button('Earth', 0, j+1, self.follow, ['earth'], b_cont)
-        add_button('Moon', 1, j+1, self.follow, ['moon'], b_cont)
-        add_button('Sun', 2, j+1, self.follow, ['sun'], b_cont)
-        add_button('Ext', 2, j+2, self.follow, ['home'], b_cont)
+        self.earth_b = add_button('Earth', 0, j+1, self.follow, ['earth'], b_cont)
+        self.moon_b = add_button('Moon', 1, j+1, self.follow, ['moon'], b_cont)
+        self.sun_b = add_button('Sun', 2, j+1, self.follow, ['sun'], b_cont)
+        self.ext_b = add_button('Ext', 2, j+2, self.follow, ['home'], b_cont)
         #and to look at
-        j = 4
+        j += 4
         add_label('Look at : ', 1, j, b_cont)
-        add_button('Earth', 0, j+1, self.look, ['earth'], b_cont)
-        add_button('Moon', 1, j+1, self.look, ['moon'], b_cont)
-        add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
+        self.earth_lb = add_button('Earth', 0, j+1, self.look, ['earth'], b_cont)
+        self.moon_lb = add_button('Moon', 1, j+1, self.look, ['moon'], b_cont)
+        self.sun_lb = add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
         #and to change speed
-        j = 7
-        add_label('Time : ', 1, j, b_cont)
+        j += 3
+        add_label('Speed : ', 0, j, b_cont)
+        self.speedlabel = add_label('Speed', 1, j, b_cont)
         add_button('-', 0, j+1, self.changeSpeed, [1./2], b_cont)
         add_button('+', 1, j+1, self.changeSpeed, [2], b_cont)
         add_button('++', 2, j+1, self.changeSpeed, [100], b_cont)
+        self.reverse_b = add_button('-1', 0, j+2, self.reverseSpeed, [], b_cont)
+        self.pause_b = add_button('Pause', 1, j+2, self.toggleSpeed, [], b_cont)
+        add_button('Now', 2, j+2, self.time_is_now, [], b_cont)
+
+        #date time display
+        j += 4
+        self.datelabel = add_label('UTC Time', 1, j, b_cont)
+        self.datelabel['text_font'] = self.mono_font
+        self.timelabel = add_label('UTC Time', 1, j+1, b_cont)
+        self.timelabel['text_font'] = self.mono_font
+        
         #factual changes
-        j = 10
+        j += 3
         add_label('Factual changes : ', 1, j, b_cont)
-        add_button('Moon', 0, j+1, self.unIncl, [], b_cont)
-        add_button('Earth', 1, j+1, self.unTilt, [], b_cont)
+        self.fact_moon_b = add_button('Moon', 0, j+1, self.toggleIncl, [], b_cont)
+        self.fact_moon2_b = add_button('Moon+', 1, j+1, self.toggleInclHard, [], b_cont)
+        self.fact_earth_b = add_button('Earth', 2, j+1, self.toggleTilt, [], b_cont)
+        #~ self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleTilt, [], b_cont)
+        
+        #hidden dialogs
+        j += 20
+        add_button('Info', 0, j, self.show_dialog, [self.info_dialog], b_cont)
+        add_button('About', 2, j, self.show_dialog, [self.about_dialog], b_cont)
+        
+
+    def show_dialog(self, frame) :
+        '''show a given frame'''
+        frame.reparentTo(pixel2d)
+    
+    def hide_dialog(self, frame) :
+        frame.detachNode()
+        
+    def update_buttons(self, action, identity='earth') :
+        """set buttons states and appearances according to user input
+        buttons should reflect what you're looking at and what you're following"""
+        if action == 'follow' :
+            if identity == 'earth' :
+                #disable buttons to prevent looking at own position
+                self.earth_lb['state'] = DGG.DISABLED
+                self.moon_lb['state'] = DGG.NORMAL
+                self.sun_lb['state'] = DGG.NORMAL
+                #show activated button for followed object
+                self.earth_b['geom'] = self.b_map_acti
+                self.moon_b['geom'] = self.b_map
+                self.sun_b['geom'] = self.b_map
+                self.ext_b['geom'] = self.b_map
+            elif identity == 'moon' :
+                self.earth_lb['state'] = DGG.NORMAL
+                self.moon_lb['state'] = DGG.DISABLED
+                self.sun_lb['state'] = DGG.NORMAL
+                self.earth_b['geom'] = self.b_map
+                self.moon_b['geom'] = self.b_map_acti
+                self.sun_b['geom'] = self.b_map
+                self.ext_b['geom'] = self.b_map
+            elif identity == 'sun' :
+                self.earth_lb['state'] = DGG.NORMAL
+                self.moon_lb['state'] = DGG.NORMAL
+                self.sun_lb['state'] = DGG.DISABLED
+                self.earth_b['geom'] = self.b_map
+                self.moon_b['geom'] = self.b_map
+                self.sun_b['geom'] = self.b_map_acti
+                self.ext_b['geom'] = self.b_map
+            elif identity == 'home' :
+                self.earth_lb['state'] = DGG.NORMAL
+                self.moon_lb['state'] = DGG.NORMAL
+                self.sun_lb['state'] = DGG.NORMAL
+                self.earth_b['geom'] = self.b_map
+                self.moon_b['geom'] = self.b_map
+                self.sun_b['geom'] = self.b_map
+                self.ext_b['geom'] = self.b_map_acti
+        elif action == 'look' :
+            if identity == 'earth' :
+                #disable buttons to prevent going at looked object
+                self.earth_b['state'] = DGG.DISABLED
+                self.moon_b['state'] = DGG.NORMAL
+                self.sun_b['state'] = DGG.NORMAL
+                #show activated button for looked object
+                self.earth_lb['geom'] = self.b_map_acti
+                self.moon_lb['geom'] = self.b_map
+                self.sun_lb['geom'] = self.b_map
+            elif identity == 'moon' :
+                self.earth_b['state'] = DGG.NORMAL
+                self.moon_b['state'] = DGG.DISABLED
+                self.sun_b['state'] = DGG.NORMAL
+                self.earth_lb['geom'] = self.b_map
+                self.moon_lb['geom'] = self.b_map_acti
+                self.sun_lb['geom'] = self.b_map
+            elif identity == 'sun' :
+                self.earth_b['state'] = DGG.NORMAL
+                self.moon_b['state'] = DGG.NORMAL
+                self.sun_b['state'] = DGG.DISABLED
+                self.earth_lb['geom'] = self.b_map
+                self.moon_lb['geom'] = self.b_map
+                self.sun_lb['geom'] = self.b_map_acti
 
 
+    #
+    #
     ## TASKS :
     #
-    def printTask(self, task) :
-        #~ print self.camera.getPos()
-        #~ print self.simulSpeed
-        return Task.cont
-
     def lockTask(self, task) :
         """alignment contraints""" 
         #lighting follows earth
@@ -573,9 +766,37 @@ class World(ShowBase):
         if self.looking != None :
                 camera.lookAt(self.focusSpot)
         return Task.cont
+        
+    def timeTask(self, task) :
+        #keep simulation time updated each frame
+        dt = globalClock.getDt() * self.simulSpeed
+        #datetime object is limited between year 1 and year 9999
+        try :
+            self.simulTime +=  timedelta(seconds=dt)
+        except OverflowError :
+            if self.simulSpeed < 0 :
+                self.simulTime =  datetime.min
+            else :
+                self.simulTime = datetime.max
+            self.simulSpeed = MINSPEED
+        return Task.cont
 
-    def updateMarkers(self, task):
-    
+    def interfaceTask(self, task) :
+        #update simulton speed indicator 
+        #(in scientific notation with limied significant digits)
+        self.speedlabel['text'] = '%.1e' % self.simulSpeed, 2
+        #update clock display
+        new_time = self.simulTime.isoformat().split("T")
+        self.datelabel['text'] = new_time[0]
+        self.timelabel['text'] = new_time[1].split(".")[0]
+        #show task timing for debug
+        if PRINTTIMING :
+            print self.taskMgr
+        return Task.again
+
+    def positionTask(self, task) :    
+        #update planetoids positions
+        self.placePlanets()
         return Task.cont
 
 #a virtual argument to bypass packing bug

@@ -23,14 +23,13 @@ def packImages() :
 
 def deploy() :
     #pack whole app as p3d
-    call('packp3d -o astrini.p3d -d ./')
+    call('ppackage packagedef.py')
     #create deployable executables
-    #some other platforms : -P win32 -P osx_i386 -P linux_amd64
+    #some other platforms : linux_amd64
     call('pdeploy -s -n astrini -N "Astrini" -v 0.0.0 -a glen_lomax \
     -A "Glen Lomax" -e glenlomax@gmail.com -l "GNU Public License" \
-    -L gpl.txt -i images/icon.png \
-    -P win32 -P osx_i386 -P linux_amd64 \
-    astrini.p3d standalone')
+    -L gpl.txt -i images/icon.png -P linux_amd64 -P win32 -P osx_i386 \
+    Astrini.p3d standalone')
 
 def main():
     deploy()

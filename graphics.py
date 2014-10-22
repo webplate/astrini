@@ -1,6 +1,49 @@
 # -*- coding: utf-8-*- 
 from panda3d.core import *
-import math
+from math import ceil, log, sin, cos
+
+
+#importation and conversion of textures (power of 2 problem)
+cardMaker = CardMaker('CardMaker')
+
+def nextPowOf2(n):
+    return 2**int(ceil(log(n, 2)))
+
+
+def makeGeom(filename):
+    """create geom from png and take care of power of two
+    texture issues to permit pixel perfect blitting"""
+    origImage = PNMImage()
+    origImage.read(filename)
+    oldWidth = origImage.getXSize()
+    oldHeight = origImage.getYSize()
+    newWidth = nextPowOf2(oldWidth)
+    newHeight = nextPowOf2(oldHeight)
+
+    newImage = PNMImage(newWidth, newHeight)
+    if origImage.hasAlpha():
+        newImage.addAlpha()
+    newImage.copySubImage(origImage, 0, 0, 0, 0)
+   
+    tex = Texture()
+    tex.load(newImage)
+   
+    cardMaker.setFrame(0, oldWidth, 0, oldHeight)
+
+    fU = float(oldWidth)/newWidth
+    fV = float(oldHeight)/newHeight
+
+    # cardMaker.setHasUvs(True)
+    cardMaker.setUvRange(Point2(0, 0), Point2(fU, fV))
+
+    npCard = NodePath(cardMaker.generate())
+    npCard.setTexture(tex)
+    npCard.setTexOffset(TextureStage.getDefault(), 0, 1-fV)
+    if origImage.hasAlpha():
+        npCard.setTransparency(TransparencyAttrib.MAlpha)
+   
+    return npCard
+
 
 def makeArc(angleDegrees = 360, numSteps = 32):
     ls = LineSegs()
@@ -9,8 +52,8 @@ def makeArc(angleDegrees = 360, numSteps = 32):
 
     for i in range(numSteps + 1):
         a = angleRadians * i / numSteps
-        y = math.sin(a)
-        x = math.cos(a)
+        y = sin(a)
+        x = cos(a)
 
         ls.drawTo(x, 0, y)
 

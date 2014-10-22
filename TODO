@@ -1,3 +1,15 @@
+soft date change
+
+realist scales
+
+
+
+support years before 1 and 9999
+support dates defore christ (datautil.date)
+
+show correct moon face when realist
+
+
 know actual time and go forward 1 day, 1 month, 1season, 1year
 class for spheroids, markers, orbits
 

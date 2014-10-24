@@ -36,16 +36,16 @@ MAXSPEED = 70000000
 MINSPEED = 0.001
 
 #multiplier to avoid working with very high numbers
-m = 1 / 1000000.
+multiplier = 1 / 1000000.
 
 #realistic values
 #cf Wikipedia
 #space
-UA = 149597887 * m
-EARTHRADIUS = 6371 * m
-SUNRADIUS = 1392000 * m
-MOONRADIUS = 1737 * m
-MOONAX = 384399 * m
+UA = 149597887 * multiplier
+EARTHRADIUS = 6371 * multiplier
+SUNRADIUS = 1392000 * multiplier
+MOONRADIUS = 1737 * multiplier
+MOONAX = 384399 * multiplier
 EARTHTILT = 23.44
 MOONTILT = 6.68
 MOONINCL = 5.145

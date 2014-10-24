@@ -108,7 +108,7 @@ class World(ShowBase):
         #InitialSettings
         self.look('sun')
         self.follow('home')
-        self.simulTime = datetime(2014, 3, 20)
+        #~ self.simulTime = datetime(9998, 3, 20)
 
     def initEmpty(self) :
         #Create the dummy nodes
@@ -124,7 +124,7 @@ class World(ShowBase):
 
     def initScene(self) :
         self.simulSpeed = 1
-        self.time_is_now
+        self.time_is_now()
         
         #computations of planetoids positions
         self.moon_coord = lunar.Lunar()
@@ -205,6 +205,7 @@ class World(ShowBase):
         camera.lookAt(self.focusSpot)
     
     def time_is_now(self) :
+        self.simulTime = datetime(9998, 3, 20)
         self.simulTime = datetime.utcnow()
     
     def changeSpeed(self, factor):
@@ -782,8 +783,8 @@ class World(ShowBase):
         return Task.cont
 
     def interfaceTask(self, task) :
-        #update simulton speed indicator 
-        #(in scientific notation with limied significant digits)
+        #update simulation speed indicator 
+        #(in scientific notation with limited significant digits)
         self.speedlabel['text'] = '%.1e' % self.simulSpeed, 2
         #update clock display
         new_time = self.simulTime.isoformat().split("T")

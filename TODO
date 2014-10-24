@@ -2,7 +2,7 @@ soft date change
 
 realist scales
 
-
+check "maychange" option on text 
 
 support years before 1 and 9999
 support dates defore christ (datautil.date)

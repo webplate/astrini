@@ -143,7 +143,7 @@ class World(ShowBase):
         self.moonIncli = MOONINCL
         self.moonIncliHard = MOONINCLHARD
         
-        base.setBackgroundColor(0, 0, 0)    #Set the background to black
+        base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
         self.loadPlanets()                #Load and position the models
         self.loadMarkers()
         self.drawOrbits()
@@ -155,15 +155,7 @@ class World(ShowBase):
         self.unspot = render.attachNewNode(Spotlight("Invisible spot"))
         self.unspot.setPos(0,0,self.orbitscale)
         self.unspot.setHpr(0,90,0)
-        #~ self.unspot.node().setScene(render)
-        #~ self.unspot.node().setShadowCaster(True, 2048, 2048)
-        #~ self.unspot.node().showFrustum()
-        # a mask to define objects unaffected by light
-        #~ self.unspot.node().setCameraMask(BitMask32.bit(1)) 
-        #~ self.light.node().setExponent(0.1)#illuminate most of fov
-        #~ self.unspot.node().getLens().setFov(1)
-        #~ self.light.node().getLens().setFilmSize(200)
-        #~ self.light.node().getLens().setNearFar(self.sunradius,self.orbitscale * 2)
+        
         self.unspot.node().getLens().setNearFar(0,0)
         render.setLight(self.unspot)
         
@@ -175,10 +167,9 @@ class World(ShowBase):
         #~ self.light.node().showFrustum()
         # a mask to define objects unaffected by light
         self.light.node().setCameraMask(BitMask32.bit(0)) 
-        #~ self.light.node().setExponent(0.1)#illuminate most of fov
-        #~ self.light.node().getLens().setFov(5)
         self.light.node().getLens().setFilmSize((2*MOONAX,MOONAX/2))
-        self.light.node().getLens().setNearFar(self.orbitscale - MOONAX, self.orbitscale + MOONAX)
+        self.light.node().getLens().setNearFar(self.orbitscale - MOONAX,
+        self.orbitscale + MOONAX)
         render.setLight(self.light)
 
         self.alight = render.attachNewNode(AmbientLight("Ambient"))
@@ -194,7 +185,6 @@ class World(ShowBase):
         # object first, and then turning on only the lava light.
         self.sun.setLightOff()
         self.sun.setLight(self.ambientLava)
-        self.sky.setLight(self.ambientLava)
 
         # Important! Enable the shader generator.
         render.setShaderAuto()
@@ -428,14 +418,6 @@ class World(ShowBase):
         self.dummy_moon = self.moon_system.attachNewNode('dummy_moon')
         self.dummy_moon.setHpr(0, self.moonTilt, 0)
         self.dummy_moon.setEffect(CompassEffect.make(render))
-        
-        #Load the sky
-        self.sky = loader.loadModel("models/solar_sky_sphere")
-        self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
-        self.sky.setTexture(self.sky_tex, 1)
-        self.sky.reparentTo(render)
-        self.sky.setScale(10 *self.orbitscale)
-        self.sky.hide(BitMask32.bit(0))
 
         #Load the Sun
         self.sun = loader.loadModel("models/planet_sphere")

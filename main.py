@@ -67,7 +67,7 @@ class World(ShowBase):
         WindowProperties.setDefault(wp)
         
         ShowBase.__init__(self)
-
+        
         #starting all base methods
         self.Camera = Camera(self)
         self.InputHandler = InputHandler(self)
@@ -302,7 +302,7 @@ class World(ShowBase):
     def unlock_focus(self) :
         self.focusSpot.wrtReparentTo(self.mainScene)
         
-    def look(self, identity):
+    def look(self, identity) :
         if identity == "earth" :
             new = self.earth
         elif identity == "moon" :
@@ -324,7 +324,7 @@ class World(ShowBase):
             sequence.start()
             self.looking = new
 
-    def toggleTilt(self):
+    def toggleTilt(self) :
         """earth tilt"""
         if self.tilted:
             inter = self.dummy_earth.hprInterval(TRAVELLEN,
@@ -333,7 +333,7 @@ class World(ShowBase):
             inter.start()
             self.fact_earth_b['geom'] = self.b_map
             self.tilted = False
-        else:
+        else :
             inter = self.dummy_earth.hprInterval(TRAVELLEN,
             (0, self.earthTilt, 0),
             blendType='easeIn')
@@ -341,7 +341,7 @@ class World(ShowBase):
             self.fact_earth_b['geom'] = self.b_map_acti
             self.tilted = True
 
-    def toggleIncl(self):
+    def toggleIncl(self) :
         """moon realist inclination"""
         if self.inclinedHard or self.inclined :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
@@ -352,7 +352,7 @@ class World(ShowBase):
             self.fact_moon2_b['geom'] = self.b_map
             self.inclined = False
             self.inclinedHard = False
-        else:
+        else :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
             (0, self.moonIncli, 0),
             blendType='easeIn')
@@ -360,7 +360,7 @@ class World(ShowBase):
             self.fact_moon_b['geom'] = self.b_map_acti
             self.inclined = True
             
-    def toggleInclHard(self):
+    def toggleInclHard(self) :
         """moon exagerated inclination"""
         if self.inclinedHard or self.inclined :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
@@ -371,7 +371,7 @@ class World(ShowBase):
             self.fact_moon2_b['geom'] = self.b_map
             self.inclined = False
             self.inclinedHard = False
-        else:
+        else :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
             (0, self.moonIncliHard, 0),
             blendType='easeIn')
@@ -379,7 +379,7 @@ class World(ShowBase):
             self.fact_moon2_b['geom'] = self.b_map_acti
             self.inclinedHard = True
 
-    def drawOrbits(self):
+    def drawOrbits(self) :
         #Draw orbits
         self.earth_orbitline = graphics.makeArc(360, 128)
         self.earth_orbitline.reparentTo(self.root_earth)
@@ -395,7 +395,7 @@ class World(ShowBase):
         # orbits are not affected by sunlight
         self.moon_orbitline.hide(BitMask32.bit(0))
         
-    def loadPlanets(self):
+    def loadPlanets(self) :
         #Create the dummy nodes
         self.dummy_root_earth = render.attachNewNode('dummy_root_earth')
         self.root_earth = self.dummy_root_earth.attachNewNode('root_earth')
@@ -474,7 +474,11 @@ class World(ShowBase):
             #correction of 25 degrees to align correct moon face
             self.moon.setHpr((360 / MOONROT) * julian_time % 360 - 25, 0, 0)
 
-    def loadMarkers(self):
+    def loadShadows(self) :
+        '''translucent black areas to show the casted sadows'''
+        pass
+
+    def loadMarkers(self) :
         #Sun
         #Create always visible marker
         self.sunMarker = graphics.makeArc()
@@ -504,10 +508,6 @@ class World(ShowBase):
         self.moonMarker.setPos(MOONAX, 0, 0)
         self.moonMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.moonMarker.setBillboardPointWorld()
-        #Show orientation
-        self.moonAxMarker = graphics.makeCross(4*self.sizescale)
-        self.moonAxMarker.reparentTo(self.moon)
-        self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
 
     def loadInterface(self) :
         paths = ('images/button_ready.png',

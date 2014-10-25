@@ -145,6 +145,7 @@ class World(ShowBase):
         
         base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
         self.loadPlanets()                #Load and position the models
+        self.loadShadows()
         self.loadMarkers()
         self.drawOrbits()
         self.initLight()                # light the scene
@@ -475,8 +476,18 @@ class World(ShowBase):
             self.moon.setHpr((360 / MOONROT) * julian_time % 360 - 25, 0, 0)
 
     def loadShadows(self) :
-        '''translucent black areas to show the casted sadows'''
-        pass
+        '''black areas to show the casted sadows'''
+        self.earthShadow = loader.loadModel("models/tube")
+        self.earthShadow.setTransparency(TransparencyAttrib.MAlpha)
+        self.earthShadow.setColor(0,0,0,1)
+        self.earthShadow.setSy(1000)
+        self.earthShadow.reparentTo(self.earth)
+        #~ self.earthShadow.setTwoSided(True) #render from both sides
+        
+        self.moonShadow = loader.loadModel("models/tube")
+        self.moonShadow.setColor(0,0,0,1)
+        self.moonShadow.setSy(1000)
+        self.moonShadow.reparentTo(self.moon)
 
     def loadMarkers(self) :
         #Sun
@@ -748,6 +759,10 @@ class World(ShowBase):
                 camera.setPos(self.following.getPos(self.render))
         if self.looking != None :
                 camera.lookAt(self.focusSpot)
+        #casted shadows should remain aligned with sun
+        self.earthShadow.lookAt(self.sun)
+        self.moonShadow.lookAt(self.sun)
+        
         return Task.cont
         
     def timeTask(self, task) :

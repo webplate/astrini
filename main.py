@@ -107,21 +107,23 @@ class World(ShowBase):
         self.taskMgr.add(self.positionTask, "positionTask")
         
         #InitialSettings
-        self.look('sun')
-        self.follow('home')
+        self.look(self.sun)
+        self.follow(self.home)
         #~ self.simulTime = datetime(9998, 3, 20)
 
     def initEmpty(self) :
         #Create the dummy nodes
-        self.homeSpot = render.attachNewNode('homeSpot')
-        self.focusSpot = render.attachNewNode('focusSpot')
+        self.home = render.attachNewNode('home')
+        self.home.setName('home')
+        self.focus = render.attachNewNode('focus')
+        self.focus.setName('focus')
         #Compute camera-sun distance from fov
         fov = self.Camera.getFov()[0]
         margin = UA / 3
         c_s_dist = (UA + margin) / tan(radians(fov/2))
-        self.homeSpot.setPos(0, -c_s_dist,UA/3)
+        self.home.setPos(0, -c_s_dist,UA/3)
         #init focus is on the sun
-        self.focusSpot.setPos(0, 0, 0)
+        self.focus.setPos(0, 0, 0)
 
     def initScene(self) :
         self.simulSpeed = 1
@@ -193,8 +195,8 @@ class World(ShowBase):
 
     def initCamera(self):
         #Camera initialization
-        camera.setPos(self.homeSpot.getPos())
-        camera.lookAt(self.focusSpot)
+        camera.setPos(self.home.getPos())
+        camera.lookAt(self.focus)
     
     def time_is_now(self) :
         self.simulTime = datetime(9998, 3, 20)
@@ -278,31 +280,23 @@ class World(ShowBase):
         self.following = new
 
     def follow(self, identity):
-        if identity == "earth" :
-            new = self.earth
-        elif identity == "moon" :
-            new = self.moon
-        elif identity == "sun" :
-            new = self.sun
-        elif identity == "home" :
-            new = self.homeSpot
         #if new destination and not already trying to reach another
-        if self.following != new and not self.travelling :
+        if self.following != identity and not self.travelling :
             self.travelling = True
             #buttons should reflect what you're looking at and what you're following
             self.update_buttons('follow', identity)
             #hide tubular shadow of followed object
-            self.update_shadows(new)
+            self.update_shadows(identity)
             #stop flow of time while traveling
             slow, fast = self.generate_speed_fade()
             #to be able to capture its position during sequence
-            self.new = new
+            self.new = identity
             travel = self.camera.posInterval(TRAVELLEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
             #slow sim, release, travel, lock and resume speed
             sequence = Sequence(slow, Func(self.stop_follow),
-            travel, Func(self.start_follow, new), fast)
+            travel, Func(self.start_follow, identity), fast)
             sequence.start()
             
 
@@ -313,33 +307,27 @@ class World(ShowBase):
         self.looking = new
 
     def lock_focus(self) :
-        self.focusSpot.reparentTo(self.looking)
-        self.focusSpot.setPos(0, 0, 0)
+        self.focus.reparentTo(self.looking)
+        self.focus.setPos(0, 0, 0)
 
     def unlock_focus(self) :
-        self.focusSpot.wrtReparentTo(self.mainScene)
+        self.focus.wrtReparentTo(self.mainScene)
         
     def look(self, identity) :
-        if identity == "earth" :
-            new = self.earth
-        elif identity == "moon" :
-            new = self.moon
-        elif identity == "sun" :
-            new = self.sun
         #if new target
-        if self.looking != new :
-            self.update_buttons('look', identity)
-            #stop flow of tim while changing focus
+        if self.looking != identity :
+            self.update_buttons('look', identity.getName())
+            #stop flow of time while changing focus
             slow, fast = self.generate_speed_fade()
             #store new to get actual position
-            self.new = new
-            travel = self.focusSpot.posInterval(FREEZELEN,
+            self.new = identity
+            travel = self.focus.posInterval(FREEZELEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
             sequence = Sequence(slow, Func(self.unlock_focus),
                 travel, Func(self.lock_focus), fast)
             sequence.start()
-            self.looking = new
+            self.looking = identity
 
     def toggleTilt(self) :
         """earth tilt"""
@@ -651,16 +639,16 @@ class World(ShowBase):
         #Buttons to follow
         j = 1
         add_label('Go to : ', 1, j, b_cont)
-        self.earth_b = add_button('Earth', 0, j+1, self.follow, ['earth'], b_cont)
-        self.moon_b = add_button('Moon', 1, j+1, self.follow, ['moon'], b_cont)
-        self.sun_b = add_button('Sun', 2, j+1, self.follow, ['sun'], b_cont)
-        self.ext_b = add_button('Ext', 2, j+2, self.follow, ['home'], b_cont)
+        self.earth_b = add_button('Earth', 0, j+1, self.follow, [self.earth], b_cont)
+        self.moon_b = add_button('Moon', 1, j+1, self.follow, [self.moon], b_cont)
+        self.sun_b = add_button('Sun', 2, j+1, self.follow, [self.sun], b_cont)
+        self.ext_b = add_button('Ext', 2, j+2, self.follow, [self.home], b_cont)
         #and to look at
         j += 4
         add_label('Look at : ', 1, j, b_cont)
-        self.earth_lb = add_button('Earth', 0, j+1, self.look, ['earth'], b_cont)
-        self.moon_lb = add_button('Moon', 1, j+1, self.look, ['moon'], b_cont)
-        self.sun_lb = add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
+        self.earth_lb = add_button('Earth', 0, j+1, self.look, [self.earth], b_cont)
+        self.moon_lb = add_button('Moon', 1, j+1, self.look, [self.moon], b_cont)
+        self.sun_lb = add_button('Sun', 2, j+1, self.look, [self.sun], b_cont)
         #and to change speed
         j += 3
         add_label('Speed : ', 0, j, b_cont)
@@ -704,10 +692,11 @@ class World(ShowBase):
     def hide_dialog(self, frame) :
         frame.detachNode()
         
-    def update_buttons(self, action, identity='earth') :
+    def update_buttons(self, action, identity) :
         """set buttons states and appearances according to user input
         buttons should reflect what you're looking at and what you're following"""
         if action == 'follow' :
+            identity = identity.getName()
             if identity == 'earth' :
                 #disable buttons to prevent looking at own position
                 self.earth_lb['state'] = DGG.DISABLED
@@ -790,7 +779,7 @@ class World(ShowBase):
         if self.following != None :
                 camera.setPos(self.following.getPos(self.render))
         if self.looking != None :
-                camera.lookAt(self.focusSpot)
+                camera.lookAt(self.focus)
         #casted shadows should remain aligned with sun
         self.earthShadow.lookAt(self.sun)
         self.moonShadow.lookAt(self.sun)

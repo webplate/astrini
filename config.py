@@ -57,10 +57,10 @@ MOONREVO = MOONROT
 EARTHREVO = 365.25696
 
 #fantasist values
-UA = 30
-EARTHRADIUS = 1
-SUNRADIUS = 1.5
-MOONRADIUS = 0.2
-MOONAX = 8
-MOONINCLHARD = 15 #an exagerated inclination to avoid moon eclipses in fantasist scale
+UA_F = 30
+EARTHRADIUS_F = 1
+SUNRADIUS_F = 1.5
+MOONRADIUS_F = 0.2
+MOONAX_F = 8
+MOONINCL_F = 15 #an exagerated inclination to avoid moon eclipses in fantasist scale
 #~ EARTHTILT = 0

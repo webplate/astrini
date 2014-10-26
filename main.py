@@ -82,6 +82,7 @@ class World(ShowBase):
         self.mono_font = loader.loadFont('fonts/UbuntuMono-R.ttf')
 
         #Scene initialization
+        self.initAstrofacts()
         self.initEmpty()
         self.initCamera()
         self.initScene()
@@ -97,6 +98,7 @@ class World(ShowBase):
         self.tilted = False
         self.inclined = False
         self.inclinedHard = False
+        self.realist_scale = False
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
         self.taskMgr.add(self.lockTask, "lockTask", priority=25)
@@ -110,15 +112,31 @@ class World(ShowBase):
         self.follow('home')
         #~ self.simulTime = datetime(9998, 3, 20)
 
+    def initAstrofacts(self) :
+        '''variables to control the relative speeds of spinning and orbits in the
+        simulation'''
+        #Number of days a full rotation of Earth around the sun should take
+        self.yearscale = EARTHREVO
+
+        self.ua =  UA_F          #Orbit scale (fantasist)
+        self.earthradius = EARTHRADIUS_F             #Planet size scale
+        self.moonradius = MOONRADIUS_F
+        self.sunradius = SUNRADIUS_F
+        self.moonax = MOONAX_F
+        self.earthTilt = EARTHTILT
+        self.moonTilt = MOONTILT
+        self.moonIncli = MOONINCL
+        self.moonIncliHard = MOONINCL_F
+
     def initEmpty(self) :
         #Create the dummy nodes
         self.homeSpot = render.attachNewNode('homeSpot')
         self.focusSpot = render.attachNewNode('focusSpot')
         #Compute camera-sun distance from fov
         fov = self.Camera.getFov()[0]
-        margin = UA / 3
-        c_s_dist = (UA + margin) / tan(radians(fov/2))
-        self.homeSpot.setPos(0, -c_s_dist,UA/3)
+        margin = self.ua / 3
+        c_s_dist = (self.ua + margin) / tan(radians(fov/2))
+        self.homeSpot.setPos(0, -c_s_dist,self.ua/3)
         #init focus is on the sun
         self.focusSpot.setPos(0, 0, 0)
 
@@ -130,19 +148,6 @@ class World(ShowBase):
         self.moon_coord = lunar.Lunar()
         self.system_coord = planets.VSOP87d()
         
-        #variables to control the relative speeds of spinning and orbits in the
-        #simulation
-        #Number of days a full rotation of Earth around the sun should take
-        self.yearscale = EARTHREVO
-
-        self.orbitscale =  UA              #Orbit scale
-        self.sizescale = EARTHRADIUS              #Planet size scale
-        self.sunradius = SUNRADIUS
-        self.earthTilt = EARTHTILT
-        self.moonTilt = MOONTILT
-        self.moonIncli = MOONINCL
-        self.moonIncliHard = MOONINCLHARD
-        
         base.setBackgroundColor(0, 0, 0)    #Set the background to black
         self.loadPlanets()                #Load and position the models
         self.loadMarkers()
@@ -153,7 +158,7 @@ class World(ShowBase):
     def initLight(self):
         #invisible spotlight to activate shadow casting (bypass bug)
         self.unspot = render.attachNewNode(Spotlight("Invisible spot"))
-        self.unspot.setPos(0,0,self.orbitscale)
+        self.unspot.setPos(0,0,self.ua)
         self.unspot.setHpr(0,90,0)
         #~ self.unspot.node().setScene(render)
         #~ self.unspot.node().setShadowCaster(True, 2048, 2048)
@@ -163,7 +168,7 @@ class World(ShowBase):
         #~ self.light.node().setExponent(0.1)#illuminate most of fov
         #~ self.unspot.node().getLens().setFov(1)
         #~ self.light.node().getLens().setFilmSize(200)
-        #~ self.light.node().getLens().setNearFar(self.sunradius,self.orbitscale * 2)
+        #~ self.light.node().getLens().setNearFar(self.sunradius,self.ua * 2)
         self.unspot.node().getLens().setNearFar(0,0)
         render.setLight(self.unspot)
         
@@ -177,8 +182,8 @@ class World(ShowBase):
         self.light.node().setCameraMask(BitMask32.bit(0)) 
         #~ self.light.node().setExponent(0.1)#illuminate most of fov
         #~ self.light.node().getLens().setFov(5)
-        self.light.node().getLens().setFilmSize((2*MOONAX,MOONAX/2))
-        self.light.node().getLens().setNearFar(self.orbitscale - MOONAX, self.orbitscale + MOONAX)
+        self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
+        self.light.node().getLens().setNearFar(self.ua - self.moonax, self.ua + self.moonax)
         render.setLight(self.light)
 
         self.alight = render.attachNewNode(AmbientLight("Ambient"))
@@ -388,20 +393,31 @@ class World(ShowBase):
             inter.start()
             self.fact_moon2_b['geom'] = self.b_map_acti
             self.inclinedHard = True
+            
+    def toggleScale(self) :
+        '''a realistic scaling modifying :
+        self.ua =  UA_F          
+        self.earthradius = EARTHRADIUS_F           
+        self.moonradius = MOONRADIUS_F
+        self.sunradius = SUNRADIUS_F
+        self.moonax = MOONAX_F
+        '''
+        if not self.realist_scale :
+            pass
 
     def drawOrbits(self):
         #Draw orbits
         self.earth_orbitline = graphics.makeArc(360, 128)
         self.earth_orbitline.reparentTo(self.root_earth)
         self.earth_orbitline.setHpr( 0, 90,0)
-        self.earth_orbitline.setScale(UA)
+        self.earth_orbitline.setScale(self.ua)
         # orbits are not affected by sunlight
         self.earth_orbitline.hide(BitMask32.bit(0))
         
         self.moon_orbitline = graphics.makeArc(360, 128)
         self.moon_orbitline.reparentTo(self.root_moon)
         self.moon_orbitline.setHpr( 0, 90,0)
-        self.moon_orbitline.setScale(MOONAX)
+        self.moon_orbitline.setScale(self.moonax)
         # orbits are not affected by sunlight
         self.moon_orbitline.hide(BitMask32.bit(0))
         
@@ -411,7 +427,7 @@ class World(ShowBase):
         self.root_earth = self.dummy_root_earth.attachNewNode('root_earth')
         
         self.earth_system = self.root_earth.attachNewNode('earth_system')
-        self.earth_system.setPos(self.orbitscale,0,0)
+        self.earth_system.setPos(self.ua,0,0)
         
         self.dummy_earth = self.earth_system.attachNewNode('dummy_earth')
         self.dummy_earth.setEffect(CompassEffect.make(render))
@@ -423,7 +439,7 @@ class World(ShowBase):
         self.root_moon = self.dummy_root_moon.attachNewNode('root_moon')
         
         self.moon_system = self.root_moon.attachNewNode('moon_system')
-        self.moon_system.setPos(MOONAX, 0, 0)
+        self.moon_system.setPos(self.moonax, 0, 0)
         
         self.dummy_moon = self.moon_system.attachNewNode('dummy_moon')
         self.dummy_moon.setHpr(0, self.moonTilt, 0)
@@ -434,7 +450,7 @@ class World(ShowBase):
         self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
         self.sky.setTexture(self.sky_tex, 1)
         self.sky.reparentTo(render)
-        self.sky.setScale(10 *self.orbitscale)
+        self.sky.setScale(10 *self.ua)
         self.sky.hide(BitMask32.bit(0))
 
         #Load the Sun
@@ -450,14 +466,14 @@ class World(ShowBase):
         self.earth_tex = loader.loadTexture("models/earth_1k_tex.jpg")
         self.earth.setTexture(self.earth_tex, 1)
         self.earth.reparentTo(self.dummy_earth)
-        self.earth.setScale(self.sizescale)
+        self.earth.setScale(self.earthradius)
         
         #Load the moon
         self.moon = loader.loadModel("models/planet_sphere")
         self.moon_tex = loader.loadTexture("models/moon_1k_tex.jpg")
         self.moon.setTexture(self.moon_tex, 1)
         self.moon.reparentTo(self.dummy_moon)
-        self.moon.setScale(MOONRADIUS)
+        self.moon.setScale(self.moonradius)
     
     def placePlanets(self) :
         '''positions planetoids according to time of simulation'''
@@ -507,23 +523,23 @@ class World(ShowBase):
         #Create always visible marker
         self.earthMarker = graphics.makeArc()
         self.earthMarker.reparentTo(self.earth_system)
-        self.earthMarker.setScale(self.sizescale + 0.1)
+        self.earthMarker.setScale(self.earthradius + 0.1)
         self.earthMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.earthMarker.setBillboardPointWorld()
         #Show orientation
-        self.earthAxMarker = graphics.makeCross(4*self.sizescale)
+        self.earthAxMarker = graphics.makeCross(4*self.earthradius)
         self.earthAxMarker.reparentTo(self.earth)
         self.earthAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         #the moon
         #Create always visible marker
         self.moonMarker = graphics.makeArc()
         self.moonMarker.reparentTo(self.root_moon)
-        self.moonMarker.setScale(MOONRADIUS + 0.1)
-        self.moonMarker.setPos(MOONAX, 0, 0)
+        self.moonMarker.setScale(self.moonradius + 0.1)
+        self.moonMarker.setPos(self.moonax, 0, 0)
         self.moonMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.moonMarker.setBillboardPointWorld()
         #Show orientation
-        self.moonAxMarker = graphics.makeCross(4*self.sizescale)
+        self.moonAxMarker = graphics.makeCross(4*self.earthradius)
         self.moonAxMarker.reparentTo(self.moon)
         self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
 
@@ -674,7 +690,7 @@ class World(ShowBase):
         self.fact_moon_b = add_button('Moon', 0, j+1, self.toggleIncl, [], b_cont)
         self.fact_moon2_b = add_button('Moon+', 1, j+1, self.toggleInclHard, [], b_cont)
         self.fact_earth_b = add_button('Earth', 2, j+1, self.toggleTilt, [], b_cont)
-        #~ self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleTilt, [], b_cont)
+        self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleScale, [], b_cont)
         
         #hidden dialogs
         j += 20

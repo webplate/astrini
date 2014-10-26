@@ -97,6 +97,7 @@ class World(ShowBase):
         self.tilted = False
         self.inclined = False
         self.inclinedHard = False
+        self.show_shadows = False
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
         self.taskMgr.add(self.lockTask, "lockTask", priority=25)
@@ -244,6 +245,19 @@ class World(ShowBase):
             self.reverse_b['geom'] = self.b_map
             self.reverse = False
         
+    def toggleShadows(self) :
+        if self.show_shadows :
+            self.shadow_b['geom'] = self.b_map
+            self.earthShadow.detachNode()
+            self.moonShadow.detachNode()
+            self.show_shadows = False
+        else :
+            self.shadow_b['geom'] = self.b_map_acti
+            self.earthShadow.reparentTo(self.earth)
+            self.moonShadow.reparentTo(self.moon)
+            self.show_shadows = True
+        self.update_shadows(self.following)
+        
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)
     
@@ -277,6 +291,8 @@ class World(ShowBase):
             self.travelling = True
             #buttons should reflect what you're looking at and what you're following
             self.update_buttons('follow', identity)
+            #hide tubular shadow of followed object
+            self.update_shadows(new)
             #stop flow of time while traveling
             slow, fast = self.generate_speed_fade()
             #to be able to capture its position during sequence
@@ -422,6 +438,8 @@ class World(ShowBase):
 
         #Load the Sun
         self.sun = loader.loadModel("models/planet_sphere")
+        #this particuar node should have a usable name
+        self.sun.setName('sun')
         self.sun_tex = loader.loadTexture("models/sun_1k_tex.jpg")
         self.sun.setTexture(self.sun_tex, 1)
         self.sun.reparentTo(render)
@@ -430,6 +448,7 @@ class World(ShowBase):
 
         #Load Earth
         self.earth = loader.loadModel("models/planet_sphere")
+        self.earth.setName('earth')
         self.earth_tex = loader.loadTexture("models/earth_1k_tex.jpg")
         self.earth.setTexture(self.earth_tex, 1)
         self.earth.reparentTo(self.dummy_earth)
@@ -437,11 +456,12 @@ class World(ShowBase):
         
         #Load the moon
         self.moon = loader.loadModel("models/planet_sphere")
+        self.moon.setName('moon')
         self.moon_tex = loader.loadTexture("models/moon_1k_tex.jpg")
         self.moon.setTexture(self.moon_tex, 1)
         self.moon.reparentTo(self.dummy_moon)
         self.moon.setScale(MOONRADIUS)
-    
+            
     def placePlanets(self) :
         '''positions planetoids according to time of simulation'''
         #time in days
@@ -481,14 +501,11 @@ class World(ShowBase):
         self.earthShadow.setTransparency(TransparencyAttrib.MAlpha)
         self.earthShadow.setColor(0,0,0,0.5)
         self.earthShadow.setSy(1000)
-        self.earthShadow.reparentTo(self.earth)
-        #~ self.earthShadow.setTwoSided(True) #render from both sides
-        
+
         self.moonShadow = loader.loadModel("models/tube")        
         self.moonShadow.setTransparency(TransparencyAttrib.MAlpha)
         self.moonShadow.setColor(0,0,0,0.5)
         self.moonShadow.setSy(1000)
-        self.moonShadow.reparentTo(self.moon)
 
     def loadMarkers(self) :
         #Sun
@@ -670,6 +687,10 @@ class World(ShowBase):
         self.fact_earth_b = add_button('Earth', 2, j+1, self.toggleTilt, [], b_cont)
         #~ self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleTilt, [], b_cont)
         
+        #Visualization changes
+        j += 3
+        self.shadow_b = add_button('Shadows', 1, j, self.toggleShadows, [], b_cont)
+        
         #hidden dialogs
         j += 20
         add_button('Info', 0, j, self.show_dialog, [self.info_dialog], b_cont)
@@ -746,7 +767,17 @@ class World(ShowBase):
                 self.moon_lb['geom'] = self.b_map
                 self.sun_lb['geom'] = self.b_map_acti
 
-
+    def update_shadows(self, following) :
+        '''hide/show tubular shadows'''
+        #show them all
+        if self.show_shadows :
+            self.moonShadow.reparentTo(self.moon)
+            self.earthShadow.reparentTo(self.earth)
+        #specific hide
+        if following.getName() == 'earth' :
+            self.earthShadow.detachNode()
+        elif following.getName() == 'moon' :
+            self.moonShadow.detachNode()
     #
     #
     ## TASKS :

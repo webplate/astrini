@@ -1,8 +1,9 @@
+tubular shadow should be set on a sun at infinite (to ba aligned with shadow caster)
+
 soft date change
 
 realist scales
 
-check "maychange" option on text 
 
 support years before 1 and 9999
 support dates defore christ (datautil.date)
@@ -14,6 +15,6 @@ know actual time and go forward 1 day, 1 month, 1season, 1year
 class for spheroids, markers, orbits
 
 INTERFACE !!
-prevent looking and following the same
-(when go somewhere look at previous location)
+when go somewhere look at previous location
+check "maychange" option on text 
 

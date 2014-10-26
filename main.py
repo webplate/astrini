@@ -677,7 +677,8 @@ class World(ShowBase):
         
         #Visualization changes
         j += 3
-        self.shadow_b = add_button('Shadows', 1, j, self.toggleShadows, [], b_cont)
+        add_label('Display : ', 1, j, b_cont)
+        self.shadow_b = add_button('Shadow', 1, j+1, self.toggleShadows, [], b_cont)
         
         #hidden dialogs
         j += 20

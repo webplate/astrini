@@ -479,13 +479,14 @@ class World(ShowBase):
         '''black areas to show the casted sadows'''
         self.earthShadow = loader.loadModel("models/tube")
         self.earthShadow.setTransparency(TransparencyAttrib.MAlpha)
-        self.earthShadow.setColor(0,0,0,1)
+        self.earthShadow.setColor(0,0,0,0.5)
         self.earthShadow.setSy(1000)
         self.earthShadow.reparentTo(self.earth)
         #~ self.earthShadow.setTwoSided(True) #render from both sides
         
-        self.moonShadow = loader.loadModel("models/tube")
-        self.moonShadow.setColor(0,0,0,1)
+        self.moonShadow = loader.loadModel("models/tube")        
+        self.moonShadow.setTransparency(TransparencyAttrib.MAlpha)
+        self.moonShadow.setColor(0,0,0,0.5)
         self.moonShadow.setSy(1000)
         self.moonShadow.reparentTo(self.moon)
 

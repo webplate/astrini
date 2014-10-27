@@ -709,24 +709,24 @@ class World(ShowBase):
             
         #about dialog
         text = [
-'',
-'',
-'Astrini',
-'',
-'An Open source project for educational astronomy',
-'Version 0.1',
-'',
-'Design : Roberto Casati and Glen Lomax.',
-'Based on ideas from Roberto Casati,',
-'Dov\'è il Sole di notte, Milano : Raffaello Cortina 2013,',
-'partly developed during Glen Lomax CogMaster internship,',
-'École des Hautes Études en Sciences Sociales, 2011-2012.',
-'',
-'Code : Glen Lomax',
-'Engine : Panda3D (https://www.panda3d.org)',
-'Licence : GPL v3',
-'Contact : glenlomax@gmail.com',
-'The source code is available at : https://github.com/webplate/astrini']
+        '',
+        '',
+        'Astrini',
+        '',
+        'An Open source project for educational astronomy',
+        'Version 0.1',
+        '',
+        'Design : Roberto Casati and Glen Lomax.',
+        'Based on ideas from Roberto Casati,',
+        'Dov\'è il Sole di notte, Milano : Raffaello Cortina 2013,',
+        'partly developed during Glen Lomax CogMaster internship,',
+        'École des Hautes Études en Sciences Sociales, 2011-2012.',
+        '',
+        'Code : Glen Lomax',
+        'Engine : Panda3D (https://www.panda3d.org)',
+        'Licence : GPL v3',
+        'Contact : glenlomax@gmail.com',
+        'The source code is available at : https://github.com/webplate/astrini']
         
         self.about_dialog = add_dialog((-5*bw, 5*bw, -10*bh, 10*bh))
         add_textarea(text, self.about_dialog)

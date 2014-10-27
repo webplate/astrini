@@ -150,8 +150,10 @@ class World(ShowBase):
         
         base.setBackgroundColor(0, 0, 0)    #Set the background to black
         self.loadPlanets()                #Load and position the models
+        self.placePlanets()
         self.loadMarkers()
-        self.drawOrbits()
+        self.placeMarkers()
+        self.loadOrbits()
         self.initLight()                # light the scene
 
 
@@ -160,15 +162,6 @@ class World(ShowBase):
         self.unspot = render.attachNewNode(Spotlight("Invisible spot"))
         self.unspot.setPos(0,0,self.ua)
         self.unspot.setHpr(0,90,0)
-        #~ self.unspot.node().setScene(render)
-        #~ self.unspot.node().setShadowCaster(True, 2048, 2048)
-        #~ self.unspot.node().showFrustum()
-        # a mask to define objects unaffected by light
-        #~ self.unspot.node().setCameraMask(BitMask32.bit(1)) 
-        #~ self.light.node().setExponent(0.1)#illuminate most of fov
-        #~ self.unspot.node().getLens().setFov(1)
-        #~ self.light.node().getLens().setFilmSize(200)
-        #~ self.light.node().getLens().setNearFar(self.sunradius,self.ua * 2)
         self.unspot.node().getLens().setNearFar(0,0)
         render.setLight(self.unspot)
         
@@ -193,13 +186,19 @@ class World(ShowBase):
 
         # Create a special ambient light specially for the sun
         # so that it appears bright
-        self.ambientLava = self.sun.attachNewNode(AmbientLight("AmbientForLava"))
-        # Since we do call
-        # setLightOff(), we are turning off all the other lights on this
-        # object first, and then turning on only the lava light.
-        self.sun.setLightOff()
+        self.ambientLava = self.render.attachNewNode(AmbientLight("AmbientForLava"))
         self.sun.setLight(self.ambientLava)
         self.sky.setLight(self.ambientLava)
+        #Special light fo markers
+        self.ambientMark = render.attachNewNode(AmbientLight("AmbientMark"))
+        self.ambientMark.node().setColor(Vec4(1, 0, 0, 1))
+        self.sunMarker.setLight(self.ambientMark)
+        self.earthMarker.setLight(self.ambientMark)
+        self.moonMarker.setLight(self.ambientMark)
+        self.earthAxMarker.setLight(self.ambientMark)
+        self.moonAxMarker.setLight(self.ambientMark)
+        self.earth_orbitline.setLight(self.ambientMark)
+        self.moon_orbitline.setLight(self.ambientMark)
 
         # Important! Enable the shader generator.
         render.setShaderAuto()
@@ -403,9 +402,29 @@ class World(ShowBase):
         self.moonax = MOONAX_F
         '''
         if not self.realist_scale :
-            pass
+            self.ua =  UA         
+            self.earthradius = EARTHRADIUS      
+            self.moonradius = MOONRADIUS
+            self.sunradius = SUNRADIUS
+            self.moonax = MOONAX
+            
+            self.placePlanets()
+            
+            self.fact_scale_b['geom'] = self.b_map_acti
+            self.realist_scale = True
+        else :
+            self.ua =  UA_F          
+            self.earthradius = EARTHRADIUS_F           
+            self.moonradius = MOONRADIUS_F
+            self.sunradius = SUNRADIUS_F
+            self.moonax = MOONAX_F
+            
+            self.placePlanets()
+            
+            self.fact_scale_b['geom'] = self.b_map
+            self.realist_scale = False
 
-    def drawOrbits(self):
+    def loadOrbits(self):
         #Draw orbits
         self.earth_orbitline = graphics.makeArc(360, 128)
         self.earth_orbitline.reparentTo(self.root_earth)
@@ -420,14 +439,13 @@ class World(ShowBase):
         self.moon_orbitline.setScale(self.moonax)
         # orbits are not affected by sunlight
         self.moon_orbitline.hide(BitMask32.bit(0))
-        
+
     def loadPlanets(self):
         #Create the dummy nodes
         self.dummy_root_earth = render.attachNewNode('dummy_root_earth')
         self.root_earth = self.dummy_root_earth.attachNewNode('root_earth')
         
         self.earth_system = self.root_earth.attachNewNode('earth_system')
-        self.earth_system.setPos(self.ua,0,0)
         
         self.dummy_earth = self.earth_system.attachNewNode('dummy_earth')
         self.dummy_earth.setEffect(CompassEffect.make(render))
@@ -439,7 +457,6 @@ class World(ShowBase):
         self.root_moon = self.dummy_root_moon.attachNewNode('root_moon')
         
         self.moon_system = self.root_moon.attachNewNode('moon_system')
-        self.moon_system.setPos(self.moonax, 0, 0)
         
         self.dummy_moon = self.moon_system.attachNewNode('dummy_moon')
         self.dummy_moon.setHpr(0, self.moonTilt, 0)
@@ -450,7 +467,6 @@ class World(ShowBase):
         self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
         self.sky.setTexture(self.sky_tex, 1)
         self.sky.reparentTo(render)
-        self.sky.setScale(10 *self.ua)
         self.sky.hide(BitMask32.bit(0))
 
         #Load the Sun
@@ -458,7 +474,6 @@ class World(ShowBase):
         self.sun_tex = loader.loadTexture("models/sun_1k_tex.jpg")
         self.sun.setTexture(self.sun_tex, 1)
         self.sun.reparentTo(render)
-        self.sun.setScale(self.sunradius)
         self.sun.hide(BitMask32.bit(0))
 
         #Load Earth
@@ -466,16 +481,25 @@ class World(ShowBase):
         self.earth_tex = loader.loadTexture("models/earth_1k_tex.jpg")
         self.earth.setTexture(self.earth_tex, 1)
         self.earth.reparentTo(self.dummy_earth)
-        self.earth.setScale(self.earthradius)
         
         #Load the moon
         self.moon = loader.loadModel("models/planet_sphere")
         self.moon_tex = loader.loadTexture("models/moon_1k_tex.jpg")
         self.moon.setTexture(self.moon_tex, 1)
         self.moon.reparentTo(self.dummy_moon)
-        self.moon.setScale(self.moonradius)
     
     def placePlanets(self) :
+        '''position planetoids on orbits, set distance from their gravitationnal
+        center, scale planetoids'''
+        self.earth_system.setPos(self.ua,0,0)
+        self.moon_system.setPos(self.moonax, 0, 0)
+        
+        self.sky.setScale(10 *self.ua)
+        self.sun.setScale(self.sunradius)
+        self.earth.setScale(self.earthradius)
+        self.moon.setScale(self.moonradius)
+    
+    def rotatePlanets(self) :
         '''positions planetoids according to time of simulation'''
         #time in days
         now = self.simulTime
@@ -513,17 +537,14 @@ class World(ShowBase):
         #Create always visible marker
         self.sunMarker = graphics.makeArc()
         self.sunMarker.reparentTo(render)
-        self.sunMarker.setScale(self.sunradius + 0.1)
         # markers are not affected by sunlight or unspot
         self.sunMarker.hide(BitMask32.bit(0))
-        #~ self.sunMarker.setLight(self.ambientLava)
         self.sunMarker.setBillboardPointWorld()
 
         #Earth
         #Create always visible marker
         self.earthMarker = graphics.makeArc()
         self.earthMarker.reparentTo(self.earth_system)
-        self.earthMarker.setScale(self.earthradius + 0.1)
         self.earthMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.earthMarker.setBillboardPointWorld()
         #Show orientation
@@ -534,7 +555,6 @@ class World(ShowBase):
         #Create always visible marker
         self.moonMarker = graphics.makeArc()
         self.moonMarker.reparentTo(self.root_moon)
-        self.moonMarker.setScale(self.moonradius + 0.1)
         self.moonMarker.setPos(self.moonax, 0, 0)
         self.moonMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.moonMarker.setBillboardPointWorld()
@@ -542,6 +562,15 @@ class World(ShowBase):
         self.moonAxMarker = graphics.makeCross(4*self.earthradius)
         self.moonAxMarker.reparentTo(self.moon)
         self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
+        
+    def placeMarkers(self) :
+        '''set position and scale of markers'''
+        self.sunMarker.setScale(self.sunradius + 0.1)
+        self.earthMarker.setScale(self.earthradius + 0.1)
+        self.moonMarker.setScale(self.moonradius + 0.1)
+
+
+
 
     def loadInterface(self) :
         paths = ('images/button_ready.png',
@@ -813,7 +842,7 @@ class World(ShowBase):
 
     def positionTask(self, task) :    
         #update planetoids positions
-        self.placePlanets()
+        self.rotatePlanets()
         return Task.cont
 
 #a virtual argument to bypass packing bug

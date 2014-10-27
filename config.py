@@ -63,4 +63,3 @@ SUNRADIUS_F = 1.5
 MOONRADIUS_F = 0.2
 MOONAX_F = 8
 MOONINCL_F = 15 #an exagerated inclination to avoid moon eclipses in fantasist scale
-#~ EARTHTILT = 0

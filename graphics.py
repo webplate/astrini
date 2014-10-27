@@ -67,7 +67,7 @@ def makeLine(length):
     node = ls.create()
     return NodePath(node)
 
-def makeCross(length):
+def makeCross(length = 1):
     ls = LineSegs()
     ls.drawTo(0, 0, -length/2.)
     ls.drawTo(0, 0, length/2.)

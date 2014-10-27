@@ -273,7 +273,7 @@ class World(ShowBase):
             self.earthShadow.reparentTo(self.earth)
             self.moonShadow.reparentTo(self.moon)
             self.show_shadows = True
-        self.update_shadows(self.following)
+        self.update_shadows()
     
     def toggleStars(self) :
         if self.show_stars :
@@ -309,14 +309,15 @@ class World(ShowBase):
         #if new destination and not already trying to reach another
         if self.following != identity and not self.travelling :
             self.travelling = True
+            #to be able to capture its position during sequence
+            #and make updates before we actually follow it
+            self.new = identity
             #buttons should reflect what you're looking at and what you're following
-            self.update_buttons('follow', identity)
+            self.update_buttons('follow')
             #hide tubular shadow of followed object
-            self.update_shadows(identity)
+            self.update_shadows()
             #stop flow of time while traveling
             slow, fast = self.generate_speed_fade()
-            #to be able to capture its position during sequence
-            self.new = identity
             travel = self.camera.posInterval(TRAVELLEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
@@ -341,12 +342,13 @@ class World(ShowBase):
         
     def look(self, identity) :
         #if new target
-        if self.looking != identity :
-            self.update_buttons('look', identity.getName())
+        if self.looking != identity and not self.travelling :
+            #store new to get actual position and update interface
+            self.new = identity
+            self.update_buttons('look')
             #stop flow of time while changing focus
             slow, fast = self.generate_speed_fade()
-            #store new to get actual position
-            self.new = identity
+            
             travel = self.focus.posInterval(FREEZELEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
@@ -791,11 +793,11 @@ class World(ShowBase):
     def hide_dialog(self, frame) :
         frame.detachNode()
         
-    def update_buttons(self, action, identity) :
+    def update_buttons(self, action) :
         """set buttons states and appearances according to user input
         buttons should reflect what you're looking at and what you're following"""
+        identity = self.new.getName()
         if action == 'follow' :
-            identity = identity.getName()
             if identity == 'earth' :
                 #disable buttons to prevent looking at own position
                 self.earth_lb['state'] = DGG.DISABLED
@@ -855,17 +857,27 @@ class World(ShowBase):
                 self.moon_lb['geom'] = self.b_map
                 self.sun_lb['geom'] = self.b_map_acti
 
-    def update_shadows(self, following) :
+    def update_shadows(self) :
         '''hide/show tubular shadows'''
         #show them all
         if self.show_shadows :
             self.moonShadow.reparentTo(self.moon)
             self.earthShadow.reparentTo(self.earth)
+        #we shouldn't hide the same shadow if we are going to follow or 
+        #already following
+        if self.travelling :
+            name = self.new.getName()
+        else :
+            name = self.following.getName()
         #specific hide
-        if following.getName() == 'earth' :
+        if name == 'earth' :
             self.earthShadow.detachNode()
-        elif following.getName() == 'moon' :
+        elif name == 'moon' :
             self.moonShadow.detachNode()
+
+    def update_markers(self) :
+        pass
+    
     #
     #
     ## TASKS :

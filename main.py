@@ -58,6 +58,11 @@ import astronomia.planets as planets
 from math import radians, degrees, tan
 from datetime import datetime, timedelta
 
+def linInt(level, v1, v2) :
+    '''linearly interpolate between v1 and v2
+    according to 0<level<1 '''
+    return v1 * level + v2 * (1 - level)
+
 class World(ShowBase):  
     def __init__(self):
         #Set application properties
@@ -402,28 +407,35 @@ class World(ShowBase):
         self.moonax = MOONAX_F
         '''
         if not self.realist_scale :
-            self.ua =  UA         
-            self.earthradius = EARTHRADIUS      
-            self.moonradius = MOONRADIUS
-            self.sunradius = SUNRADIUS
-            self.moonax = MOONAX
-            
-            self.placeAll()
-            
+            LerpFunc(self.scaleSystem,
+             fromData=0,
+             toData=1,
+             duration=SCALELEN,
+             blendType='easeIn').start()
+
             self.fact_scale_b['geom'] = self.b_map_acti
             self.realist_scale = True
         else :
-            self.ua =  UA_F          
-            self.earthradius = EARTHRADIUS_F           
-            self.moonradius = MOONRADIUS_F
-            self.sunradius = SUNRADIUS_F
-            self.moonax = MOONAX_F
-            
-            self.placeAll()
+            LerpFunc(self.scaleSystem,
+             fromData=1,
+             toData=0,
+             duration=SCALELEN,
+             blendType='easeOut').start()
             
             self.fact_scale_b['geom'] = self.b_map
             self.realist_scale = False
-
+    
+    def scaleSystem(self, value) :
+        '''scale the whole system from fantasist to realistic according
+        to value (between 0. and 1.0)'''
+        self.ua = linInt(value, UA, UA_F)
+        self.earthradius = linInt(value, EARTHRADIUS, EARTHRADIUS_F)
+        self.moonradius = linInt(value, MOONRADIUS, MOONRADIUS_F)
+        self.sunradius = linInt(value, SUNRADIUS, SUNRADIUS_F)
+        self.moonax = linInt(value, MOONAX, MOONAX_F)
+        #and reposition system according to new values
+        self.placeAll()
+        
     def loadOrbits(self):
         #Draw orbits
         self.earth_orbitline = graphics.makeArc(360, ORBITRESOLUTION)

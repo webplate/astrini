@@ -32,6 +32,7 @@ BUTTONSIZE = 48, 16
 #duration in sec of soft transitions
 FREEZELEN = 0.2
 TRAVELLEN = 1.0
+SCALELEN = 2.0
 MAXSPEED = 70000000
 MINSPEED = 0.001
 

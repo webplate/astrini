@@ -102,6 +102,7 @@ class World(ShowBase):
         self.tilted = False
         self.inclined = False
         self.inclinedHard = False
+        self.show_shadows = False
         self.realist_scale = False
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
@@ -112,8 +113,8 @@ class World(ShowBase):
         self.taskMgr.add(self.positionTask, "positionTask")
         
         #InitialSettings
-        self.look('sun')
-        self.follow('home')
+        self.look(self.sun)
+        self.follow(self.home)
         #~ self.simulTime = datetime(9998, 3, 20)
 
     def initAstrofacts(self) :
@@ -134,8 +135,10 @@ class World(ShowBase):
 
     def initEmpty(self) :
         #Create the dummy nodes
-        self.homeSpot = render.attachNewNode('homeSpot')
-        self.focusSpot = render.attachNewNode('focusSpot')
+        self.home = render.attachNewNode('home')
+        self.home.setName('home')
+        self.focus = render.attachNewNode('focus')
+        self.focus.setName('focus')
 
     def initScene(self) :
         self.simulSpeed = 1
@@ -145,13 +148,12 @@ class World(ShowBase):
         self.moon_coord = lunar.Lunar()
         self.system_coord = planets.VSOP87d()
         
-        base.setBackgroundColor(0, 0, 0)    #Set the background to black
+        base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
         self.loadPlanets()                #Load and position the models
+        self.loadShadows()
         self.loadMarkers()
         self.loadOrbits()
         self.initLight()                # light the scene
-        #position and scale planets markers orbits lights and home position
-        self.placeAll()                 
 
 
     def initLight(self):
@@ -170,11 +172,8 @@ class World(ShowBase):
         #~ self.light.node().showFrustum()
         # a mask to define objects unaffected by light
         self.light.node().setCameraMask(BitMask32.bit(0)) 
-        #~ self.light.node().setExponent(0.1)#illuminate most of fov
-        #~ self.light.node().getLens().setFov(5)
         render.setLight(self.light)
 
-        #The ambient light (we see even unlighted face of planetoids)
         self.alight = render.attachNewNode(AmbientLight("Ambient"))
         p = 0.15
         self.alight.node().setColor(Vec4(p, p, p, 1))
@@ -209,8 +208,8 @@ class World(ShowBase):
         c_s_dist = (self.ua + margin) / tan(radians(fov/2))
         self.homeSpot.setPos(0, -c_s_dist,self.ua/3)
         #Camera initialization
-        camera.setPos(self.homeSpot.getPos())
-        camera.lookAt(self.focusSpot)
+        camera.setPos(self.home.getPos())
+        camera.lookAt(self.focus)
     
     def time_is_now(self) :
         self.simulTime = datetime(9998, 3, 20)
@@ -261,6 +260,19 @@ class World(ShowBase):
             self.reverse_b['geom'] = self.b_map
             self.reverse = False
         
+    def toggleShadows(self) :
+        if self.show_shadows :
+            self.shadow_b['geom'] = self.b_map
+            self.earthShadow.detachNode()
+            self.moonShadow.detachNode()
+            self.show_shadows = False
+        else :
+            self.shadow_b['geom'] = self.b_map_acti
+            self.earthShadow.reparentTo(self.earth)
+            self.moonShadow.reparentTo(self.moon)
+            self.show_shadows = True
+        self.update_shadows(self.following)
+        
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)
     
@@ -281,29 +293,23 @@ class World(ShowBase):
         self.following = new
 
     def follow(self, identity):
-        if identity == "earth" :
-            new = self.earth
-        elif identity == "moon" :
-            new = self.moon
-        elif identity == "sun" :
-            new = self.sun
-        elif identity == "home" :
-            new = self.homeSpot
         #if new destination and not already trying to reach another
-        if self.following != new and not self.travelling :
+        if self.following != identity and not self.travelling :
             self.travelling = True
             #buttons should reflect what you're looking at and what you're following
             self.update_buttons('follow', identity)
+            #hide tubular shadow of followed object
+            self.update_shadows(identity)
             #stop flow of time while traveling
             slow, fast = self.generate_speed_fade()
             #to be able to capture its position during sequence
-            self.new = new
+            self.new = identity
             travel = self.camera.posInterval(TRAVELLEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
             #slow sim, release, travel, lock and resume speed
             sequence = Sequence(slow, Func(self.stop_follow),
-            travel, Func(self.start_follow, new), fast)
+            travel, Func(self.start_follow, identity), fast)
             sequence.start()
             
 
@@ -314,36 +320,29 @@ class World(ShowBase):
         self.looking = new
 
     def lock_focus(self) :
-        self.focusSpot.reparentTo(self.looking)
-        self.focusSpot.setPos(0, 0, 0)
+        self.focus.reparentTo(self.looking)
+        self.focus.setPos(0, 0, 0)
 
     def unlock_focus(self) :
-        self.focusSpot.wrtReparentTo(self.mainScene)
+        self.focus.wrtReparentTo(self.mainScene)
         
-    def look(self, identity):
-        '''move the focus of camera and parent it to a node'''
-        if identity == "earth" :
-            new = self.earth
-        elif identity == "moon" :
-            new = self.moon
-        elif identity == "sun" :
-            new = self.sun
+    def look(self, identity) :
         #if new target
-        if self.looking != new :
-            self.update_buttons('look', identity)
-            #stop flow of tim while changing focus
+        if self.looking != identity :
+            self.update_buttons('look', identity.getName())
+            #stop flow of time while changing focus
             slow, fast = self.generate_speed_fade()
             #store new to get actual position
-            self.new = new
-            travel = self.focusSpot.posInterval(FREEZELEN,
+            self.new = identity
+            travel = self.focus.posInterval(FREEZELEN,
             self.get_current_rel_pos,
             blendType='easeInOut')
             sequence = Sequence(slow, Func(self.unlock_focus),
                 travel, Func(self.lock_focus), fast)
             sequence.start()
-            self.looking = new
+            self.looking = identity
 
-    def toggleTilt(self):
+    def toggleTilt(self) :
         """earth tilt"""
         if self.tilted:
             inter = self.dummy_earth.hprInterval(TRAVELLEN,
@@ -352,7 +351,7 @@ class World(ShowBase):
             inter.start()
             self.fact_earth_b['geom'] = self.b_map
             self.tilted = False
-        else:
+        else :
             inter = self.dummy_earth.hprInterval(TRAVELLEN,
             (0, self.earthTilt, 0),
             blendType='easeIn')
@@ -360,7 +359,7 @@ class World(ShowBase):
             self.fact_earth_b['geom'] = self.b_map_acti
             self.tilted = True
 
-    def toggleIncl(self):
+    def toggleIncl(self) :
         """moon realist inclination"""
         if self.inclinedHard or self.inclined :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
@@ -371,7 +370,7 @@ class World(ShowBase):
             self.fact_moon2_b['geom'] = self.b_map
             self.inclined = False
             self.inclinedHard = False
-        else:
+        else :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
             (0, self.moonIncli, 0),
             blendType='easeIn')
@@ -379,7 +378,7 @@ class World(ShowBase):
             self.fact_moon_b['geom'] = self.b_map_acti
             self.inclined = True
             
-    def toggleInclHard(self):
+    def toggleInclHard(self) :
         """moon exagerated inclination"""
         if self.inclinedHard or self.inclined :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
@@ -390,7 +389,7 @@ class World(ShowBase):
             self.fact_moon2_b['geom'] = self.b_map
             self.inclined = False
             self.inclinedHard = False
-        else:
+        else :
             inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
             (0, self.moonIncliHard, 0),
             blendType='easeIn')
@@ -436,7 +435,7 @@ class World(ShowBase):
         #and reposition system according to new values
         self.placeAll()
         
-    def loadOrbits(self):
+    def loadOrbits(self) :
         #Draw orbits
         self.earth_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
         self.earth_orbitline.reparentTo(self.root_earth)
@@ -488,25 +487,23 @@ class World(ShowBase):
 
         #Load the Sun
         self.sun = loader.loadModel("models/planet_sphere")
+        #this particuar node should have a usable name
+        self.sun.setName('sun')
         self.sun_tex = loader.loadTexture("models/sun_1k_tex.jpg")
         self.sun.setTexture(self.sun_tex, 1)
-        #Camera position shouldn't make planet disappear
-        self.sun.node().setBounds(OmniBoundingVolume())
-        self.sun.node().setFinal(True)
         self.sun.reparentTo(render)
         self.sun.hide(BitMask32.bit(0))
 
         #Load Earth
         self.earth = loader.loadModel("models/planet_sphere")
+        self.earth.setName('earth')
         self.earth_tex = loader.loadTexture("models/earth_1k_tex.jpg")
         self.earth.setTexture(self.earth_tex, 1)
-        #Camera position shouldn't make planet disappear
-        self.earth.node().setBounds(OmniBoundingVolume())
-        self.earth.node().setFinal(True)
         self.earth.reparentTo(self.dummy_earth)
         
         #Load the moon
         self.moon = loader.loadModel("models/planet_sphere")
+        self.moon.setName('moon')
         self.moon_tex = loader.loadTexture("models/moon_1k_tex.jpg")
         self.moon.setTexture(self.moon_tex, 1)
         self.moon.reparentTo(self.dummy_moon)
@@ -560,7 +557,19 @@ class World(ShowBase):
             #correction of 25 degrees to align correct moon face
             self.moon.setHpr((360 / MOONROT) * julian_time % 360 - 25, 0, 0)
 
-    def loadMarkers(self):
+    def loadShadows(self) :
+        '''black areas to show the casted sadows'''
+        self.earthShadow = loader.loadModel("models/tube")
+        self.earthShadow.setTransparency(TransparencyAttrib.MAlpha)
+        self.earthShadow.setColor(0,0,0,0.5)
+        self.earthShadow.setSy(1000)
+
+        self.moonShadow = loader.loadModel("models/tube")        
+        self.moonShadow.setTransparency(TransparencyAttrib.MAlpha)
+        self.moonShadow.setColor(0,0,0,0.5)
+        self.moonShadow.setSy(1000)
+
+    def loadMarkers(self) :
         #Sun
         #Create always visible marker
         self.sunMarker = graphics.makeArc()
@@ -715,16 +724,16 @@ class World(ShowBase):
         #Buttons to follow
         j = 1
         add_label('Go to : ', 1, j, b_cont)
-        self.earth_b = add_button('Earth', 0, j+1, self.follow, ['earth'], b_cont)
-        self.moon_b = add_button('Moon', 1, j+1, self.follow, ['moon'], b_cont)
-        self.sun_b = add_button('Sun', 2, j+1, self.follow, ['sun'], b_cont)
-        self.ext_b = add_button('Ext', 2, j+2, self.follow, ['home'], b_cont)
+        self.earth_b = add_button('Earth', 0, j+1, self.follow, [self.earth], b_cont)
+        self.moon_b = add_button('Moon', 1, j+1, self.follow, [self.moon], b_cont)
+        self.sun_b = add_button('Sun', 2, j+1, self.follow, [self.sun], b_cont)
+        self.ext_b = add_button('Ext', 2, j+2, self.follow, [self.home], b_cont)
         #and to look at
         j += 4
         add_label('Look at : ', 1, j, b_cont)
-        self.earth_lb = add_button('Earth', 0, j+1, self.look, ['earth'], b_cont)
-        self.moon_lb = add_button('Moon', 1, j+1, self.look, ['moon'], b_cont)
-        self.sun_lb = add_button('Sun', 2, j+1, self.look, ['sun'], b_cont)
+        self.earth_lb = add_button('Earth', 0, j+1, self.look, [self.earth], b_cont)
+        self.moon_lb = add_button('Moon', 1, j+1, self.look, [self.moon], b_cont)
+        self.sun_lb = add_button('Sun', 2, j+1, self.look, [self.sun], b_cont)
         #and to change speed
         j += 3
         add_label('Speed : ', 0, j, b_cont)
@@ -751,6 +760,11 @@ class World(ShowBase):
         self.fact_earth_b = add_button('Earth', 2, j+1, self.toggleTilt, [], b_cont)
         self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleScale, [], b_cont)
         
+        #Visualization changes
+        j += 3
+        add_label('Display : ', 1, j, b_cont)
+        self.shadow_b = add_button('Shadow', 1, j+1, self.toggleShadows, [], b_cont)
+        
         #hidden dialogs
         j += 20
         add_button('Info', 0, j, self.show_dialog, [self.info_dialog], b_cont)
@@ -764,10 +778,11 @@ class World(ShowBase):
     def hide_dialog(self, frame) :
         frame.detachNode()
         
-    def update_buttons(self, action, identity='earth') :
+    def update_buttons(self, action, identity) :
         """set buttons states and appearances according to user input
         buttons should reflect what you're looking at and what you're following"""
         if action == 'follow' :
+            identity = identity.getName()
             if identity == 'earth' :
                 #disable buttons to prevent looking at own position
                 self.earth_lb['state'] = DGG.DISABLED
@@ -827,7 +842,17 @@ class World(ShowBase):
                 self.moon_lb['geom'] = self.b_map
                 self.sun_lb['geom'] = self.b_map_acti
 
-
+    def update_shadows(self, following) :
+        '''hide/show tubular shadows'''
+        #show them all
+        if self.show_shadows :
+            self.moonShadow.reparentTo(self.moon)
+            self.earthShadow.reparentTo(self.earth)
+        #specific hide
+        if following.getName() == 'earth' :
+            self.earthShadow.detachNode()
+        elif following.getName() == 'moon' :
+            self.moonShadow.detachNode()
     #
     #
     ## TASKS :
@@ -840,7 +865,11 @@ class World(ShowBase):
         if self.following != None :
                 camera.setPos(self.following.getPos(self.render))
         if self.looking != None :
-                camera.lookAt(self.focusSpot)
+                camera.lookAt(self.focus)
+        #casted shadows should remain aligned with sun
+        self.earthShadow.lookAt(self.sun)
+        self.moonShadow.lookAt(self.sun)
+        
         return Task.cont
         
     def timeTask(self, task) :

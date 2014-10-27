@@ -79,3 +79,4 @@ def makeCross(length = 1):
     ls.drawTo(length/2., 0, 0)
     node = ls.create()
     return NodePath(node)
+    

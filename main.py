@@ -153,10 +153,11 @@ class World(ShowBase):
         self.loadShadows()
         self.loadMarkers()
         self.loadOrbits()
-        self.initLight()                # light the scene
+        self.loadLight()                # light the scene
+        #position and scale all loaded
+        self.placeAll()
 
-
-    def initLight(self):
+    def loadLight(self):
         #invisible spotlight to activate shadow casting (bypass bug)
         self.unspot = render.attachNewNode(Spotlight("Invisible spot"))
         self.unspot.setPos(0,0,self.ua)
@@ -206,7 +207,7 @@ class World(ShowBase):
         fov = self.Camera.getFov()[0]
         margin = self.ua / 3
         c_s_dist = (self.ua + margin) / tan(radians(fov/2))
-        self.homeSpot.setPos(0, -c_s_dist,self.ua/3)
+        self.home.setPos(0, -c_s_dist,self.ua/3)
         #Camera initialization
         camera.setPos(self.home.getPos())
         camera.lookAt(self.focus)

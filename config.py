@@ -39,7 +39,7 @@ MINSPEED = 0.001
 ORBITRESOLUTION = 256
 
 #multiplier to avoid working with very high numbers
-multiplier = 1 / 100000.
+multiplier = 1 / 10000.
 
 #realistic values
 #cf Wikipedia

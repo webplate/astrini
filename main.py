@@ -167,8 +167,6 @@ class World(ShowBase):
         self.light.node().setCameraMask(BitMask32.bit(0)) 
         #~ self.light.node().setExponent(0.1)#illuminate most of fov
         #~ self.light.node().getLens().setFov(5)
-        self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
-        self.light.node().getLens().setNearFar(self.ua - self.moonax, self.ua + self.moonax)
         render.setLight(self.light)
 
         #The ambient light (we see even unlighted face of planetoids)
@@ -194,6 +192,10 @@ class World(ShowBase):
 
         # Important! Enable the shader generator.
         render.setShaderAuto()
+    
+    def placeLight(self) :
+        self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
+        self.light.node().getLens().setNearFar(self.ua - self.moonax, self.ua + self.moonax)
     
     def placeCamera(self) :
         #Compute camera-sun distance from fov
@@ -472,6 +474,9 @@ class World(ShowBase):
         self.sun = loader.loadModel("models/planet_sphere")
         self.sun_tex = loader.loadTexture("models/sun_1k_tex.jpg")
         self.sun.setTexture(self.sun_tex, 1)
+        #Camera position shouldn't make planet disappear
+        self.sun.node().setBounds(OmniBoundingVolume())
+        self.sun.node().setFinal(True)
         self.sun.reparentTo(render)
         self.sun.hide(BitMask32.bit(0))
 
@@ -479,11 +484,17 @@ class World(ShowBase):
         self.earth = loader.loadModel("models/planet_sphere")
         self.earth_tex = loader.loadTexture("models/earth_1k_tex.jpg")
         self.earth.setTexture(self.earth_tex, 1)
+        #Camera position shouldn't make planet disappear
+        self.earth.node().setBounds(OmniBoundingVolume())
+        self.earth.node().setFinal(True)
         self.earth.reparentTo(self.dummy_earth)
         
         #Load the moon
         self.moon = loader.loadModel("models/planet_sphere")
         self.moon_tex = loader.loadTexture("models/moon_1k_tex.jpg")
+        #Camera position shouldn't make planet disappear
+        self.moon.node().setBounds(OmniBoundingVolume())
+        self.moon.node().setFinal(True)
         self.moon.setTexture(self.moon_tex, 1)
         self.moon.reparentTo(self.dummy_moon)
     
@@ -569,6 +580,7 @@ class World(ShowBase):
         self.placePlanets()
         self.placeMarkers()
         self.placeOrbits()
+        self.placeLight()
 
 
     def loadInterface(self) :

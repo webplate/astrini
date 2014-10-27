@@ -84,7 +84,6 @@ class World(ShowBase):
         #Scene initialization
         self.initAstrofacts()
         self.initEmpty()
-        self.initCamera()
         self.initScene()
         #Interface
         self.loadInterface()
@@ -132,11 +131,6 @@ class World(ShowBase):
         #Create the dummy nodes
         self.homeSpot = render.attachNewNode('homeSpot')
         self.focusSpot = render.attachNewNode('focusSpot')
-        #Compute camera-sun distance from fov
-        fov = self.Camera.getFov()[0]
-        margin = self.ua / 3
-        c_s_dist = (self.ua + margin) / tan(radians(fov/2))
-        self.homeSpot.setPos(0, -c_s_dist,self.ua/3)
 
     def initScene(self) :
         self.simulSpeed = 1
@@ -151,7 +145,8 @@ class World(ShowBase):
         self.loadMarkers()
         self.loadOrbits()
         self.initLight()                # light the scene
-        self.placeAll()                 #position and scale planets markers orbits...
+        #position and scale planets markers orbits and home position
+        self.placeAll()                 
 
 
     def initLight(self):
@@ -200,8 +195,13 @@ class World(ShowBase):
 
         # Important! Enable the shader generator.
         render.setShaderAuto()
-
-    def initCamera(self):
+    
+    def placeCamera(self) :
+        #Compute camera-sun distance from fov
+        fov = self.Camera.getFov()[0]
+        margin = self.ua / 3
+        c_s_dist = (self.ua + margin) / tan(radians(fov/2))
+        self.homeSpot.setPos(0, -c_s_dist,self.ua/3)
         #Camera initialization
         camera.setPos(self.homeSpot.getPos())
         camera.lookAt(self.focusSpot)
@@ -439,7 +439,6 @@ class World(ShowBase):
     def placeOrbits(self) :
         self.earth_orbitline.setScale(self.ua)
         self.moon_orbitline.setScale(self.moonax)
-        
 
     def loadPlanets(self):
         #Create the dummy nodes
@@ -571,6 +570,7 @@ class World(ShowBase):
         self.moonMarker.setScale(self.moonradius + 0.1)
 
     def placeAll(self) :
+        self.placeCamera()
         self.placePlanets()
         self.placeMarkers()
         self.placeOrbits()

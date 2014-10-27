@@ -103,6 +103,7 @@ class World(ShowBase):
         self.inclined = False
         self.inclinedHard = False
         self.show_shadows = False
+        self.show_stars = False
         self.realist_scale = False
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
@@ -273,6 +274,17 @@ class World(ShowBase):
             self.moonShadow.reparentTo(self.moon)
             self.show_shadows = True
         self.update_shadows(self.following)
+    
+    def toggleStars(self) :
+        if self.show_stars :
+            self.star_b['geom'] = self.b_map
+            self.sky.detachNode()
+            self.show_stars = False
+        else :
+            self.star_b['geom'] = self.b_map_acti
+            self.sky.reparentTo(render)
+            self.show_stars = True
+        
         
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)
@@ -483,7 +495,6 @@ class World(ShowBase):
         self.sky = loader.loadModel("models/solar_sky_sphere")
         self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
         self.sky.setTexture(self.sky_tex, 1)
-        self.sky.reparentTo(render)
         self.sky.hide(BitMask32.bit(0))
 
         #Load the Sun
@@ -762,9 +773,10 @@ class World(ShowBase):
         self.fact_scale_b = add_button('Scale', 0, j+2, self.toggleScale, [], b_cont)
         
         #Visualization changes
-        j += 3
+        j += 4
         add_label('Display : ', 1, j, b_cont)
-        self.shadow_b = add_button('Shadow', 1, j+1, self.toggleShadows, [], b_cont)
+        self.shadow_b = add_button('Shadow', 2, j+1, self.toggleShadows, [], b_cont)
+        self.star_b = add_button('Stars', 0, j+1, self.toggleStars, [], b_cont)
         
         #hidden dialogs
         j += 20

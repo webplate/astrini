@@ -316,6 +316,7 @@ class World(ShowBase):
         self.focusSpot.wrtReparentTo(self.mainScene)
         
     def look(self, identity):
+        '''move the focus of camera and parent it to a node'''
         if identity == "earth" :
             new = self.earth
         elif identity == "moon" :
@@ -428,14 +429,17 @@ class World(ShowBase):
         self.earth_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
         self.earth_orbitline.reparentTo(self.root_earth)
         self.earth_orbitline.setHpr( 0, 90,0)
-        # orbits are not affected by sunlight
-        self.earth_orbitline.hide(BitMask32.bit(0))
         
         self.moon_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
         self.moon_orbitline.reparentTo(self.root_moon)
         self.moon_orbitline.setHpr( 0, 90,0)
-        # orbits are not affected by sunlight
-        self.moon_orbitline.hide(BitMask32.bit(0))
+        
+        for obj in [self.earth_orbitline, self.moon_orbitline] :
+            #Camera position shouldn't make these actors disappear
+            obj.node().setBounds(OmniBoundingVolume())
+            obj.node().setFinal(True)
+            # orbits are not affected by sunlight
+            obj.hide(BitMask32.bit(0))
     
     def placeOrbits(self) :
         self.earth_orbitline.setScale(self.ua)
@@ -561,7 +565,6 @@ class World(ShowBase):
         #Create always visible marker
         self.moonMarker = graphics.makeArc()
         self.moonMarker.reparentTo(self.moon_system)
-        
         
         for obj in [self.sunMarker, self.earthMarker,self.moonMarker] :
             #Camera position shouldn't make these actors disappear
@@ -695,7 +698,7 @@ class World(ShowBase):
         
         #An informational dialog
         self.info_dialog = add_dialog((-3*bw, 3*bw, -3*bh, 3*bh))
-        add_textarea(['','Stars are purely decorative and unrealistic'], self.info_dialog)
+        add_textarea(['','Here some information'], self.info_dialog)
         
         #Buttons to follow
         j = 1

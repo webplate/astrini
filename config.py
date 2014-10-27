@@ -36,7 +36,7 @@ MAXSPEED = 70000000
 MINSPEED = 0.001
 
 #multiplier to avoid working with very high numbers
-multiplier = 1 / 1000000.
+multiplier = 1 / 100000.
 
 #realistic values
 #cf Wikipedia

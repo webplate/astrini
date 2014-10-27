@@ -189,7 +189,6 @@ class World(ShowBase):
         self.earthMarker.setLight(self.ambientMark)
         self.moonMarker.setLight(self.ambientMark)
         self.earthAxMarker.setLight(self.ambientMark)
-        self.moonAxMarker.setLight(self.ambientMark)
         self.earth_orbitline.setLight(self.ambientMark)
         self.moon_orbitline.setLight(self.ambientMark)
 
@@ -548,26 +547,22 @@ class World(ShowBase):
         self.earthMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.earthMarker.setBillboardPointWorld()
         #Show orientation
-        self.earthAxMarker = graphics.makeCross(4*self.earthradius)
+        self.earthAxMarker = graphics.makeCross()
         self.earthAxMarker.reparentTo(self.earth)
         self.earthAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         #the moon
         #Create always visible marker
         self.moonMarker = graphics.makeArc()
-        self.moonMarker.reparentTo(self.root_moon)
-        self.moonMarker.setPos(self.moonax, 0, 0)
+        self.moonMarker.reparentTo(self.moon_system)
         self.moonMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         self.moonMarker.setBillboardPointWorld()
-        #Show orientation
-        self.moonAxMarker = graphics.makeCross(4*self.earthradius)
-        self.moonAxMarker.reparentTo(self.moon)
-        self.moonAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
-        
+
     def placeMarkers(self) :
         '''set position and scale of markers'''
         self.sunMarker.setScale(self.sunradius + 0.1)
         self.earthMarker.setScale(self.earthradius + 0.1)
         self.moonMarker.setScale(self.moonradius + 0.1)
+        self.earthAxMarker.setScale(4*self.earthradius)
 
     def placeAll(self) :
         self.placeCamera()

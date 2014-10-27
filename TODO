@@ -14,9 +14,9 @@ class for spheroids, markers, orbits
 
 INTERFACE !!
 when go somewhere look at previous location
-check "maychange" option on text 
+check "maychange" option on text
 
-    def is_hidden(self, node) :
-        '''check if a panda node is shown as it has a non empty parent'''
-        return node.getParent() == Node()
+def is_hidden(self, node) :
+    '''check if a panda node is shown as it has a non empty parent'''
+    return node.getParent() == Node()
         

@@ -137,8 +137,6 @@ class World(ShowBase):
         margin = self.ua / 3
         c_s_dist = (self.ua + margin) / tan(radians(fov/2))
         self.homeSpot.setPos(0, -c_s_dist,self.ua/3)
-        #init focus is on the sun
-        self.focusSpot.setPos(0, 0, 0)
 
     def initScene(self) :
         self.simulSpeed = 1
@@ -150,11 +148,10 @@ class World(ShowBase):
         
         base.setBackgroundColor(0, 0, 0)    #Set the background to black
         self.loadPlanets()                #Load and position the models
-        self.placePlanets()
         self.loadMarkers()
-        self.placeMarkers()
         self.loadOrbits()
         self.initLight()                # light the scene
+        self.placeAll()                 #position and scale planets markers orbits...
 
 
     def initLight(self):
@@ -179,6 +176,7 @@ class World(ShowBase):
         self.light.node().getLens().setNearFar(self.ua - self.moonax, self.ua + self.moonax)
         render.setLight(self.light)
 
+        #The ambient light (we see even unlighted face of planetoids)
         self.alight = render.attachNewNode(AmbientLight("Ambient"))
         p = 0.15
         self.alight.node().setColor(Vec4(p, p, p, 1))
@@ -408,7 +406,7 @@ class World(ShowBase):
             self.sunradius = SUNRADIUS
             self.moonax = MOONAX
             
-            self.placePlanets()
+            self.placeAll()
             
             self.fact_scale_b['geom'] = self.b_map_acti
             self.realist_scale = True
@@ -419,7 +417,7 @@ class World(ShowBase):
             self.sunradius = SUNRADIUS_F
             self.moonax = MOONAX_F
             
-            self.placePlanets()
+            self.placeAll()
             
             self.fact_scale_b['geom'] = self.b_map
             self.realist_scale = False
@@ -429,16 +427,19 @@ class World(ShowBase):
         self.earth_orbitline = graphics.makeArc(360, 128)
         self.earth_orbitline.reparentTo(self.root_earth)
         self.earth_orbitline.setHpr( 0, 90,0)
-        self.earth_orbitline.setScale(self.ua)
         # orbits are not affected by sunlight
         self.earth_orbitline.hide(BitMask32.bit(0))
         
         self.moon_orbitline = graphics.makeArc(360, 128)
         self.moon_orbitline.reparentTo(self.root_moon)
         self.moon_orbitline.setHpr( 0, 90,0)
-        self.moon_orbitline.setScale(self.moonax)
         # orbits are not affected by sunlight
         self.moon_orbitline.hide(BitMask32.bit(0))
+    
+    def placeOrbits(self) :
+        self.earth_orbitline.setScale(self.ua)
+        self.moon_orbitline.setScale(self.moonax)
+        
 
     def loadPlanets(self):
         #Create the dummy nodes
@@ -569,7 +570,10 @@ class World(ShowBase):
         self.earthMarker.setScale(self.earthradius + 0.1)
         self.moonMarker.setScale(self.moonradius + 0.1)
 
-
+    def placeAll(self) :
+        self.placePlanets()
+        self.placeMarkers()
+        self.placeOrbits()
 
 
     def loadInterface(self) :

@@ -145,7 +145,7 @@ class World(ShowBase):
         self.loadMarkers()
         self.loadOrbits()
         self.initLight()                # light the scene
-        #position and scale planets markers orbits and home position
+        #position and scale planets markers orbits lights and home position
         self.placeAll()                 
 
 
@@ -492,11 +492,13 @@ class World(ShowBase):
         #Load the moon
         self.moon = loader.loadModel("models/planet_sphere")
         self.moon_tex = loader.loadTexture("models/moon_1k_tex.jpg")
-        #Camera position shouldn't make planet disappear
-        self.moon.node().setBounds(OmniBoundingVolume())
-        self.moon.node().setFinal(True)
         self.moon.setTexture(self.moon_tex, 1)
         self.moon.reparentTo(self.dummy_moon)
+        
+        #Camera position shouldn't make these actors disappear
+        for obj in [self.earth, self.sun, self.moon] :
+            obj.node().setBounds(OmniBoundingVolume())
+            obj.node().setFinal(True)
     
     def placePlanets(self) :
         '''position planetoids on orbits, set distance from their gravitationnal
@@ -547,16 +549,10 @@ class World(ShowBase):
         #Create always visible marker
         self.sunMarker = graphics.makeArc()
         self.sunMarker.reparentTo(render)
-        # markers are not affected by sunlight or unspot
-        self.sunMarker.hide(BitMask32.bit(0))
-        self.sunMarker.setBillboardPointWorld()
-
         #Earth
         #Create always visible marker
         self.earthMarker = graphics.makeArc()
         self.earthMarker.reparentTo(self.earth_system)
-        self.earthMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
-        self.earthMarker.setBillboardPointWorld()
         #Show orientation
         self.earthAxMarker = graphics.makeCross()
         self.earthAxMarker.reparentTo(self.earth)
@@ -565,8 +561,16 @@ class World(ShowBase):
         #Create always visible marker
         self.moonMarker = graphics.makeArc()
         self.moonMarker.reparentTo(self.moon_system)
-        self.moonMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
-        self.moonMarker.setBillboardPointWorld()
+        
+        
+        for obj in [self.sunMarker, self.earthMarker,self.moonMarker] :
+            #Camera position shouldn't make these actors disappear
+            obj.node().setBounds(OmniBoundingVolume())
+            obj.node().setFinal(True)
+            # markers are not affected by sunlight or unspot
+            obj.hide(BitMask32.bit(0))
+            #and always point to camera
+            obj.setBillboardPointWorld()
 
     def placeMarkers(self) :
         '''set position and scale of markers'''

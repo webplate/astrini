@@ -423,13 +423,13 @@ class World(ShowBase):
 
     def loadOrbits(self):
         #Draw orbits
-        self.earth_orbitline = graphics.makeArc(360, 128)
+        self.earth_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
         self.earth_orbitline.reparentTo(self.root_earth)
         self.earth_orbitline.setHpr( 0, 90,0)
         # orbits are not affected by sunlight
         self.earth_orbitline.hide(BitMask32.bit(0))
         
-        self.moon_orbitline = graphics.makeArc(360, 128)
+        self.moon_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
         self.moon_orbitline.reparentTo(self.root_moon)
         self.moon_orbitline.setHpr( 0, 90,0)
         # orbits are not affected by sunlight

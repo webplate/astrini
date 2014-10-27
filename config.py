@@ -24,16 +24,19 @@ task-timer-verbose #t
 USEEPHEM = False
 EPHEMSIMPLESET = 18.7399468035 #correction to align equinox in simple model
 
-#Interface sttings
+#Interface settings
 PRINTTIMING = False #show Task manager statistics
 INTERFACEDELAY = 0.5
 BUTTONSIZE = 48, 16
 
-#diration in sec of soft transitions
+#duration in sec of soft transitions
 FREEZELEN = 0.2
 TRAVELLEN = 1.0
 MAXSPEED = 70000000
 MINSPEED = 0.001
+
+#Marker and orbitlines settings
+ORBITRESOLUTION = 256
 
 #multiplier to avoid working with very high numbers
 multiplier = 1 / 100000.
@@ -50,16 +53,16 @@ EARTHTILT = 23.44
 MOONTILT = 6.68
 MOONINCL = 5.145
 #time
-SECONDSINDAY = 86400 
+SECONDSINDAY = 86400. 
 SUNROT = 27.28 #in days
 MOONROT = 27.321582
 MOONREVO = MOONROT
 EARTHREVO = 365.25696
 
 #fantasist values
-UA_F = 30
-EARTHRADIUS_F = 1
+UA_F = 30.
+EARTHRADIUS_F = 1.
 SUNRADIUS_F = 1.5
 MOONRADIUS_F = 0.2
-MOONAX_F = 8
-MOONINCL_F = 15 #an exagerated inclination to avoid moon eclipses in fantasist scale
+MOONAX_F = 8.
+MOONINCL_F = 15. #an exagerated inclination to avoid moon eclipses in fantasist scale

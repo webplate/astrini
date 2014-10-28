@@ -1,6 +1,5 @@
 tubular shadow should be set on a sun at infinite (to be aligned with shadow caster)
 
-hide markers of followed object OR NEWMARKERS
 
 support years before 1 and 9999
 support dates defore christ (datautil.date)

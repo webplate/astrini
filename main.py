@@ -62,7 +62,7 @@ def linInt(level, v1, v2) :
     '''linearly interpolate between v1 and v2
     according to 0<level<1 '''
     return v1 * level + v2 * (1 - level)
-    
+
 def nodeCoordIn2d(nodePath):
     '''converts coord of node in render to coord in aspect2d'''
     coord3d = nodePath.getPos(base.cam)
@@ -117,6 +117,7 @@ class World(ShowBase):
         self.inclinedHard = False
         self.show_shadows = False
         self.show_stars = False
+        self.show_marks = False
         self.realist_scale = False
         # Add Tasks procedures to the task manager.
         #low priority to prevent jitter of camera
@@ -297,7 +298,32 @@ class World(ShowBase):
             self.star_b['geom'] = self.b_map_acti
             self.sky.reparentTo(render)
             self.show_stars = True
+    
+    def toggleMarks(self) :
+        if self.show_marks :
+            self.mark_b['geom'] = self.b_map
+            nodes = [ self.earthAxMarker,
+            self.sunMarker,
+            self.moonMarker,
+            self.earthMarker, 
+            self.earth_orbitline,
+            self.moon_orbitline ]
         
+            for n in nodes :
+                n.detachNode()
+
+            self.show_marks = False
+        else :
+            self.mark_b['geom'] = self.b_map_acti
+            
+            self.earthAxMarker.reparentTo(self.earth)
+            self.sunMarker.reparentTo(aspect2d)
+            self.moonMarker.reparentTo(aspect2d)
+            self.earthMarker.reparentTo(aspect2d)
+            self.earth_orbitline.reparentTo(self.root_earth)
+            self.moon_orbitline.reparentTo(self.root_moon)
+            
+            self.show_marks = True
         
     def get_current_rel_pos(self) :
         return self.new.getPos(self.mainScene)
@@ -466,11 +492,9 @@ class World(ShowBase):
     def loadOrbits(self) :
         #Draw orbits
         self.earth_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
-        self.earth_orbitline.reparentTo(self.root_earth)
         self.earth_orbitline.setHpr( 0, 90,0)
         
         self.moon_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
-        self.moon_orbitline.reparentTo(self.root_moon)
         self.moon_orbitline.setHpr( 0, 90,0)
         
         for obj in [self.earth_orbitline, self.moon_orbitline] :
@@ -601,21 +625,17 @@ class World(ShowBase):
         #Create always visible marker
         self.sunMarker = graphics.makeArc()
         self.sunMarker.setScale(MARKERSCALE)
-        self.sunMarker.reparentTo(aspect2d)
         #Earth
         #Create always visible marker
         self.earthMarker = graphics.makeArc()
         self.earthMarker.setScale(MARKERSCALE)
-        self.earthMarker.reparentTo(aspect2d)
         #Show orientation
         self.earthAxMarker = graphics.makeCross()
-        self.earthAxMarker.reparentTo(self.earth)
         self.earthAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
         #the moon
         #Create always visible marker
         self.moonMarker = graphics.makeArc()
         self.moonMarker.setScale(MARKERSCALE)
-        self.moonMarker.reparentTo(aspect2d)
 
     def placeMarkers(self) :
         '''set position and scale of markers'''
@@ -786,8 +806,9 @@ class World(ShowBase):
         #Visualization changes
         j += 4
         add_label('Display : ', 1, j, b_cont)
-        self.shadow_b = add_button('Shadow', 2, j+1, self.toggleShadows, [], b_cont)
-        self.star_b = add_button('Stars', 0, j+1, self.toggleStars, [], b_cont)
+        self.shadow_b = add_button('Shadow', 0, j+1, self.toggleShadows, [], b_cont)
+        self.mark_b = add_button('Mark', 1, j+1, self.toggleMarks, [], b_cont)
+        self.star_b = add_button('Stars', 2, j+1, self.toggleStars, [], b_cont)
         
         #hidden dialogs
         j += 20
@@ -883,9 +904,6 @@ class World(ShowBase):
             self.earthShadow.detachNode()
         elif name == 'moon' :
             self.moonShadow.detachNode()
-
-    def update_markers(self) :
-        pass
     
     #
     #

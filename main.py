@@ -62,6 +62,19 @@ def linInt(level, v1, v2) :
     '''linearly interpolate between v1 and v2
     according to 0<level<1 '''
     return v1 * level + v2 * (1 - level)
+    
+def nodeCoordIn2d(nodePath):
+    '''converts coord of node in render to coord in aspect2d'''
+    coord3d = nodePath.getPos(base.cam)
+    #elude objects behind camera
+    if coord3d[1] < 0 :
+        return Point3()
+    coord2d = Point2()
+    base.camLens.project(coord3d, coord2d)
+    coordInRender2d = Point3(coord2d[0], 0, coord2d[1])
+    coordInAspect2d = aspect2d.getRelativePoint(render2d,
+                        coordInRender2d)
+    return coordInAspect2d
 
 class World(ShowBase):  
     def __init__(self):
@@ -587,11 +600,13 @@ class World(ShowBase):
         #Sun
         #Create always visible marker
         self.sunMarker = graphics.makeArc()
-        self.sunMarker.reparentTo(render)
+        self.sunMarker.setScale(MARKERSCALE)
+        self.sunMarker.reparentTo(aspect2d)
         #Earth
         #Create always visible marker
         self.earthMarker = graphics.makeArc()
-        self.earthMarker.reparentTo(self.earth_system)
+        self.earthMarker.setScale(MARKERSCALE)
+        self.earthMarker.reparentTo(aspect2d)
         #Show orientation
         self.earthAxMarker = graphics.makeCross()
         self.earthAxMarker.reparentTo(self.earth)
@@ -599,23 +614,17 @@ class World(ShowBase):
         #the moon
         #Create always visible marker
         self.moonMarker = graphics.makeArc()
-        self.moonMarker.reparentTo(self.moon_system)
-        
-        for obj in [self.sunMarker, self.earthMarker,self.moonMarker] :
-            #Camera position shouldn't make these actors disappear
-            obj.node().setBounds(OmniBoundingVolume())
-            obj.node().setFinal(True)
-            # markers are not affected by sunlight or unspot
-            obj.hide(BitMask32.bit(0))
-            #and always point to camera
-            obj.setBillboardPointWorld()
+        self.moonMarker.setScale(MARKERSCALE)
+        self.moonMarker.reparentTo(aspect2d)
 
     def placeMarkers(self) :
         '''set position and scale of markers'''
-        self.sunMarker.setScale(self.sunradius + 0.1)
-        self.earthMarker.setScale(self.earthradius + 0.1)
-        self.moonMarker.setScale(self.moonradius + 0.1)
         self.earthAxMarker.setScale(4*self.earthradius)
+        
+        self.sunMarker.setPos(nodeCoordIn2d(self.sun))
+        self.moonMarker.setPos(nodeCoordIn2d(self.moon))
+        self.earthMarker.setPos(nodeCoordIn2d(self.earth))
+
 
     def placeAll(self) :
         self.placeCamera()
@@ -894,7 +903,8 @@ class World(ShowBase):
         #casted shadows should remain aligned with sun
         self.earthShadow.lookAt(self.sun)
         self.moonShadow.lookAt(self.sun)
-        
+        #place markers on their targets
+        self.placeMarkers()
         return Task.cont
         
     def timeTask(self, task) :

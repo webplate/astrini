@@ -38,6 +38,7 @@ MINSPEED = 0.001
 
 #Marker and orbitlines settings
 ORBITRESOLUTION = 256
+MARKERSCALE = 0.02
 
 #multiplier to avoid working with very high numbers
 multiplier = 1 / 10000.

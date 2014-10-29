@@ -28,7 +28,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
+#
 
 #My Global config variables
 #import before Showbase to set panda application
@@ -896,8 +896,11 @@ class World(ShowBase):
         #already following
         if self.travelling :
             name = self.new.getName()
-        else :
+        #shouldn't bug if we aren't following any
+        elif not self.travelling and self.following != None :
             name = self.following.getName()
+        else :
+            name = None
         #specific hide
         if name == 'earth' :
             self.earthShadow.detachNode()

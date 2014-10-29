@@ -93,7 +93,6 @@ class World(ShowBase):
         #default config when just opened
         self.Camera.mm.showMouse()
         self.Camera.setUtilsActive()
-        self.mainScene = render.attachNewNode("mainScene")
         
         #load fonts
         self.condensed_font = loader.loadFont('fonts/Ubuntu-C.ttf')
@@ -326,7 +325,7 @@ class World(ShowBase):
             self.show_marks = True
         
     def get_current_rel_pos(self) :
-        return self.new.getPos(self.mainScene)
+        return self.new.getPos(render)
     
     def generate_speed_fade(self) :
         #generate intervals to fade in and out from previous speed
@@ -377,7 +376,7 @@ class World(ShowBase):
         self.focus.setPos(0, 0, 0)
 
     def unlock_focus(self) :
-        self.focus.wrtReparentTo(self.mainScene)
+        self.focus.wrtReparentTo(render)
         
     def look(self, identity) :
         #if new target

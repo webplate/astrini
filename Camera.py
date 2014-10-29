@@ -101,35 +101,14 @@ class KeyboardMover(DirectObject):
         self.FUp = keys[4]
         self.FDown = keys[5]
 
-class CameraEvents(DirectObject):
-    def __init__(self):
-        pass
-    
-    def keyPressed(self):
-        '''
-        Customize input handler keypress event
-        
-        TODO: insert debug infos here to help other progs
-        
-        '''
-        pass
-    
-    def keyReleased(self):
-        '''
-        Customize input handler keyrelease event
-        
-        TODO: insert debug infos here to help other progs
-        
-        '''
-        pass
 
-'''
+
+class MouseMover(DirectObject):
+    '''
 This class is use to move mouse when in FPS (fly) mode
 setActive() -> used to activate FPS mouse slide
 setUnactive() -> inactivate FPS behaviour
 '''
-
-class MouseMover(DirectObject):
     def __init__(self):
         #camera rotation settings
         self.heading = 0
@@ -187,8 +166,6 @@ class Camera(DirectObject):
         #keyboard/mouse mover
         self.km = KeyboardMover()
         self.mm = MouseMover()
-        #Camera events
-        self.ce = CameraEvents()
         #disabling mouse by default
         base.disableMouse()
         #setting status

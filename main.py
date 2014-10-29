@@ -202,7 +202,7 @@ class World(ShowBase):
         self.sky.setLight(self.ambientLava)
         #Special light fo markers
         self.ambientMark = render.attachNewNode(AmbientLight("AmbientMark"))
-        self.ambientMark.node().setColor(Vec4(1, 0, 0, 1))
+        self.ambientMark.node().setColor(Vec4(0.8, 0.4, 0, 1))
         self.sunMarker.setLight(self.ambientMark)
         self.earthMarker.setLight(self.ambientMark)
         self.moonMarker.setLight(self.ambientMark)

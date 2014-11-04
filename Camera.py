@@ -170,18 +170,12 @@ class Camera(DirectObject):
         base.disableMouse()
         #setting status
         self.state = "static"
+        #default config when just opened
+        self.mm.showMouse()
+        self.setUtilsActive()
         
         self.setNearFar(1.0,10000 * UA)
         self.setFov(45)
-    
-    def getKeyboardMover(self):
-        return self.km
-    
-    def getMouseMover(self):
-        return self.km
-    
-    def getSelectionTool(self):
-        return self.st
     
     def getFov(self):
         return base.camLens.getFov()
@@ -194,11 +188,9 @@ class Camera(DirectObject):
 
     '''
     This is an interface method used to switch between fly and static 
-    modes dinamically through a simple string
+    modes dynamically through a simple string
     '''
-    def getSelected(self):
-        return self.st.listSelected
-    
+
     def setState(self,s):
         #if there is a real change in camera state
         if s != self.state:
@@ -215,11 +207,9 @@ class Camera(DirectObject):
     
     def setUtilsActive(self):
         self.accept("tab", self.toggleView)
-        #self.accept("f", self.ps.toggleFullscreen)
     
     def setUtilsUnactive(self):
         self.ignore("tab")
-        self.ignore("f")
     
     def toggleState(self):
         if self.state == "static":
@@ -228,14 +218,11 @@ class Camera(DirectObject):
             self.setState("static")
     
     def toggleView(self):
-        if self.getState() == "fly":
+        if self.state == "fly":
             #myGui.showAll()  to be removed soon
             self.world.InputHandler.setActive()
-        if self.getState() == "static":
+        if self.state == "static":
             #myGui.hideAll()  to be removed soon
             self.world.InputHandler.setInactive()
         #switching camera in any case
         self.toggleState()
-    
-    def getState(self):
-        return self.state

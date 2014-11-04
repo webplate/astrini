@@ -3,8 +3,7 @@ ppython main.py
 
 requires :
     panda3D SDK (panda3d.org)
-    astronomia (on pypi)
-	numpy
+    numpy
 
 CAMERA CONTROL (PERSPECTIVAL CHANGES):
     TAB - toggle free camera
@@ -30,9 +29,3 @@ CAMERA CONTROL (PERSPECTIVAL CHANGES):
 FACTUAL CHANGES:
     shift-E	to toggle earth tilt
     shift-R to toggle moon inclination
-
-TIME CONTROL:
-    L - Speed x 2
-    K - Speed / 2
-    I - Inverse speed
-    N - start/stop flow of  time

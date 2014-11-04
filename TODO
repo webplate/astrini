@@ -1,5 +1,10 @@
-tubular shadow should be set on a sun at infinite (to be aligned with shadow caster)
+look and follow instructions should be added to a list and then done sequentially
+OR BETTER
+done in parallel conserving speed
 
+markers should not be seen when on camera position (0,0,0)
+
+tubular shadow should be set on a sun at infinite (to be aligned with shadow caster)
 
 support years before 1 and 9999
 support dates defore christ (datautil.date)

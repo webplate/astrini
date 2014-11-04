@@ -45,7 +45,6 @@ from direct.interval.IntervalGlobal import *
 #interpolate function parameter
 from direct.interval.LerpInterval import LerpFunc
 # Default classes used to handle input and camera behaviour
-# Useful for fast prototyping
 from Camera import Camera
 from InputHandler import InputHandler
 #Drawing functions
@@ -83,17 +82,12 @@ class World(ShowBase):
         wp.setTitle(APPNAME)
         wp.setSize(APPX, APPY)
         WindowProperties.setDefault(wp)
-        
+
         ShowBase.__init__(self)
 
-        #starting all base methods
+        #wrapper around camera
         self.Camera = Camera(self)
-        self.InputHandler = InputHandler(self)
-        
-        #default config when just opened
-        self.Camera.mm.showMouse()
-        self.Camera.setUtilsActive()
-        
+
         #load fonts
         self.condensed_font = loader.loadFont('fonts/Ubuntu-C.ttf')
         self.mono_font = loader.loadFont('fonts/UbuntuMono-R.ttf')
@@ -104,6 +98,9 @@ class World(ShowBase):
         self.initScene()
         #Interface
         self.loadInterface()
+        
+        #mouse and keyboard inputs
+        self.InputHandler = InputHandler(self)
         
         #Prepare locks (following procedures etc...)
         self.travelling = False
@@ -324,8 +321,11 @@ class World(ShowBase):
             
             self.show_marks = True
         
-    def get_current_rel_pos(self) :
-        return self.new.getPos(render)
+    def get_curr_look_rel_pos(self) :
+        return self.to_look.getPos(render)
+        
+    def get_curr_follow_rel_pos(self) :
+        return self.to_follow.getPos(render)
     
     def generate_speed_fade(self) :
         #generate intervals to fade in and out from previous speed
@@ -349,15 +349,13 @@ class World(ShowBase):
             self.travelling = True
             #to be able to capture its position during sequence
             #and make updates before we actually follow it
-            self.new = identity
-            #buttons should reflect what you're looking at and what you're following
-            self.update_buttons('follow')
+            self.to_follow = identity
             #hide tubular shadow of followed object
             self.update_shadows()
             #stop flow of time while traveling
             slow, fast = self.generate_speed_fade()
             travel = self.camera.posInterval(TRAVELLEN,
-            self.get_current_rel_pos,
+            self.get_curr_follow_rel_pos,
             blendType='easeInOut')
             #slow sim, release, travel, lock and resume speed
             sequence = Sequence(slow, Func(self.stop_follow),
@@ -372,6 +370,7 @@ class World(ShowBase):
         self.looking = new
 
     def lock_focus(self) :
+        self.looking = self.to_look
         self.focus.reparentTo(self.looking)
         self.focus.setPos(0, 0, 0)
 
@@ -380,20 +379,18 @@ class World(ShowBase):
         
     def look(self, identity) :
         #if new target
-        if self.looking != identity and not self.travelling :
+        if self.looking != identity :
             #store new to get actual position and update interface
-            self.new = identity
-            self.update_buttons('look')
+            self.to_look = identity
             #stop flow of time while changing focus
             slow, fast = self.generate_speed_fade()
             
             travel = self.focus.posInterval(FREEZELEN,
-            self.get_current_rel_pos,
+            self.get_curr_look_rel_pos,
             blendType='easeInOut')
             sequence = Sequence(slow, Func(self.unlock_focus),
                 travel, Func(self.lock_focus), fast)
             sequence.start()
-            self.looking = identity
 
     def toggleTilt(self) :
         """earth tilt"""
@@ -822,69 +819,83 @@ class World(ShowBase):
     def hide_dialog(self, frame) :
         frame.detachNode()
         
-    def update_buttons(self, action) :
+    def update_buttons(self) :
         """set buttons states and appearances according to user input
         buttons should reflect what you're looking at and what you're following"""
-        identity = self.new.getName()
-        if action == 'follow' :
-            if identity == 'earth' :
-                #disable buttons to prevent looking at own position
-                self.earth_lb['state'] = DGG.DISABLED
-                self.moon_lb['state'] = DGG.NORMAL
-                self.sun_lb['state'] = DGG.NORMAL
-                #show activated button for followed object
-                self.earth_b['geom'] = self.b_map_acti
-                self.moon_b['geom'] = self.b_map
-                self.sun_b['geom'] = self.b_map
-                self.ext_b['geom'] = self.b_map
-            elif identity == 'moon' :
-                self.earth_lb['state'] = DGG.NORMAL
-                self.moon_lb['state'] = DGG.DISABLED
-                self.sun_lb['state'] = DGG.NORMAL
-                self.earth_b['geom'] = self.b_map
-                self.moon_b['geom'] = self.b_map_acti
-                self.sun_b['geom'] = self.b_map
-                self.ext_b['geom'] = self.b_map
-            elif identity == 'sun' :
-                self.earth_lb['state'] = DGG.NORMAL
-                self.moon_lb['state'] = DGG.NORMAL
-                self.sun_lb['state'] = DGG.DISABLED
-                self.earth_b['geom'] = self.b_map
-                self.moon_b['geom'] = self.b_map
-                self.sun_b['geom'] = self.b_map_acti
-                self.ext_b['geom'] = self.b_map
-            elif identity == 'home' :
-                self.earth_lb['state'] = DGG.NORMAL
-                self.moon_lb['state'] = DGG.NORMAL
-                self.sun_lb['state'] = DGG.NORMAL
-                self.earth_b['geom'] = self.b_map
-                self.moon_b['geom'] = self.b_map
-                self.sun_b['geom'] = self.b_map
-                self.ext_b['geom'] = self.b_map_acti
-        elif action == 'look' :
-            if identity == 'earth' :
-                #disable buttons to prevent going at looked object
-                self.earth_b['state'] = DGG.DISABLED
-                self.moon_b['state'] = DGG.NORMAL
-                self.sun_b['state'] = DGG.NORMAL
-                #show activated button for looked object
-                self.earth_lb['geom'] = self.b_map_acti
-                self.moon_lb['geom'] = self.b_map
-                self.sun_lb['geom'] = self.b_map
-            elif identity == 'moon' :
-                self.earth_b['state'] = DGG.NORMAL
-                self.moon_b['state'] = DGG.DISABLED
-                self.sun_b['state'] = DGG.NORMAL
-                self.earth_lb['geom'] = self.b_map
-                self.moon_lb['geom'] = self.b_map_acti
-                self.sun_lb['geom'] = self.b_map
-            elif identity == 'sun' :
-                self.earth_b['state'] = DGG.NORMAL
-                self.moon_b['state'] = DGG.NORMAL
-                self.sun_b['state'] = DGG.DISABLED
-                self.earth_lb['geom'] = self.b_map
-                self.moon_lb['geom'] = self.b_map
-                self.sun_lb['geom'] = self.b_map_acti
+        if self.following == self.earth :
+            #disable buttons to prevent looking at own position
+            self.earth_lb['state'] = DGG.DISABLED
+            self.moon_lb['state'] = DGG.NORMAL
+            self.sun_lb['state'] = DGG.NORMAL
+            #show activated button for followed object
+            self.earth_b['geom'] = self.b_map_acti
+            self.moon_b['geom'] = self.b_map
+            self.sun_b['geom'] = self.b_map
+            self.ext_b['geom'] = self.b_map
+        elif self.following == self.moon :
+            self.earth_lb['state'] = DGG.NORMAL
+            self.moon_lb['state'] = DGG.DISABLED
+            self.sun_lb['state'] = DGG.NORMAL
+            self.earth_b['geom'] = self.b_map
+            self.moon_b['geom'] = self.b_map_acti
+            self.sun_b['geom'] = self.b_map
+            self.ext_b['geom'] = self.b_map
+        elif self.following == self.sun :
+            self.earth_lb['state'] = DGG.NORMAL
+            self.moon_lb['state'] = DGG.NORMAL
+            self.sun_lb['state'] = DGG.DISABLED
+            self.earth_b['geom'] = self.b_map
+            self.moon_b['geom'] = self.b_map
+            self.sun_b['geom'] = self.b_map_acti
+            self.ext_b['geom'] = self.b_map
+        elif self.following == self.home :
+            self.earth_lb['state'] = DGG.NORMAL
+            self.moon_lb['state'] = DGG.NORMAL
+            self.sun_lb['state'] = DGG.NORMAL
+            self.earth_b['geom'] = self.b_map
+            self.moon_b['geom'] = self.b_map
+            self.sun_b['geom'] = self.b_map
+            self.ext_b['geom'] = self.b_map_acti
+        elif self.following == None :
+            self.earth_lb['state'] = DGG.NORMAL
+            self.moon_lb['state'] = DGG.NORMAL
+            self.sun_lb['state'] = DGG.NORMAL
+            self.earth_b['geom'] = self.b_map
+            self.moon_b['geom'] = self.b_map
+            self.sun_b['geom'] = self.b_map
+            self.ext_b['geom'] = self.b_map
+        
+        
+        if self.looking == self.earth :
+            #disable buttons to prevent going at looked object
+            self.earth_b['state'] = DGG.DISABLED
+            self.moon_b['state'] = DGG.NORMAL
+            self.sun_b['state'] = DGG.NORMAL
+            #show activated button for looked object
+            self.earth_lb['geom'] = self.b_map_acti
+            self.moon_lb['geom'] = self.b_map
+            self.sun_lb['geom'] = self.b_map
+        elif self.looking == self.moon :
+            self.earth_b['state'] = DGG.NORMAL
+            self.moon_b['state'] = DGG.DISABLED
+            self.sun_b['state'] = DGG.NORMAL
+            self.earth_lb['geom'] = self.b_map
+            self.moon_lb['geom'] = self.b_map_acti
+            self.sun_lb['geom'] = self.b_map
+        elif self.looking == self.sun :
+            self.earth_b['state'] = DGG.NORMAL
+            self.moon_b['state'] = DGG.NORMAL
+            self.sun_b['state'] = DGG.DISABLED
+            self.earth_lb['geom'] = self.b_map
+            self.moon_lb['geom'] = self.b_map
+            self.sun_lb['geom'] = self.b_map_acti
+        elif self.looking == None :
+            self.earth_b['state'] = DGG.NORMAL
+            self.moon_b['state'] = DGG.NORMAL
+            self.sun_b['state'] = DGG.NORMAL
+            self.earth_lb['geom'] = self.b_map
+            self.moon_lb['geom'] = self.b_map
+            self.sun_lb['geom'] = self.b_map
 
     def update_shadows(self) :
         '''hide/show tubular shadows'''
@@ -895,7 +906,7 @@ class World(ShowBase):
         #we shouldn't hide the same shadow if we are going to follow or 
         #already following
         if self.travelling :
-            name = self.new.getName()
+            name = self.to_follow.getName()
         #shouldn't bug if we aren't following any
         elif not self.travelling and self.following != None :
             name = self.following.getName()
@@ -949,6 +960,8 @@ class World(ShowBase):
         new_time = self.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]
+        #buttons should reflect what camera is following or looking at
+        self.update_buttons()
         #show task timing for debug
         if PRINTTIMING :
             print self.taskMgr

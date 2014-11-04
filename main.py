@@ -560,7 +560,7 @@ class World(ShowBase):
         self.moon.reparentTo(self.dummy_moon)
         
         #Camera position shouldn't make these actors disappear
-        for obj in [self.earth, self.sun, self.moon] :
+        for obj in [self.sky, self.earth, self.sun, self.moon] :
             obj.node().setBounds(OmniBoundingVolume())
             obj.node().setFinal(True)
     

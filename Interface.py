@@ -159,11 +159,11 @@ class Interface(object) :
         #factual changes
         j += 3
         add_label('Factual changes : ', 1, j, b_cont)
-        self.fact_moon_b = add_button('Moon', 0, j+1, self.world.toggleIncl,
+        self.fact_moon_b = add_button('Moon', 0, j+1, self.world.scene.sys.toggleIncl,
         [], b_cont)
-        self.fact_moon2_b = add_button('Moon+', 1, j+1, self.world.toggleInclHard,
-        [], b_cont)
-        self.fact_earth_b = add_button('Earth', 2, j+1, self.world.toggleTilt,
+        self.fact_moon2_b = add_button('Moon+', 1, j+1, self.world.scene.sys.toggleIncl,
+        [True], b_cont)
+        self.fact_earth_b = add_button('Earth', 2, j+1, self.world.scene.sys.toggleTilt,
         [], b_cont)
         self.fact_scale_b = add_button('Scale', 0, j+2, self.world.scene.toggleScale,
         [], b_cont)
@@ -298,6 +298,21 @@ class Interface(object) :
             self.mark_b['geom'] = self.b_map_acti
         else :
             self.mark_b['geom'] = self.b_map
+        
+        #which level of inclination
+        if self.world.scene.sys.inclined :
+            self.fact_moon_b['geom'] = self.b_map_acti
+        elif self.world.scene.sys.inclinedHard :
+            self.fact_moon2_b['geom'] = self.b_map_acti
+        else :
+            self.fact_moon_b['geom'] = self.b_map
+            self.fact_moon2_b['geom'] = self.b_map
+        
+        if self.world.scene.sys.tilted :
+            self.fact_earth_b['geom'] = self.b_map_acti
+        else :
+            self.fact_earth_b['geom'] = self.b_map
+        
 
     def interfaceTask(self, task) :
         #update simulation speed indicator 

@@ -76,69 +76,11 @@ class World(ShowBase):
         self.travelling = False
         self.looking = None
         self.following = None
-        self.tilted = False
-        self.inclined = False
-        self.inclinedHard = False
         
         #InitialSettings
         self.look(self.sun)
         self.follow(self.home)
 
-
-    def toggleTilt(self) :
-        """earth tilt"""
-        if self.tilted:
-            inter = self.dummy_earth.hprInterval(TRAVELLEN,
-            (0, 0, 0),
-            blendType='easeIn')
-            inter.start()
-            self.fact_earth_b['geom'] = self.b_map
-            self.tilted = False
-        else :
-            inter = self.dummy_earth.hprInterval(TRAVELLEN,
-            (0, self.earthTilt, 0),
-            blendType='easeIn')
-            inter.start()
-            self.fact_earth_b['geom'] = self.b_map_acti
-            self.tilted = True
-
-    def toggleIncl(self) :
-        """moon realist inclination"""
-        if self.inclinedHard or self.inclined :
-            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
-            (0, 0, 0),
-            blendType='easeIn')
-            inter.start()
-            self.fact_moon_b['geom'] = self.b_map
-            self.fact_moon2_b['geom'] = self.b_map
-            self.inclined = False
-            self.inclinedHard = False
-        else :
-            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
-            (0, self.moonIncli, 0),
-            blendType='easeIn')
-            inter.start()
-            self.fact_moon_b['geom'] = self.b_map_acti
-            self.inclined = True
-            
-    def toggleInclHard(self) :
-        """moon exagerated inclination"""
-        if self.inclinedHard or self.inclined :
-            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
-            (0, 0, 0),
-            blendType='easeIn')
-            inter.start()
-            self.fact_moon_b['geom'] = self.b_map
-            self.fact_moon2_b['geom'] = self.b_map
-            self.inclined = False
-            self.inclinedHard = False
-        else :
-            inter = self.dummy_root_moon.hprInterval(TRAVELLEN,
-            (0, self.moonIncliHard, 0),
-            blendType='easeIn')
-            inter.start()
-            self.fact_moon2_b['geom'] = self.b_map_acti
-            self.inclinedHard = True
 
     def update_shadows(self) :
         '''hide/show tubular shadows'''

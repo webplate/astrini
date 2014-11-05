@@ -161,7 +161,9 @@ class Orbital(Planetoid) :
 
 
 class System(object) :
-    '''sun earth and moon'''
+    '''sun earth and moon
+    plus sky and lights
+    methods to do factual changes'''
     def __init__(self):
         self.initAstrofacts()
         self.loadPlanets()
@@ -170,6 +172,10 @@ class System(object) :
         
         self.loadSky()
         self.loadLight()
+        
+        self.tilted = False
+        self.inclined = False
+        self.inclinedHard = False
         
         # Add Tasks procedures to the task manager.
         #lower priority to prevent jitter of objects
@@ -249,8 +255,6 @@ class System(object) :
         self.sky = loader.loadModel("models/solar_sky_sphere")
         self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
         self.sky.setTexture(self.sky_tex, 1)
-        #~ self.sky.hide(BitMask32.bit(0))
-        self.sky.setScale(SKYRADIUS)
     
     def showSky(self) :
         self.sky.reparentTo(render)
@@ -265,7 +269,6 @@ class System(object) :
     def hideShadows(self) :
         for obj in self.orbitals :
             obj.hideShadow()
-            obj.hideOrbit()
     
     def showMarkers(self) :
         for obj in self.orbitals :
@@ -283,6 +286,7 @@ class System(object) :
         for obj in [self.sun, self.earth, self.moon] :
             obj.place()
         self.placeLight()
+        self.sky.setScale(10*self.earth.distance)
     
     def rotate(self, time) :
         for obj in [self.sun, self.earth, self.moon] :
@@ -297,7 +301,42 @@ class System(object) :
         self.moon.shadow.lookAt(self.sun.mod)
         self.place()
         return Task.cont
+    
+    def toggleTilt(self) :
+        """earth tilt"""
+        if self.tilted:
+            inter = self.earth.dummy.hprInterval(TRAVELLEN,
+            (0, 0, 0),
+            blendType='easeIn')
+            inter.start()
+            self.tilted = False
+        else :
+            inter = self.earth.dummy.hprInterval(TRAVELLEN,
+            (0, self.earthTilt, 0),
+            blendType='easeIn')
+            inter.start()
+            self.tilted = True
 
+    def toggleIncl(self, hard = False) :
+        """moon inclination"""
+        if self.inclined or self.inclinedHard :
+            inter = self.moon.dummy_root.hprInterval(TRAVELLEN,
+            (0, 0, 0),
+            blendType='easeIn')
+            inter.start()
+            self.inclined = False
+            self.inclinedHard = False
+        else :
+            if not hard :
+                value = self.moonIncli
+                self.inclined = True
+            else :
+                value = self.moonIncliHard
+                self.inclinedHard = True
+            inter = self.moon.dummy_root.hprInterval(TRAVELLEN,
+            (0, value, 0),
+            blendType='easeIn')
+            inter.start()
 
 
 def linInt(level, v1, v2) :
@@ -343,6 +382,7 @@ class Scene(object) :
     #
     #
     def time_is_now(self) :
+        self.simulSpeed = 1
         self.simulTime = datetime.utcnow()
     
     def changeSpeed(self, factor):

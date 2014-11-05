@@ -56,7 +56,7 @@ class World(ShowBase):
         ShowBase.__init__(self)
 
         #Scene initialization
-        self.scene = Scene()
+        self.scene = Scene(self)
         self.earth = self.scene.sys.earth.mod
         self.moon = self.scene.sys.moon.mod
         self.sun = self.scene.sys.sun.mod
@@ -100,7 +100,7 @@ class World(ShowBase):
             #and make updates before we actually follow it
             self.to_follow = identity
             #hide tubular shadow of followed object
-            #~ self.update_shadows()
+            self.scene.updateShadows()
             #stop flow of time while traveling
             slow, fast = self.scene.generate_speed_fade()
             travel = self.camera.posInterval(TRAVELLEN,
@@ -113,7 +113,7 @@ class World(ShowBase):
 
     def stop_look(self) :
         self.looking = None
-        
+
     def start_look(self, new) :
         self.looking = new
 
@@ -124,7 +124,7 @@ class World(ShowBase):
 
     def unlock_focus(self) :
         self.focus.wrtReparentTo(render)
-        
+
     def look(self, identity) :
         #if new target
         if self.looking != identity :

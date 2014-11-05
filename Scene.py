@@ -36,6 +36,8 @@ class Planetoid(object) :
         self.offset = offset
         self.load(tex)
         self.mod.reparentTo(render)
+        #the model gets the same name as the planetoid
+        self.mod.setName(self.name)
         
     def load(self, tex) :
         #load shape
@@ -349,7 +351,8 @@ def linInt(level, v1, v2) :
 
 class Scene(object) :
     '''system with time'''
-    def __init__(self):
+    def __init__(self, world) :
+        self.world = world
         self.loadEmpty()
         base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
         self.sys = System()
@@ -502,6 +505,7 @@ class Scene(object) :
         else :
             self.sys.showShadows()
             self.show_shadows = True
+        self.updateShadows()
     
     def toggleSky(self) :
         if self.show_stars :
@@ -519,29 +523,25 @@ class Scene(object) :
             self.sys.showMarkers()
             self.show_marks = True
 
-    #~ def update_shadows(self) :
-        #~ '''hide/show tubular shadows'''
-        #~ #show them all
-        #~ if self.show_shadows :
-            #~ self.moonShadow.reparentTo(self.moon)
-            #~ self.earthShadow.reparentTo(self.earth)
-        #~ #we shouldn't hide the same shadow if we are going to follow or 
-        #~ #already following
-        #~ if self.travelling :
-            #~ name = self.to_follow.getName()
-        #~ #shouldn't bug if we aren't following any
-        #~ elif not self.travelling and self.following != None :
-            #~ name = self.following.getName()
-        #~ else :
-            #~ name = None
-        #~ #specific hide
-        #~ if name == 'earth' :
-            #~ self.earthShadow.detachNode()
-        #~ elif name == 'moon' :
-            #~ self.moonShadow.detachNode()
+    def updateShadows(self) :
+        '''hide/show tubular shadows'''
+        #show them all
+        if self.show_shadows :
+            self.sys.moon.showShadow()
+            self.sys.earth.showShadow()
+        #we shouldn't hide the same shadow if we are going to follow or 
+        #already following
+        if self.world.travelling :
+            name = self.world.to_follow.getName()
+        #shouldn't bug if we aren't following any
+        elif not self.world.travelling and self.world.following != None :
+            name = self.world.following.getName()
+        else :
+            name = None
+        #specific hide
+        if name == 'earth' :
+            self.sys.earth.hideShadow()
+        elif name == 'moon' :
+            self.sys.moon.hideShadow()
 
-    #~ def shadowTask(self, task) :
-        #~ '''shadow should be hidden when on followed object'''
-        #~ 
-        #~ return Task.cont
     

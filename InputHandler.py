@@ -1,3 +1,4 @@
+# -*- coding: utf-8-*- 
 from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
 from pandac.PandaModules import *

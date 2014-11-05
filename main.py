@@ -44,36 +44,19 @@ from direct.task import Task
 from direct.interval.IntervalGlobal import *
 #interpolate function parameter
 from direct.interval.LerpInterval import LerpFunc
-# Default classes used to handle input and camera behaviour
+# Default classes
 from Camera import Camera
 from InputHandler import InputHandler
+from Scene import Scene
 #Drawing functions
 import graphics
-#a pypi package to get precise planetoids positions
-import astronomia.calendar as calendar
-import astronomia.lunar as lunar
-import astronomia.planets as planets
 #Misc imports
-from math import radians, degrees, tan
 from datetime import datetime, timedelta
 
 def linInt(level, v1, v2) :
     '''linearly interpolate between v1 and v2
     according to 0<level<1 '''
     return v1 * level + v2 * (1 - level)
-
-def nodeCoordIn2d(nodePath):
-    '''converts coord of node in render to coord in aspect2d'''
-    coord3d = nodePath.getPos(base.cam)
-    #elude objects behind camera
-    if coord3d[1] < 0 :
-        return Point3()
-    coord2d = Point2()
-    base.camLens.project(coord3d, coord2d)
-    coordInRender2d = Point3(coord2d[0], 0, coord2d[1])
-    coordInAspect2d = aspect2d.getRelativePoint(render2d,
-                        coordInRender2d)
-    return coordInAspect2d
 
 class World(ShowBase):  
     def __init__(self):
@@ -85,20 +68,25 @@ class World(ShowBase):
 
         ShowBase.__init__(self)
 
-        #wrapper around camera
-        self.Camera = Camera(self)
+        
 
         #load fonts
         self.condensed_font = loader.loadFont('fonts/Ubuntu-C.ttf')
         self.mono_font = loader.loadFont('fonts/UbuntuMono-R.ttf')
 
         #Scene initialization
-        self.initAstrofacts()
-        self.initEmpty()
-        self.initScene()
+        self.simulSpeed = 1
+        self.time_is_now()
+        self.scene = Scene()
+        self.earth = self.scene.sys.earth.mod
+        self.moon = self.scene.sys.moon.mod
+        self.sun = self.scene.sys.sun.mod
+        self.home = self.scene.home
+        self.focus = self.scene.focus
         #Interface
         self.loadInterface()
-        
+        #wrapper around camera
+        self.Camera = Camera(self)
         #mouse and keyboard inputs
         self.InputHandler = InputHandler(self)
         
@@ -116,112 +104,14 @@ class World(ShowBase):
         self.show_marks = False
         self.realist_scale = False
         # Add Tasks procedures to the task manager.
-        #low priority to prevent jitter of camera
-        self.taskMgr.add(self.lockTask, "lockTask", priority=25)
         self.taskMgr.add(self.timeTask, "timeTask")
         #do not update interface every frame (no use slowdown)
         self.taskMgr.doMethodLater(INTERFACEDELAY, self.interfaceTask, "interfaceTask")
-        self.taskMgr.add(self.positionTask, "positionTask")
         
         #InitialSettings
         self.look(self.sun)
         self.follow(self.home)
         #~ self.simulTime = datetime(9998, 3, 20)
-
-    def initAstrofacts(self) :
-        '''variables to control the relative speeds of spinning and orbits in the
-        simulation'''
-        #Number of days a full rotation of Earth around the sun should take
-        self.yearscale = EARTHREVO
-
-        self.ua =  UA_F          #Orbit scale (fantasist)
-        self.earthradius = EARTHRADIUS_F             #Planet size scale
-        self.moonradius = MOONRADIUS_F
-        self.sunradius = SUNRADIUS_F
-        self.moonax = MOONAX_F
-        self.earthTilt = EARTHTILT
-        self.moonTilt = MOONTILT
-        self.moonIncli = MOONINCL
-        self.moonIncliHard = MOONINCL_F
-
-    def initEmpty(self) :
-        #Create the dummy nodes
-        self.home = render.attachNewNode('home')
-        self.home.setName('home')
-        self.focus = render.attachNewNode('focus')
-        self.focus.setName('focus')
-
-    def initScene(self) :
-        self.simulSpeed = 1
-        self.time_is_now()
-        
-        #computations of planetoids positions
-        self.moon_coord = lunar.Lunar()
-        self.system_coord = planets.VSOP87d()
-        
-        base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
-        self.loadPlanets()                #Load and position the models
-        self.loadShadows()
-        self.loadMarkers()
-        self.loadOrbits()
-        self.loadLight()                # light the scene
-        #position and scale all loaded
-        self.placeAll()
-
-    def loadLight(self):
-        #invisible spotlight to activate shadow casting (bypass bug)
-        self.unspot = render.attachNewNode(Spotlight("Invisible spot"))
-        self.unspot.setPos(0,0,self.ua)
-        self.unspot.setHpr(0,90,0)
-        self.unspot.node().getLens().setNearFar(0,0)
-        render.setLight(self.unspot)
-        
-        #the light on the earth system
-        self.light = render.attachNewNode(DirectionalLight("SunLight"))
-        self.light.setPos(0,0,0)
-        self.light.node().setScene(render)
-        self.light.node().setShadowCaster(True, 2048, 2048)
-        #~ self.light.node().showFrustum()
-        # a mask to define objects unaffected by light
-        self.light.node().setCameraMask(BitMask32.bit(0)) 
-        render.setLight(self.light)
-
-        self.alight = render.attachNewNode(AmbientLight("Ambient"))
-        p = 0.15
-        self.alight.node().setColor(Vec4(p, p, p, 1))
-        render.setLight(self.alight)
-
-        # Create a special ambient light specially for the sun
-        # so that it appears bright
-        self.ambientLava = self.render.attachNewNode(AmbientLight("AmbientForLava"))
-        self.sun.setLight(self.ambientLava)
-        self.sky.setLight(self.ambientLava)
-        #Special light fo markers
-        self.ambientMark = render.attachNewNode(AmbientLight("AmbientMark"))
-        self.ambientMark.node().setColor(Vec4(0.8, 0.4, 0, 1))
-        self.sunMarker.setLight(self.ambientMark)
-        self.earthMarker.setLight(self.ambientMark)
-        self.moonMarker.setLight(self.ambientMark)
-        self.earthAxMarker.setLight(self.ambientMark)
-        self.earth_orbitline.setLight(self.ambientMark)
-        self.moon_orbitline.setLight(self.ambientMark)
-
-        # Important! Enable the shader generator.
-        render.setShaderAuto()
-    
-    def placeLight(self) :
-        self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
-        self.light.node().getLens().setNearFar(self.ua - self.moonax, self.ua + self.moonax)
-    
-    def placeCamera(self) :
-        #Compute camera-sun distance from fov
-        fov = self.Camera.getFov()[0]
-        margin = self.ua / 3
-        c_s_dist = (self.ua + margin) / tan(radians(fov/2))
-        self.home.setPos(0, -c_s_dist,self.ua/3)
-        #Camera initialization
-        camera.setPos(self.home.getPos())
-        camera.lookAt(self.focus)
     
     def time_is_now(self) :
         self.simulTime = datetime(9998, 3, 20)
@@ -484,170 +374,6 @@ class World(ShowBase):
         self.moonax = linInt(value, MOONAX, MOONAX_F)
         #and reposition system according to new values
         self.placeAll()
-        
-    def loadOrbits(self) :
-        #Draw orbits
-        self.earth_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
-        self.earth_orbitline.setHpr( 0, 90,0)
-        
-        self.moon_orbitline = graphics.makeArc(360, ORBITRESOLUTION)
-        self.moon_orbitline.setHpr( 0, 90,0)
-        
-        for obj in [self.earth_orbitline, self.moon_orbitline] :
-            #Camera position shouldn't make these actors disappear
-            obj.node().setBounds(OmniBoundingVolume())
-            obj.node().setFinal(True)
-            # orbits are not affected by sunlight
-            obj.hide(BitMask32.bit(0))
-    
-    def placeOrbits(self) :
-        self.earth_orbitline.setScale(self.ua)
-        self.moon_orbitline.setScale(self.moonax)
-
-    def loadPlanets(self):
-        #Create the dummy nodes
-        self.dummy_root_earth = render.attachNewNode('dummy_root_earth')
-        self.root_earth = self.dummy_root_earth.attachNewNode('root_earth')
-        
-        self.earth_system = self.root_earth.attachNewNode('earth_system')
-        
-        self.dummy_earth = self.earth_system.attachNewNode('dummy_earth')
-        self.dummy_earth.setEffect(CompassEffect.make(render))
-        
-        #The moon orbits Earth, not the sun
-        self.dummy_root_moon = self.earth_system.attachNewNode('dummy_root_moon')
-        self.dummy_root_moon.setEffect(CompassEffect.make(render))
-        
-        self.root_moon = self.dummy_root_moon.attachNewNode('root_moon')
-        
-        self.moon_system = self.root_moon.attachNewNode('moon_system')
-        
-        self.dummy_moon = self.moon_system.attachNewNode('dummy_moon')
-        self.dummy_moon.setHpr(0, self.moonTilt, 0)
-        self.dummy_moon.setEffect(CompassEffect.make(render))
-        
-        #Load the sky
-        self.sky = loader.loadModel("models/solar_sky_sphere")
-        self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
-        self.sky.setTexture(self.sky_tex, 1)
-        self.sky.hide(BitMask32.bit(0))
-
-        #Load the Sun
-        self.sun = loader.loadModel("models/planet_sphere")
-        #this particuar node should have a usable name
-        self.sun.setName('sun')
-        self.sun_tex = loader.loadTexture("models/sun_1k_tex.jpg")
-        self.sun.setTexture(self.sun_tex, 1)
-        self.sun.reparentTo(render)
-        self.sun.hide(BitMask32.bit(0))
-
-        #Load Earth
-        self.earth = loader.loadModel("models/planet_sphere")
-        self.earth.setName('earth')
-        self.earth_tex = loader.loadTexture("models/earth_1k_tex.jpg")
-        self.earth.setTexture(self.earth_tex, 1)
-        self.earth.reparentTo(self.dummy_earth)
-        
-        #Load the moon
-        self.moon = loader.loadModel("models/planet_sphere")
-        self.moon.setName('moon')
-        self.moon_tex = loader.loadTexture("models/moon_1k_tex.jpg")
-        self.moon.setTexture(self.moon_tex, 1)
-        self.moon.reparentTo(self.dummy_moon)
-        
-        #Camera position shouldn't make these actors disappear
-        for obj in [self.earth, self.sun, self.moon] :
-            obj.node().setBounds(OmniBoundingVolume())
-            obj.node().setFinal(True)
-    
-    def placePlanets(self) :
-        '''position planetoids on orbits, set distance from their gravitationnal
-        center, scale planetoids'''
-        self.earth_system.setPos(self.ua,0,0)
-        self.moon_system.setPos(self.moonax, 0, 0)
-        
-        self.sky.setScale(10 *self.ua)
-        self.sun.setScale(self.sunradius)
-        self.earth.setScale(self.earthradius)
-        self.moon.setScale(self.moonradius)
-    
-    def rotatePlanets(self) :
-        '''positions planetoids according to time of simulation'''
-        #time in days
-        now = self.simulTime
-        julian_time = calendar.cal_to_jde(now.year, now.month, now.day,
-        now.hour, now.minute, now.second, gregorian=True)
-        
-        self.sun.setHpr((360 / SUNROT) * julian_time % 360, 0, 0)
-
-        if USEEPHEM :
-            #REALIST MODE (BUT SLOW!!)
-            longi = self.system_coord.dimension(julian_time, 'Earth', 'L')
-            lati = self.system_coord.dimension(julian_time, 'Earth', 'B')
-            self.dummy_root_earth.setHpr(0, degrees(lati), 0)
-            self.root_earth.setHpr(degrees(longi), 0, 0)
-            self.earth.setHpr(360 * julian_time % 360, 0, 0)
-            
-            longi = self.moon_coord.dimension(julian_time, 'L')
-            lati = self.moon_coord.dimension(julian_time, 'B')
-            self.dummy_root_moon.setHpr(0, degrees(lati), 0)
-            self.root_moon.setHpr(degrees(longi), 0, 0)
-            self.moon.setHpr((360 / MOONROT) * julian_time % 360 + 110, 0, 0)
-        else :
-            #SIMPLISTIC MODEL
-            self.root_earth.setHpr(
-            ((360 / self.yearscale) * julian_time % 360) -EPHEMSIMPLESET,
-            0, 0)
-            self.earth.setHpr(360 * julian_time % 360, 0, 0)
-            
-            self.root_moon.setHpr((360 / MOONREVO) * julian_time % 360, 0, 0)
-            #correction of 25 degrees to align correct moon face
-            self.moon.setHpr((360 / MOONROT) * julian_time % 360 - 25, 0, 0)
-
-    def loadShadows(self) :
-        '''black areas to show the casted sadows'''
-        self.earthShadow = loader.loadModel("models/tube")
-        self.earthShadow.setTransparency(TransparencyAttrib.MAlpha)
-        self.earthShadow.setColor(0,0,0,0.5)
-        self.earthShadow.setSy(1000)
-
-        self.moonShadow = loader.loadModel("models/tube")        
-        self.moonShadow.setTransparency(TransparencyAttrib.MAlpha)
-        self.moonShadow.setColor(0,0,0,0.5)
-        self.moonShadow.setSy(1000)
-
-    def loadMarkers(self) :
-        #Sun
-        #Create always visible marker
-        self.sunMarker = graphics.makeArc()
-        self.sunMarker.setScale(MARKERSCALE)
-        #Earth
-        #Create always visible marker
-        self.earthMarker = graphics.makeArc()
-        self.earthMarker.setScale(MARKERSCALE)
-        #Show orientation
-        self.earthAxMarker = graphics.makeCross()
-        self.earthAxMarker.hide(BitMask32.bit(0))# markers are not affected by sunlight
-        #the moon
-        #Create always visible marker
-        self.moonMarker = graphics.makeArc()
-        self.moonMarker.setScale(MARKERSCALE)
-
-    def placeMarkers(self) :
-        '''set position and scale of markers'''
-        self.earthAxMarker.setScale(4*self.earthradius)
-        
-        self.sunMarker.setPos(nodeCoordIn2d(self.sun))
-        self.moonMarker.setPos(nodeCoordIn2d(self.moon))
-        self.earthMarker.setPos(nodeCoordIn2d(self.earth))
-
-
-    def placeAll(self) :
-        self.placeCamera()
-        self.placePlanets()
-        self.placeMarkers()
-        self.placeOrbits()
-        self.placeLight()
 
 
     def loadInterface(self) :
@@ -922,21 +648,6 @@ class World(ShowBase):
     #
     ## TASKS :
     #
-    def lockTask(self, task) :
-        """alignment contraints""" 
-        #lighting follows earth
-        self.light.lookAt(self.earth)
-        #align if necessary
-        if self.following != None :
-                camera.setPos(self.following.getPos(self.render))
-        if self.looking != None :
-                camera.lookAt(self.focus)
-        #casted shadows should remain aligned with sun
-        self.earthShadow.lookAt(self.sun)
-        self.moonShadow.lookAt(self.sun)
-        #place markers on their targets
-        self.placeMarkers()
-        return Task.cont
         
     def timeTask(self, task) :
         #keep simulation time updated each frame
@@ -966,11 +677,6 @@ class World(ShowBase):
         if PRINTTIMING :
             print self.taskMgr
         return Task.again
-
-    def positionTask(self, task) :    
-        #update planetoids positions
-        self.rotatePlanets()
-        return Task.cont
 
 #a virtual argument to bypass packing bug
 def main(arg=None):

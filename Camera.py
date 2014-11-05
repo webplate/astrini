@@ -1,8 +1,9 @@
+# -*- coding: utf-8-*- 
 from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
 from pandac.PandaModules import *
 
-import math 
+from math import tan, radians
 
 #My Global config variables
 from config import *
@@ -173,8 +174,10 @@ class Camera(DirectObject):
         #default config when just opened
         self.mm.showMouse()
         self.setUtilsActive()
+        self.placeCameraHome()
+        taskMgr.add(self.lockCameraTask, "lockCameraTask")
         
-        self.setNearFar(1.0,10000 * UA)
+        self.setNearFar(0.1,10000 * UA)
         self.setFov(45)
     
     def getFov(self):
@@ -226,3 +229,20 @@ class Camera(DirectObject):
             self.world.InputHandler.setInactive()
         #switching camera in any case
         self.toggleState()
+
+    def placeCameraHome(self) :
+        #Compute camera-sun distance from fov
+        fov = self.getFov()[0]
+        ua = self.world.scene.sys.ua
+        margin = ua / 3
+        c_s_dist = (ua + margin) / tan(radians(fov/2))
+        self.world.home.setPos(0, -c_s_dist,ua/3)
+
+    def lockCameraTask(self, task) :
+        """alignment contraints""" 
+        #align if necessary
+        if self.world.following != None :
+            camera.setPos(self.world.following.getPos(render))
+        if self.world.looking != None :
+            camera.lookAt(self.world.focus)
+        return Task.cont

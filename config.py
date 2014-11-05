@@ -26,6 +26,7 @@ EPHEMSIMPLESET = 18.7399468035 #correction to align equinox in simple model
 
 #Interface settings
 PRINTTIMING = False #show Task manager statistics
+SHOWFRUSTRUM = True
 INTERFACEDELAY = 0.1
 BUTTONSIZE = 48, 16
 
@@ -38,6 +39,7 @@ MAXSPEED = 70000000
 #Marker and orbitlines settings
 ORBITRESOLUTION = 256
 MARKERSCALE = 0.02
+SKYRADIUS = 1000
 
 #multiplier to avoid working with very high numbers
 multiplier = 1 / 10000.

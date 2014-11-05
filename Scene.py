@@ -165,9 +165,12 @@ class System(object) :
     def __init__(self):
         self.initAstrofacts()
         self.loadPlanets()
+        self.system = [self.sun, self.earth, self.moon]
+        self.orbitals = [self.earth, self.moon]
+        
         self.loadSky()
         self.loadLight()
-        self.system = [self.sun, self.earth, self.moon]
+        
         # Add Tasks procedures to the task manager.
         #lower priority to prevent jitter of objects
         taskMgr.add(self.lockTask, "lockTask", priority=26)
@@ -209,7 +212,8 @@ class System(object) :
         self.light.setPos(0,0,0)
         self.light.node().setScene(render)
         self.light.node().setShadowCaster(True, 2048, 2048)
-        self.light.node().showFrustum()
+        if SHOWFRUSTRUM :
+            self.light.node().showFrustum()
         # a mask to define objects unaffected by light
         self.light.node().setCameraMask(BitMask32.bit(0)) 
         render.setLight(self.light)
@@ -227,10 +231,10 @@ class System(object) :
         #Special light fo markers
         self.ambientMark = render.attachNewNode(AmbientLight("AmbientMark"))
         self.ambientMark.node().setColor(Vec4(0.8, 0.4, 0, 1))
-        for obj in [self.sun, self.earth, self.moon] :
+        for obj in self.system :
             obj.marker.setLight(self.ambientMark)
             obj.axis.setLight(self.ambientMark)
-        for obj in [self.earth, self.moon] :
+        for obj in self.orbitals :
             obj.orbit_line.setLight(self.ambientMark)
 
         # Important! Enable the shader generator.
@@ -246,6 +250,34 @@ class System(object) :
         self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
         self.sky.setTexture(self.sky_tex, 1)
         #~ self.sky.hide(BitMask32.bit(0))
+        self.sky.setScale(SKYRADIUS)
+    
+    def showSky(self) :
+        self.sky.reparentTo(render)
+    
+    def hideSky(self) :
+        self.sky.detachNode()
+    
+    def showShadows(self) :
+        for obj in self.orbitals :
+            obj.showShadow()
+    
+    def hideShadows(self) :
+        for obj in self.orbitals :
+            obj.hideShadow()
+            obj.hideOrbit()
+    
+    def showMarkers(self) :
+        for obj in self.orbitals :
+            obj.showMarker()
+            obj.showOrbit()
+        self.earth.showAxis()
+
+    def hideMarkers(self) :
+        for obj in self.orbitals :
+            obj.hideMarker()
+            obj.hideOrbit()
+        self.earth.hideAxis()
 
     def place(self) :
         for obj in [self.sun, self.earth, self.moon] :
@@ -290,19 +322,15 @@ class Scene(object) :
         self.time_is_now()
         
         self.realist_scale = False
+        
+        self.show_shadows = False
+        self.show_stars = False
+        self.show_marks = False
 
         # Add Tasks procedures to the task managers.
         taskMgr.add(self.timeTask, "timeTask", priority = 1)
         taskMgr.add(self.placeTask, "placeTask", priority = 2)
         
-        for obj in self.sys.system :
-            obj.showMarker()
-        
-        self.sys.earth.showShadow()
-        self.sys.earth.showOrbit()
-        self.sys.earth.showAxis()
-        self.sys.moon.showShadow()
-        self.sys.moon.showOrbit()
 
     def loadEmpty(self) :
         #Create the dummy nodes
@@ -430,3 +458,28 @@ class Scene(object) :
         self.sys.place()
         self.sys.rotate(self.time())
         return Task.cont
+    
+    #Vizualisation control
+    def toggleShadows(self) :
+        if self.show_shadows :
+            self.sys.hideShadows()
+            self.show_shadows = False
+        else :
+            self.sys.showShadows()
+            self.show_shadows = True
+    
+    def toggleSky(self) :
+        if self.show_stars :
+            self.sys.hideSky()
+            self.show_stars = False
+        else :
+            self.sys.showSky()
+            self.show_stars = True
+    
+    def toggleMarks(self) :
+        if self.show_marks :
+            self.sys.hideMarkers()
+            self.show_marks = False
+        else :
+            self.sys.showMarkers()
+            self.show_marks = True

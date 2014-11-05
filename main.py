@@ -79,125 +79,11 @@ class World(ShowBase):
         self.tilted = False
         self.inclined = False
         self.inclinedHard = False
-        self.show_shadows = False
-        self.show_stars = False
-        self.show_marks = False
         
         #InitialSettings
         self.look(self.sun)
         self.follow(self.home)
-    
 
-    def toggleShadows(self) :
-        if self.show_shadows :
-            self.shadow_b['geom'] = self.b_map
-            self.earthShadow.detachNode()
-            self.moonShadow.detachNode()
-            self.show_shadows = False
-        else :
-            self.shadow_b['geom'] = self.b_map_acti
-            self.earthShadow.reparentTo(self.earth)
-            self.moonShadow.reparentTo(self.moon)
-            self.show_shadows = True
-        self.update_shadows()
-    
-    def toggleStars(self) :
-        if self.show_stars :
-            self.star_b['geom'] = self.b_map
-            self.sky.detachNode()
-            self.show_stars = False
-        else :
-            self.star_b['geom'] = self.b_map_acti
-            self.sky.reparentTo(render)
-            self.show_stars = True
-    
-    def toggleMarks(self) :
-        if self.show_marks :
-            self.mark_b['geom'] = self.b_map
-            nodes = [ self.earthAxMarker,
-            self.sunMarker,
-            self.moonMarker,
-            self.earthMarker, 
-            self.earth_orbitline,
-            self.moon_orbitline ]
-        
-            for n in nodes :
-                n.detachNode()
-
-            self.show_marks = False
-        else :
-            self.mark_b['geom'] = self.b_map_acti
-            
-            self.earthAxMarker.reparentTo(self.earth)
-            self.sunMarker.reparentTo(aspect2d)
-            self.moonMarker.reparentTo(aspect2d)
-            self.earthMarker.reparentTo(aspect2d)
-            self.earth_orbitline.reparentTo(self.root_earth)
-            self.moon_orbitline.reparentTo(self.root_moon)
-            
-            self.show_marks = True
-        
-    def get_curr_look_rel_pos(self) :
-        return self.to_look.getPos(render)
-        
-    def get_curr_follow_rel_pos(self) :
-        return self.to_follow.getPos(render)
-
-    def stop_follow(self) :
-        self.following = None
-
-    def start_follow(self, new) :
-        self.travelling = False
-        self.following = new
-
-    def follow(self, identity):
-        #if new destination and not already trying to reach another
-        if self.following != identity and not self.travelling :
-            self.travelling = True
-            #to be able to capture its position during sequence
-            #and make updates before we actually follow it
-            self.to_follow = identity
-            #hide tubular shadow of followed object
-            self.update_shadows()
-            #stop flow of time while traveling
-            slow, fast = self.scene.generate_speed_fade()
-            travel = self.camera.posInterval(TRAVELLEN,
-            self.get_curr_follow_rel_pos,
-            blendType='easeInOut')
-            #slow sim, release, travel, lock and resume speed
-            sequence = Sequence(slow, Func(self.stop_follow),
-            travel, Func(self.start_follow, identity), fast)
-            sequence.start()
-            
-
-    def stop_look(self) :
-        self.looking = None
-        
-    def start_look(self, new) :
-        self.looking = new
-
-    def lock_focus(self) :
-        self.looking = self.to_look
-        self.focus.reparentTo(self.looking)
-        self.focus.setPos(0, 0, 0)
-
-    def unlock_focus(self) :
-        self.focus.wrtReparentTo(render)
-        
-    def look(self, identity) :
-        #if new target
-        if self.looking != identity :
-            #store new to get actual position and update interface
-            self.to_look = identity
-            #stop flow of time while changing focus
-            slow, fast = self.scene.generate_speed_fade()
-            
-            travel = self.focus.posInterval(FREEZELEN,
-            self.get_curr_look_rel_pos,
-            blendType='easeInOut')
-            sequence = Sequence(slow, Func(self.unlock_focus),
-                travel, Func(self.lock_focus), fast)
-            sequence.start()
 
     def toggleTilt(self) :
         """earth tilt"""
@@ -274,6 +160,72 @@ class World(ShowBase):
             self.earthShadow.detachNode()
         elif name == 'moon' :
             self.moonShadow.detachNode()
+
+
+
+
+
+    def get_curr_look_rel_pos(self) :
+        return self.to_look.getPos(render)
+        
+    def get_curr_follow_rel_pos(self) :
+        return self.to_follow.getPos(render)
+
+    def stop_follow(self) :
+        self.following = None
+
+    def start_follow(self, new) :
+        self.travelling = False
+        self.following = new
+
+    def follow(self, identity):
+        #if new destination and not already trying to reach another
+        if self.following != identity and not self.travelling :
+            self.travelling = True
+            #to be able to capture its position during sequence
+            #and make updates before we actually follow it
+            self.to_follow = identity
+            #hide tubular shadow of followed object
+            #~ self.update_shadows()
+            #stop flow of time while traveling
+            slow, fast = self.scene.generate_speed_fade()
+            travel = self.camera.posInterval(TRAVELLEN,
+            self.get_curr_follow_rel_pos,
+            blendType='easeInOut')
+            #slow sim, release, travel, lock and resume speed
+            sequence = Sequence(slow, Func(self.stop_follow),
+            travel, Func(self.start_follow, identity), fast)
+            sequence.start()
+            
+
+    def stop_look(self) :
+        self.looking = None
+        
+    def start_look(self, new) :
+        self.looking = new
+
+    def lock_focus(self) :
+        self.looking = self.to_look
+        self.focus.reparentTo(self.looking)
+        self.focus.setPos(0, 0, 0)
+
+    def unlock_focus(self) :
+        self.focus.wrtReparentTo(render)
+        
+    def look(self, identity) :
+        #if new target
+        if self.looking != identity :
+            #store new to get actual position and update interface
+            self.to_look = identity
+            #stop flow of time while changing focus
+            slow, fast = self.scene.generate_speed_fade()
+            
+            travel = self.focus.posInterval(FREEZELEN,
+            self.get_curr_look_rel_pos,
+            blendType='easeInOut')
+            sequence = Sequence(slow, Func(self.unlock_focus),
+                travel, Func(self.lock_focus), fast)
+            sequence.start()
 
 #a virtual argument to bypass packing bug
 def main(arg=None):

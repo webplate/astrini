@@ -171,11 +171,11 @@ class Interface(object) :
         #Visualization changes
         j += 4
         add_label('Display : ', 1, j, b_cont)
-        self.shadow_b = add_button('Shadow', 0, j+1, self.world.toggleShadows,
+        self.shadow_b = add_button('Shadow', 0, j+1, self.world.scene.toggleShadows,
         [], b_cont)
-        self.mark_b = add_button('Mark', 1, j+1, self.world.toggleMarks,
+        self.mark_b = add_button('Mark', 1, j+1, self.world.scene.toggleMarks,
         [], b_cont)
-        self.star_b = add_button('Stars', 2, j+1, self.world.toggleStars,
+        self.star_b = add_button('Stars', 2, j+1, self.world.scene.toggleSky,
         [], b_cont)
         
         #hidden dialogs
@@ -283,6 +283,21 @@ class Interface(object) :
             self.fact_scale_b['geom'] = self.b_map_acti
         else :
             self.fact_scale_b['geom'] = self.b_map
+            
+        if self.world.scene.show_shadows :
+            self.shadow_b['geom'] = self.b_map_acti
+        else :
+            self.shadow_b['geom'] = self.b_map
+
+        if self.world.scene.show_stars :
+            self.star_b['geom'] = self.b_map_acti
+        else :
+            self.star_b['geom'] = self.b_map
+
+        if self.world.scene.show_marks :
+            self.mark_b['geom'] = self.b_map_acti
+        else :
+            self.mark_b['geom'] = self.b_map
 
     def interfaceTask(self, task) :
         #update simulation speed indicator 

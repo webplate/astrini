@@ -28,7 +28,7 @@ EPHEMSIMPLESET = 18.7399468035 #correction to align equinox in simple model
 PRINTTIMING = False #show Task manager statistics
 SHOWFRUSTRUM = False
 CAMERAFAR = 10**5
-INTERFACEDELAY = 0.1
+INTERFACEDELAY = 0.5
 BUTTONSIZE = 48, 16
 
 #duration in sec of soft transitions

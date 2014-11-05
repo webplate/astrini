@@ -23,6 +23,7 @@ class Interface(object) :
         self.loadInterface()
         #do not update interface every frame (no use slowdown)
         taskMgr.doMethodLater(INTERFACEDELAY, self.interfaceTask, "interfaceTask")
+        taskMgr.add(self.buttonsTask, "buttonsTask", priority=5)
 
     def loadInterface(self) :
         paths = ('images/button_ready.png',
@@ -322,9 +323,13 @@ class Interface(object) :
         new_time = self.world.scene.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]
-        #buttons should reflect what camera is following or looking at
-        self.update_buttons()
         #show task timing for debug
         if PRINTTIMING :
             print taskMgr
+        return Task.again
+    
+    def buttonsTask(self, task) :
+        #buttons should reflect what camera is following or looking at
+        self.update_buttons()
+        #show task timing for debug
         return Task.again

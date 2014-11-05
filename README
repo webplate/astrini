@@ -5,7 +5,7 @@ requires :
     panda3D SDK (panda3d.org)
     numpy
 
-CAMERA CONTROL (PERSPECTIVAL CHANGES):
+CAMERA CONTROL:
     TAB - toggle free camera
     Mouse - move camera
     Z - Move camera
@@ -25,7 +25,3 @@ CAMERA CONTROL (PERSPECTIVAL CHANGES):
 
     A - stop following
     W - stop looking at
-
-FACTUAL CHANGES:
-    shift-E	to toggle earth tilt
-    shift-R to toggle moon inclination

@@ -48,8 +48,6 @@ from Camera import Camera
 from InputHandler import InputHandler
 from Scene import Scene
 from Interface import Interface
-#Drawing functions
-import graphics
 #Misc imports
 from datetime import datetime, timedelta
 
@@ -137,7 +135,7 @@ class World(ShowBase):
     def toggleSpeed(self):
         if not self.paused :
             self.previousSpeed = self.simulSpeed
-            self.simulSpeed = MINSPEED
+            self.simulSpeed = 0.
             #change button appearance
             self.pause_b['geom'] = self.b_map_acti
             self.paused = True
@@ -215,9 +213,9 @@ class World(ShowBase):
         #generate intervals to fade in and out from previous speed
         prev_speed = self.simulSpeed
         slow = LerpFunc(self.setSpeed, FREEZELEN,
-        prev_speed, MINSPEED)
+        prev_speed, 0.)
         fast = LerpFunc(self.setSpeed, FREEZELEN,
-        MINSPEED, prev_speed)
+        0., prev_speed)
         return slow, fast
 
     def stop_follow(self) :
@@ -390,11 +388,6 @@ class World(ShowBase):
             self.earthShadow.detachNode()
         elif name == 'moon' :
             self.moonShadow.detachNode()
-    
-    #
-    #
-    ## TASKS :
-    #
         
     def timeTask(self, task) :
         #keep simulation time updated each frame
@@ -407,7 +400,7 @@ class World(ShowBase):
                 self.simulTime =  datetime.min
             else :
                 self.simulTime = datetime.max
-            self.simulSpeed = MINSPEED
+            self.simulSpeed = 0.
         return Task.cont
 
 #a virtual argument to bypass packing bug

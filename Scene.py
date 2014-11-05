@@ -25,13 +25,13 @@ def nodeCoordIn2d(nodePath):
 
 class Planetoid(object) :
     '''rotating spherical model with markers'''
-    def __init__(self, name, parent, tex, radius, period = 1, offset = 0) :
+    def __init__(self, name, tex, radius, period = 1, offset = 0) :
         self.name = name
         self.radius = radius
         self.period = period
         self.offset = offset
         self.load(tex)
-        self.mod.reparentTo(parent)
+        self.mod.reparentTo(render)
         
     def load(self, tex) :
         #load shape
@@ -51,7 +51,7 @@ class Planetoid(object) :
     
         #marker of orientation
         self.axis = graphics.makeCross()
-    
+        
     def showMarker(self) :
         '''always visible spot on target'''
         self.marker.reparentTo(aspect2d)
@@ -81,17 +81,35 @@ class Planetoid(object) :
 class Orbital(Planetoid) :
     '''planetoid with an orbit, shadow
     distance from orbit root'''
-    def __init__(self, name, parent, tex, radius, period, offset,
-    root, system, orbit_period, orbit_offset, distance) :
-        Planetoid.__init__(self, name, parent, tex, radius, period , offset)
-        self.root = root
-        self.system = system
+    def __init__(self, name, tex, radius, period, offset,
+    root_system, orbit_period, orbit_offset, distance) :
+        Planetoid.__init__(self, name, tex, radius, period , offset)
+        self.root_system = root_system
         self.orbit_period = orbit_period
         self.orbit_offset = orbit_offset
         self.distance = distance
         
+        self.loadDummy()
         self.loadShadow()
         self.loadOrbit()
+    
+    def loadDummy(self) :
+        '''Create the dummy nodes, the skeleton of the system'''
+        self.dummy_root = self.root_system.attachNewNode('dummy_root')
+        self.dummy_root.setEffect(CompassEffect.make(render))
+
+        self.dummy_root = self.root_system.attachNewNode('dummy_root')
+        self.dummy_root.setEffect(CompassEffect.make(render))
+
+        self.root = self.dummy_root.attachNewNode('root')
+
+        self.system = self.root.attachNewNode('system')
+        
+        self.dummy = self.system.attachNewNode('dummy')
+        self.dummy.setEffect(CompassEffect.make(render))
+        
+        #parent to get relative positionning
+        self.mod.reparentTo(self.dummy)
     
     def orbit(self, julian_time) :
         self.root.setHpr(
@@ -99,6 +117,7 @@ class Orbital(Planetoid) :
         0, 0)
     
     def rotate(self, time) :
+        '''rotate on itself and around gravity center'''
         Planetoid.rotate(self, time)
         self.orbit(time)
     
@@ -142,12 +161,13 @@ class System(object) :
     def __init__(self):
         self.initAstrofacts()
         self.loadPlanets()
+        self.loadSky()
         self.loadLight()
         self.system = [self.sun, self.earth, self.moon]
         # Add Tasks procedures to the task manager.
         #lower priority to prevent jitter of objects
         taskMgr.add(self.lockTask, "lockTask", priority=26)
-    
+
     def initAstrofacts(self) :
         '''variables to control the relative speeds of spinning and orbits in the
         simulation'''
@@ -165,42 +185,15 @@ class System(object) :
         self.moonIncliHard = MOONINCL_F
         
     def loadPlanets(self):
-        #Create the dummy nodes
-        #the skeleton of the system
-        self.dummy_root_earth = render.attachNewNode('dummy_root_earth')
-        self.root_earth = self.dummy_root_earth.attachNewNode('root_earth')
-        
-        self.earth_system = self.root_earth.attachNewNode('earth_system')
-        
-        self.dummy_earth = self.earth_system.attachNewNode('dummy_earth')
-        self.dummy_earth.setEffect(CompassEffect.make(render))
-        
-        #The moon orbits Earth, not the sun
-        self.dummy_root_moon = self.earth_system.attachNewNode('dummy_root_moon')
-        self.dummy_root_moon.setEffect(CompassEffect.make(render))
-        
-        self.root_moon = self.dummy_root_moon.attachNewNode('root_moon')
-        
-        self.moon_system = self.root_moon.attachNewNode('moon_system')
-        
-        self.dummy_moon = self.moon_system.attachNewNode('dummy_moon')
-        self.dummy_moon.setEffect(CompassEffect.make(render))
-        
-        #Load the sky
-        self.sky = loader.loadModel("models/solar_sky_sphere")
-        self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
-        self.sky.setTexture(self.sky_tex, 1)
-        #~ self.sky.hide(BitMask32.bit(0))
-                
-        self.sun = Planetoid('sun', render, 'sun_1k_tex.jpg',
+        self.sun = Planetoid('sun', 'sun_1k_tex.jpg',
         self.sunradius, SUNROT, 0)
         
-        self.earth = Orbital('earth', self.dummy_earth, 'earth_1k_tex.jpg',
-        self.earthradius, 1, 0, self.root_earth, self.earth_system,
+        self.earth = Orbital('earth', 'earth_1k_tex.jpg',
+        self.earthradius, 1, 0, render,
         self.yearscale, -EPHEMSIMPLESET, self.ua)
                 
-        self.moon = Orbital('moon', self.dummy_moon, 'moon_1k_tex.jpg',
-        self.moonradius, MOONROT, -25, self.root_moon, self.moon_system,
+        self.moon = Orbital('moon', 'moon_1k_tex.jpg',
+        self.moonradius, MOONROT, -25, self.earth.system,
         MOONREVO, 0, self.moonax)
     
     def loadLight(self):
@@ -247,6 +240,12 @@ class System(object) :
     def placeLight(self) :
         self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
         self.light.node().getLens().setNearFar(self.ua - self.moonax, self.ua + self.moonax)
+    
+    def loadSky(self) :
+        self.sky = loader.loadModel("models/solar_sky_sphere")
+        self.sky_tex = loader.loadTexture("models/stars_1k_tex.jpg")
+        self.sky.setTexture(self.sky_tex, 1)
+        #~ self.sky.hide(BitMask32.bit(0))
 
     def place(self) :
         for obj in [self.sun, self.earth, self.moon] :

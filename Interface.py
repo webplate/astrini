@@ -136,16 +136,23 @@ class Interface(object) :
         #Buttons to follow
         j = 1
         add_label('Go to : ', 1, j, b_cont)
-        self.earth_b = add_button('Earth', 0, j+1, self.world.follow, [self.world.earth], b_cont)
-        self.moon_b = add_button('Moon', 1, j+1, self.world.follow, [self.world.moon], b_cont)
-        self.sun_b = add_button('Sun', 2, j+1, self.world.follow, [self.world.sun], b_cont)
-        self.ext_b = add_button('Ext', 2, j+2, self.world.follow, [self.world.home], b_cont)
+        self.earth_b = add_button('Earth', 0, j+1, self.world.follow,
+        [self.world.earth], b_cont)
+        self.moon_b = add_button('Moon', 1, j+1, self.world.follow,
+        [self.world.moon], b_cont)
+        self.sun_b = add_button('Sun', 2, j+1, self.world.follow,
+        [self.world.sun], b_cont)
+        self.ext_b = add_button('Ext', 2, j+2, self.world.follow,
+        [self.world.home], b_cont)
         #and to look at
         j += 4
         add_label('Look at : ', 1, j, b_cont)
-        self.earth_lb = add_button('Earth', 0, j+1, self.world.look, [self.world.earth], b_cont)
-        self.moon_lb = add_button('Moon', 1, j+1, self.world.look, [self.world.moon], b_cont)
-        self.sun_lb = add_button('Sun', 2, j+1, self.world.look, [self.world.sun], b_cont)
+        self.earth_lb = add_button('Earth', 0, j+1, self.world.look,
+        [self.world.earth], b_cont)
+        self.moon_lb = add_button('Moon', 1, j+1, self.world.look,
+        [self.world.moon], b_cont)
+        self.sun_lb = add_button('Sun', 2, j+1, self.world.look,
+        [self.world.sun], b_cont)
         #and to change speed
         j += 3
         add_label('Speed : ', 0, j, b_cont)
@@ -153,8 +160,10 @@ class Interface(object) :
         add_button('-', 0, j+1, self.world.changeSpeed, [1./2], b_cont)
         add_button('+', 1, j+1, self.world.changeSpeed, [2], b_cont)
         add_button('++', 2, j+1, self.world.changeSpeed, [100], b_cont)
-        self.reverse_b = add_button('-1', 0, j+2, self.world.reverseSpeed, [], b_cont)
-        self.pause_b = add_button('Pause', 1, j+2, self.world.toggleSpeed, [], b_cont)
+        self.reverse_b = add_button('-1', 0, j+2, self.world.reverseSpeed,
+        [], b_cont)
+        self.pause_b = add_button('Pause', 1, j+2, self.world.toggleSpeed,
+        [], b_cont)
         add_button('Now', 2, j+2, self.world.time_is_now, [], b_cont)
 
         #date time display
@@ -167,17 +176,24 @@ class Interface(object) :
         #factual changes
         j += 3
         add_label('Factual changes : ', 1, j, b_cont)
-        self.fact_moon_b = add_button('Moon', 0, j+1, self.world.toggleIncl, [], b_cont)
-        self.fact_moon2_b = add_button('Moon+', 1, j+1, self.world.toggleInclHard, [], b_cont)
-        self.fact_earth_b = add_button('Earth', 2, j+1, self.world.toggleTilt, [], b_cont)
-        self.fact_scale_b = add_button('Scale', 0, j+2, self.world.toggleScale, [], b_cont)
+        self.fact_moon_b = add_button('Moon', 0, j+1, self.world.toggleIncl,
+        [], b_cont)
+        self.fact_moon2_b = add_button('Moon+', 1, j+1, self.world.toggleInclHard,
+        [], b_cont)
+        self.fact_earth_b = add_button('Earth', 2, j+1, self.world.toggleTilt,
+        [], b_cont)
+        self.fact_scale_b = add_button('Scale', 0, j+2, self.world.toggleScale,
+        [], b_cont)
         
         #Visualization changes
         j += 4
         add_label('Display : ', 1, j, b_cont)
-        self.shadow_b = add_button('Shadow', 0, j+1, self.world.toggleShadows, [], b_cont)
-        self.mark_b = add_button('Mark', 1, j+1, self.world.toggleMarks, [], b_cont)
-        self.star_b = add_button('Stars', 2, j+1, self.world.toggleStars, [], b_cont)
+        self.shadow_b = add_button('Shadow', 0, j+1, self.world.toggleShadows,
+        [], b_cont)
+        self.mark_b = add_button('Mark', 1, j+1, self.world.toggleMarks,
+        [], b_cont)
+        self.star_b = add_button('Stars', 2, j+1, self.world.toggleStars,
+        [], b_cont)
         
         #hidden dialogs
         j += 20

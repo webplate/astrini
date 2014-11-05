@@ -140,12 +140,12 @@ class Interface(object) :
         j += 3
         add_label('Speed : ', 0, j, b_cont)
         self.speedlabel = add_label('Speed', 1, j, b_cont)
-        add_button('-', 0, j+1, self.world.changeSpeed, [1./2], b_cont)
-        add_button('+', 1, j+1, self.world.changeSpeed, [2], b_cont)
-        add_button('++', 2, j+1, self.world.changeSpeed, [100], b_cont)
-        self.reverse_b = add_button('-1', 0, j+2, self.world.reverseSpeed,
+        add_button('-', 0, j+1, self.world.scene.changeSpeed, [1./2], b_cont)
+        add_button('+', 1, j+1, self.world.scene.changeSpeed, [2], b_cont)
+        add_button('++', 2, j+1, self.world.scene.changeSpeed, [100], b_cont)
+        self.reverse_b = add_button('-1', 0, j+2, self.world.scene.reverseSpeed,
         [], b_cont)
-        self.pause_b = add_button('Pause', 1, j+2, self.world.toggleSpeed,
+        self.pause_b = add_button('Pause', 1, j+2, self.world.scene.toggleSpeed,
         [], b_cont)
         add_button('Now', 2, j+2, self.world.scene.time_is_now, [], b_cont)
 
@@ -165,7 +165,7 @@ class Interface(object) :
         [], b_cont)
         self.fact_earth_b = add_button('Earth', 2, j+1, self.world.toggleTilt,
         [], b_cont)
-        self.fact_scale_b = add_button('Scale', 0, j+2, self.world.toggleScale,
+        self.fact_scale_b = add_button('Scale', 0, j+2, self.world.scene.toggleScale,
         [], b_cont)
         
         #Visualization changes
@@ -268,6 +268,21 @@ class Interface(object) :
             self.earth_lb['geom'] = self.b_map
             self.moon_lb['geom'] = self.b_map
             self.sun_lb['geom'] = self.b_map
+            
+        if self.world.scene.reverse :
+            self.reverse_b['geom'] = self.b_map_acti
+        else :
+            self.reverse_b['geom'] = self.b_map
+            
+        if self.world.scene.paused :
+            self.pause_b['geom'] = self.b_map_acti
+        else :
+            self.pause_b['geom'] = self.b_map
+
+        if self.world.scene.realist_scale :
+            self.fact_scale_b['geom'] = self.b_map_acti
+        else :
+            self.fact_scale_b['geom'] = self.b_map
 
     def interfaceTask(self, task) :
         #update simulation speed indicator 
@@ -281,5 +296,5 @@ class Interface(object) :
         self.update_buttons()
         #show task timing for debug
         if PRINTTIMING :
-            print self.taskMgr
+            print taskMgr
         return Task.again

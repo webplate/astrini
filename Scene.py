@@ -3,6 +3,8 @@
 from panda3d.core import *
 # Task declaration import 
 from direct.task import Task
+#interpolate function parameter
+from direct.interval.LerpInterval import LerpFunc
 #Work with time
 from datetime import datetime, timedelta
 import astronomia.calendar
@@ -173,29 +175,25 @@ class System(object) :
     def initAstrofacts(self) :
         '''variables to control the relative speeds of spinning and orbits in the
         simulation'''
-        #Number of days a full rotation of Earth around the sun should take
-        self.yearscale = EARTHREVO
 
         self.ua =  UA_F          #Orbit scale (fantasist)
-        self.earthradius = EARTHRADIUS_F             #Planet size scale
-        self.moonradius = MOONRADIUS_F
-        self.sunradius = SUNRADIUS_F
         self.moonax = MOONAX_F
+
         self.earthTilt = EARTHTILT
         self.moonTilt = MOONTILT
         self.moonIncli = MOONINCL
         self.moonIncliHard = MOONINCL_F
-        
+
     def loadPlanets(self):
         self.sun = Planetoid('sun', 'sun_1k_tex.jpg',
-        self.sunradius, SUNROT, 0)
-        
+        SUNRADIUS_F, SUNROT, 0)
+
         self.earth = Orbital('earth', 'earth_1k_tex.jpg',
-        self.earthradius, 1, 0, render,
-        self.yearscale, -EPHEMSIMPLESET, self.ua)
-                
+        EARTHRADIUS_F, 1, 0, render,
+        EARTHREVO, -EPHEMSIMPLESET, self.ua)
+
         self.moon = Orbital('moon', 'moon_1k_tex.jpg',
-        self.moonradius, MOONROT, -25, self.earth.system,
+        MOONRADIUS_F, MOONROT, -25, self.earth.system,
         MOONREVO, 0, self.moonax)
     
     def loadLight(self):
@@ -235,13 +233,13 @@ class System(object) :
         for obj in [self.earth, self.moon] :
             obj.orbit_line.setLight(self.ambientMark)
 
-
         # Important! Enable the shader generator.
         render.setShaderAuto()
 
     def placeLight(self) :
         self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
-        self.light.node().getLens().setNearFar(self.ua - self.moonax, self.ua + self.moonax)
+        self.light.node().getLens().setNearFar(self.earth.distance - self.moonax,
+        self.earth.distance + self.moonax)
     
     def loadSky(self) :
         self.sky = loader.loadModel("models/solar_sky_sphere")
@@ -269,17 +267,33 @@ class System(object) :
         return Task.cont
 
 
+
+def linInt(level, v1, v2) :
+    '''linearly interpolate between v1 and v2
+    according to 0<level<1 '''
+    return v1 * level + v2 * (1 - level)
+
+
+
+
 class Scene(object) :
     '''system with time'''
     def __init__(self):
-        self.initEmpty()
+        self.loadEmpty()
         base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
         self.sys = System()
+        #Time Control
+        self.paused = False
+        self.reverse = False
+        
         self.simulSpeed = 1
         self.time_is_now()
+        
+        self.realist_scale = False
+
         # Add Tasks procedures to the task managers.
-        taskMgr.add(self.timeTask, "timeTask")
-        taskMgr.add(self.placeTask, "placeTask")
+        taskMgr.add(self.timeTask, "timeTask", priority = 1)
+        taskMgr.add(self.placeTask, "placeTask", priority = 2)
         
         for obj in self.sys.system :
             obj.showMarker()
@@ -290,16 +304,68 @@ class Scene(object) :
         self.sys.moon.showShadow()
         self.sys.moon.showOrbit()
 
-    def initEmpty(self) :
+    def loadEmpty(self) :
         #Create the dummy nodes
         self.home = render.attachNewNode('home')
         self.home.setName('home')
         self.focus = render.attachNewNode('focus')
         self.focus.setName('focus')
     
+    #Timing control :
+    #
+    #
     def time_is_now(self) :
         self.simulTime = datetime.utcnow()
     
+    def changeSpeed(self, factor):
+        #if simulation is paused change previous speed
+        if not self.paused :
+            speed = self.simulSpeed * factor
+            if speed > MAXSPEED :
+                self.simulSpeed = MAXSPEED
+            elif speed < -MAXSPEED :
+                self.simulSpeed = -MAXSPEED
+            else :
+                self.simulSpeed = speed
+        else :
+            speed = self.previousSpeed * factor
+            if speed > MAXSPEED :
+                self.previousSpeed = MAXSPEED
+            elif speed < -MAXSPEED :
+                self.previousSpeed = -MAXSPEED
+            else :
+                self.previousSpeed = speed
+
+    def setSpeed(self, speed) :
+        if speed <= MAXSPEED :
+            self.simulSpeed = speed
+
+    def toggleSpeed(self):
+        if not self.paused :
+            self.previousSpeed = self.simulSpeed
+            self.simulSpeed = 0.            
+            self.paused = True
+        else:
+            self.simulSpeed = self.previousSpeed
+            self.paused = False
+
+    def reverseSpeed(self) :
+        self.changeSpeed(-1)
+        #button appearance should reflect reversed state
+        if not self.reverse :
+            self.reverse = True
+        else :
+            self.reverse = False
+
+    def generate_speed_fade(self) :
+        #generate intervals to fade in and out from previous speed
+        prev_speed = self.simulSpeed
+        slow = LerpFunc(self.setSpeed, FREEZELEN,
+        prev_speed, 0.)
+        fast = LerpFunc(self.setSpeed, FREEZELEN,
+        0., prev_speed)
+        return slow, fast
+        
     def time(self) :
         #time in days
         now = self.simulTime
@@ -321,6 +387,44 @@ class Scene(object) :
                 self.simulTime = datetime.max
             self.simulSpeed = 0.
         return Task.cont
+    
+    #Scaling control :
+    #
+    #
+     
+    def toggleScale(self) :
+        '''a realistic scaling modifying :
+        self.ua =  UA_F          
+        self.earthradius = EARTHRADIUS_F           
+        self.moonradius = MOONRADIUS_F
+        self.sunradius = SUNRADIUS_F
+        self.moonax = MOONAX_F
+        '''
+        if not self.realist_scale :
+            LerpFunc(self.scaleSystem,
+             fromData=0,
+             toData=1,
+             duration=SCALELEN,
+             blendType='easeIn').start()
+
+            self.realist_scale = True
+        else :
+            LerpFunc(self.scaleSystem,
+             fromData=1,
+             toData=0,
+             duration=SCALELEN,
+             blendType='easeOut').start()
+            
+            self.realist_scale = False
+    
+    def scaleSystem(self, value) :
+        '''scale the whole system from fantasist to realistic according
+        to value (between 0. and 1.0)'''
+        self.sys.earth.distance = linInt(value, UA, UA_F)
+        self.sys.earth.radius = linInt(value, EARTHRADIUS, EARTHRADIUS_F)
+        self.sys.moon.radius = linInt(value, MOONRADIUS, MOONRADIUS_F)
+        self.sys.sun.radius = linInt(value, SUNRADIUS, SUNRADIUS_F)
+        self.sys.moon.distance = linInt(value, MOONAX, MOONAX_F)
     
     def placeTask(self, task) :
         self.sys.place()

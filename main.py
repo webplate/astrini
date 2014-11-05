@@ -47,11 +47,6 @@ from InputHandler import InputHandler
 from Scene import Scene
 from Interface import Interface
 
-def linInt(level, v1, v2) :
-    '''linearly interpolate between v1 and v2
-    according to 0<level<1 '''
-    return v1 * level + v2 * (1 - level)
-
 class World(ShowBase):  
     def __init__(self):
         #Set application properties
@@ -79,8 +74,6 @@ class World(ShowBase):
         
         #Prepare locks (following procedures etc...)
         self.travelling = False
-        self.paused = False
-        self.reverse = False
         self.looking = None
         self.following = None
         self.tilted = False
@@ -89,60 +82,12 @@ class World(ShowBase):
         self.show_shadows = False
         self.show_stars = False
         self.show_marks = False
-        self.realist_scale = False
-        
-        
         
         #InitialSettings
         self.look(self.sun)
         self.follow(self.home)
     
 
-    def changeSpeed(self, factor):
-        #if simulation is paused change previous speed
-        if not self.paused :
-            speed = self.scene.simulSpeed * factor
-            if speed > MAXSPEED :
-                self.scene.simulSpeed = MAXSPEED
-            elif speed < -MAXSPEED :
-                self.scene.simulSpeed = -MAXSPEED
-            else :
-                self.scene.simulSpeed = speed
-        else :
-            speed = self.previousSpeed * factor
-            if speed > MAXSPEED :
-                self.previousSpeed = MAXSPEED
-            elif speed < -MAXSPEED :
-                self.previousSpeed = -MAXSPEED
-            else :
-                self.previousSpeed = speed
-
-    def setSpeed(self, speed) :
-        if speed <= MAXSPEED :
-            self.scene.simulSpeed = speed
-
-    def toggleSpeed(self):
-        if not self.paused :
-            self.previousSpeed = self.scene.simulSpeed
-            self.scene.simulSpeed = 0.
-            #change button appearance
-            self.pause_b['geom'] = self.b_map_acti
-            self.paused = True
-        else:
-            self.scene.simulSpeed = self.previousSpeed
-            self.pause_b['geom'] = self.b_map
-            self.paused = False
-
-    def reverseSpeed(self) :
-        self.changeSpeed(-1)
-        #button appearance should reflect reversed state
-        if not self.reverse :
-            self.reverse_b['geom'] = self.b_map_acti
-            self.reverse = True
-        else :
-            self.reverse_b['geom'] = self.b_map
-            self.reverse = False
-        
     def toggleShadows(self) :
         if self.show_shadows :
             self.shadow_b['geom'] = self.b_map
@@ -197,15 +142,6 @@ class World(ShowBase):
         
     def get_curr_follow_rel_pos(self) :
         return self.to_follow.getPos(render)
-    
-    def generate_speed_fade(self) :
-        #generate intervals to fade in and out from previous speed
-        prev_speed = self.scene.simulSpeed
-        slow = LerpFunc(self.setSpeed, FREEZELEN,
-        prev_speed, 0.)
-        fast = LerpFunc(self.setSpeed, FREEZELEN,
-        0., prev_speed)
-        return slow, fast
 
     def stop_follow(self) :
         self.following = None
@@ -224,7 +160,7 @@ class World(ShowBase):
             #hide tubular shadow of followed object
             self.update_shadows()
             #stop flow of time while traveling
-            slow, fast = self.generate_speed_fade()
+            slow, fast = self.scene.generate_speed_fade()
             travel = self.camera.posInterval(TRAVELLEN,
             self.get_curr_follow_rel_pos,
             blendType='easeInOut')
@@ -254,7 +190,7 @@ class World(ShowBase):
             #store new to get actual position and update interface
             self.to_look = identity
             #stop flow of time while changing focus
-            slow, fast = self.generate_speed_fade()
+            slow, fast = self.scene.generate_speed_fade()
             
             travel = self.focus.posInterval(FREEZELEN,
             self.get_curr_look_rel_pos,
@@ -317,45 +253,6 @@ class World(ShowBase):
             inter.start()
             self.fact_moon2_b['geom'] = self.b_map_acti
             self.inclinedHard = True
-            
-    def toggleScale(self) :
-        '''a realistic scaling modifying :
-        self.ua =  UA_F          
-        self.earthradius = EARTHRADIUS_F           
-        self.moonradius = MOONRADIUS_F
-        self.sunradius = SUNRADIUS_F
-        self.moonax = MOONAX_F
-        '''
-        if not self.realist_scale :
-            LerpFunc(self.scaleSystem,
-             fromData=0,
-             toData=1,
-             duration=SCALELEN,
-             blendType='easeIn').start()
-
-            self.fact_scale_b['geom'] = self.b_map_acti
-            self.realist_scale = True
-        else :
-            LerpFunc(self.scaleSystem,
-             fromData=1,
-             toData=0,
-             duration=SCALELEN,
-             blendType='easeOut').start()
-            
-            self.fact_scale_b['geom'] = self.b_map
-            self.realist_scale = False
-    
-    def scaleSystem(self, value) :
-        '''scale the whole system from fantasist to realistic according
-        to value (between 0. and 1.0)'''
-        self.ua = linInt(value, UA, UA_F)
-        self.earthradius = linInt(value, EARTHRADIUS, EARTHRADIUS_F)
-        self.moonradius = linInt(value, MOONRADIUS, MOONRADIUS_F)
-        self.sunradius = linInt(value, SUNRADIUS, SUNRADIUS_F)
-        self.moonax = linInt(value, MOONAX, MOONAX_F)
-        #and reposition system according to new values
-        self.placeAll()
-
 
     def update_shadows(self) :
         '''hide/show tubular shadows'''

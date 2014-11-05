@@ -179,7 +179,7 @@ class Camera(DirectObject):
         taskMgr.add(self.lockCameraTask, "lockCameraTask", priority=25)
         taskMgr.add(self.lockHomeTask, "lockHomeTask", priority=3)
         
-        self.setNearFar(0.1,100000000)
+        self.setNearFar(0.1,CAMERAFAR)
         self.setFov(45)
     
     def getFov(self):

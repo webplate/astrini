@@ -27,6 +27,7 @@ EPHEMSIMPLESET = 18.7399468035 #correction to align equinox in simple model
 #Interface settings
 PRINTTIMING = False #show Task manager statistics
 SHOWFRUSTRUM = False
+CAMERAFAR = 10**5
 INTERFACEDELAY = 0.1
 BUTTONSIZE = 48, 16
 
@@ -42,7 +43,7 @@ MARKERSCALE = 0.02
 SKYRADIUS = 1000
 
 #multiplier to avoid working with very high numbers
-multiplier = 1 / 10000.
+multiplier = 1 / 1000000.
 
 #realistic values
 #cf Wikipedia

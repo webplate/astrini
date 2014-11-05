@@ -3,7 +3,9 @@
 from panda3d.core import *
 # Task declaration import 
 from direct.task import Task
-
+#Work with time
+from datetime import datetime, timedelta
+import astronomia.calendar
 #Drawing functions
 import graphics
 #My Global config variables
@@ -252,6 +254,10 @@ class System(object) :
             obj.place()
         self.placeLight()
     
+    def rotate(self, time) :
+        for obj in [self.sun, self.earth, self.moon] :
+            obj.rotate(time)
+    
     def lockTask(self, task) :
         """alignment contraints""" 
         #lighting follows earth
@@ -264,12 +270,16 @@ class System(object) :
 
 
 class Scene(object) :
-    '''system'''
+    '''system with time'''
     def __init__(self):
         self.initEmpty()
         base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
         self.sys = System()
-        self.sys.place()
+        self.simulSpeed = 1
+        self.time_is_now()
+        # Add Tasks procedures to the task managers.
+        taskMgr.add(self.timeTask, "timeTask")
+        taskMgr.add(self.placeTask, "placeTask")
         
         for obj in self.sys.system :
             obj.showMarker()
@@ -287,8 +297,32 @@ class Scene(object) :
         self.focus = render.attachNewNode('focus')
         self.focus.setName('focus')
     
+    def time_is_now(self) :
+        self.simulTime = datetime.utcnow()
+    
     def time(self) :
         #time in days
         now = self.simulTime
-        julian_time = calendar.cal_to_jde(now.year, now.month, now.day,
-        now.hour, now.minute, now.second, gregorian=True)
+        julian_time = astronomia.calendar.cal_to_jde(now.year,
+        now.month, now.day, now.hour, now.minute, now.second,
+        gregorian=True)
+        return julian_time
+    
+    def timeTask(self, task) :
+        #keep simulation time updated each frame
+        dt = globalClock.getDt() * self.simulSpeed
+        #datetime object is limited between year 1 and year 9999
+        try :
+            self.simulTime +=  timedelta(seconds=dt)
+        except OverflowError :
+            if self.simulSpeed < 0 :
+                self.simulTime =  datetime.min
+            else :
+                self.simulTime = datetime.max
+            self.simulSpeed = 0.
+        return Task.cont
+    
+    def placeTask(self, task) :
+        self.sys.place()
+        self.sys.rotate(self.time())
+        return Task.cont

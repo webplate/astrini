@@ -11,6 +11,7 @@ import graphics
 #My Global config variables
 from config import *
 
+
 class Interface(object) :
     '''the gui of astrini'''
     def __init__(self, world) :
@@ -106,25 +107,7 @@ class Interface(object) :
             return cont
             
         #about dialog
-        text = [
-        '',
-        '',
-        'Astrini',
-        '',
-        'An Open source project for educational astronomy',
-        'Version 0.1',
-        '',
-        'Design : Roberto Casati and Glen Lomax.',
-        'Based on ideas from Roberto Casati,',
-        'Dov\'è il Sole di notte, Milano : Raffaello Cortina 2013,',
-        'partly developed during Glen Lomax CogMaster internship,',
-        'École des Hautes Études en Sciences Sociales, 2011-2012.',
-        '',
-        'Code : Glen Lomax',
-        'Engine : Panda3D (https://www.panda3d.org)',
-        'Licence : GPL v3',
-        'Contact : glenlomax@gmail.com',
-        'The source code is available at : https://github.com/webplate/astrini']
+        text = ABOUTTEXT
         
         self.about_dialog = add_dialog((-5*bw, 5*bw, -10*bh, 10*bh))
         add_textarea(text, self.about_dialog)
@@ -164,7 +147,7 @@ class Interface(object) :
         [], b_cont)
         self.pause_b = add_button('Pause', 1, j+2, self.world.toggleSpeed,
         [], b_cont)
-        add_button('Now', 2, j+2, self.world.time_is_now, [], b_cont)
+        add_button('Now', 2, j+2, self.world.scene.time_is_now, [], b_cont)
 
         #date time display
         j += 4
@@ -289,9 +272,9 @@ class Interface(object) :
     def interfaceTask(self, task) :
         #update simulation speed indicator 
         #(in scientific notation with limited significant digits)
-        self.speedlabel['text'] = '%.1e' % self.world.simulSpeed, 2
+        self.speedlabel['text'] = '%.1e' % self.world.scene.simulSpeed, 2
         #update clock display
-        new_time = self.world.simulTime.isoformat().split("T")
+        new_time = self.world.scene.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]
         #buttons should reflect what camera is following or looking at

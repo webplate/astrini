@@ -37,8 +37,6 @@ from config import *
 # Remember to use every extension as a DirectObject inheriting class
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import *
-# Task declaration import 
-from direct.task import Task
 #Sequence and parallel for intervals
 from direct.interval.IntervalGlobal import *
 #interpolate function parameter
@@ -48,8 +46,6 @@ from Camera import Camera
 from InputHandler import InputHandler
 from Scene import Scene
 from Interface import Interface
-#Misc imports
-from datetime import datetime, timedelta
 
 def linInt(level, v1, v2) :
     '''linearly interpolate between v1 and v2
@@ -67,8 +63,6 @@ class World(ShowBase):
         ShowBase.__init__(self)
 
         #Scene initialization
-        self.simulSpeed = 1
-        self.time_is_now()
         self.scene = Scene()
         self.earth = self.scene.sys.earth.mod
         self.moon = self.scene.sys.moon.mod
@@ -76,7 +70,7 @@ class World(ShowBase):
         self.home = self.scene.home
         self.focus = self.scene.focus
         
-        #wrapper around camera
+        #camera manip and mode
         self.Camera = Camera(self)
         #mouse and keyboard inputs
         self.InputHandler = InputHandler(self)
@@ -96,29 +90,24 @@ class World(ShowBase):
         self.show_stars = False
         self.show_marks = False
         self.realist_scale = False
-        # Add Tasks procedures to the task manager.
-        self.taskMgr.add(self.timeTask, "timeTask")
+        
         
         
         #InitialSettings
         self.look(self.sun)
         self.follow(self.home)
-        #~ self.simulTime = datetime(9998, 3, 20)
     
-    def time_is_now(self) :
-        self.simulTime = datetime(9998, 3, 20)
-        self.simulTime = datetime.utcnow()
-    
+
     def changeSpeed(self, factor):
         #if simulation is paused change previous speed
         if not self.paused :
-            speed = self.simulSpeed * factor
+            speed = self.scene.simulSpeed * factor
             if speed > MAXSPEED :
-                self.simulSpeed = MAXSPEED
+                self.scene.simulSpeed = MAXSPEED
             elif speed < -MAXSPEED :
-                self.simulSpeed = -MAXSPEED
+                self.scene.simulSpeed = -MAXSPEED
             else :
-                self.simulSpeed = speed
+                self.scene.simulSpeed = speed
         else :
             speed = self.previousSpeed * factor
             if speed > MAXSPEED :
@@ -130,17 +119,17 @@ class World(ShowBase):
 
     def setSpeed(self, speed) :
         if speed <= MAXSPEED :
-            self.simulSpeed = speed
+            self.scene.simulSpeed = speed
 
     def toggleSpeed(self):
         if not self.paused :
-            self.previousSpeed = self.simulSpeed
-            self.simulSpeed = 0.
+            self.previousSpeed = self.scene.simulSpeed
+            self.scene.simulSpeed = 0.
             #change button appearance
             self.pause_b['geom'] = self.b_map_acti
             self.paused = True
         else:
-            self.simulSpeed = self.previousSpeed
+            self.scene.simulSpeed = self.previousSpeed
             self.pause_b['geom'] = self.b_map
             self.paused = False
 
@@ -211,7 +200,7 @@ class World(ShowBase):
     
     def generate_speed_fade(self) :
         #generate intervals to fade in and out from previous speed
-        prev_speed = self.simulSpeed
+        prev_speed = self.scene.simulSpeed
         slow = LerpFunc(self.setSpeed, FREEZELEN,
         prev_speed, 0.)
         fast = LerpFunc(self.setSpeed, FREEZELEN,
@@ -388,20 +377,6 @@ class World(ShowBase):
             self.earthShadow.detachNode()
         elif name == 'moon' :
             self.moonShadow.detachNode()
-        
-    def timeTask(self, task) :
-        #keep simulation time updated each frame
-        dt = globalClock.getDt() * self.simulSpeed
-        #datetime object is limited between year 1 and year 9999
-        try :
-            self.simulTime +=  timedelta(seconds=dt)
-        except OverflowError :
-            if self.simulSpeed < 0 :
-                self.simulTime =  datetime.min
-            else :
-                self.simulTime = datetime.max
-            self.simulSpeed = 0.
-        return Task.cont
 
 #a virtual argument to bypass packing bug
 def main(arg=None):

@@ -39,8 +39,6 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import *
 #Sequence and parallel for intervals
 from direct.interval.IntervalGlobal import *
-#interpolate function parameter
-from direct.interval.LerpInterval import LerpFunc
 # Default classes
 from Camera import Camera
 from InputHandler import InputHandler
@@ -81,32 +79,6 @@ class World(ShowBase):
         self.look(self.sun)
         self.follow(self.home)
 
-
-    def update_shadows(self) :
-        '''hide/show tubular shadows'''
-        #show them all
-        if self.show_shadows :
-            self.moonShadow.reparentTo(self.moon)
-            self.earthShadow.reparentTo(self.earth)
-        #we shouldn't hide the same shadow if we are going to follow or 
-        #already following
-        if self.travelling :
-            name = self.to_follow.getName()
-        #shouldn't bug if we aren't following any
-        elif not self.travelling and self.following != None :
-            name = self.following.getName()
-        else :
-            name = None
-        #specific hide
-        if name == 'earth' :
-            self.earthShadow.detachNode()
-        elif name == 'moon' :
-            self.moonShadow.detachNode()
-
-
-
-
-
     def get_curr_look_rel_pos(self) :
         return self.to_look.getPos(render)
         
@@ -138,7 +110,6 @@ class World(ShowBase):
             sequence = Sequence(slow, Func(self.stop_follow),
             travel, Func(self.start_follow, identity), fast)
             sequence.start()
-            
 
     def stop_look(self) :
         self.looking = None

@@ -462,11 +462,6 @@ class Scene(object) :
      
     def toggleScale(self) :
         '''a realistic scaling modifying :
-        self.ua =  UA_F          
-        self.earthradius = EARTHRADIUS_F           
-        self.moonradius = MOONRADIUS_F
-        self.sunradius = SUNRADIUS_F
-        self.moonax = MOONAX_F
         '''
         if not self.realist_scale :
             LerpFunc(self.scaleSystem,
@@ -523,3 +518,30 @@ class Scene(object) :
         else :
             self.sys.showMarkers()
             self.show_marks = True
+
+    #~ def update_shadows(self) :
+        #~ '''hide/show tubular shadows'''
+        #~ #show them all
+        #~ if self.show_shadows :
+            #~ self.moonShadow.reparentTo(self.moon)
+            #~ self.earthShadow.reparentTo(self.earth)
+        #~ #we shouldn't hide the same shadow if we are going to follow or 
+        #~ #already following
+        #~ if self.travelling :
+            #~ name = self.to_follow.getName()
+        #~ #shouldn't bug if we aren't following any
+        #~ elif not self.travelling and self.following != None :
+            #~ name = self.following.getName()
+        #~ else :
+            #~ name = None
+        #~ #specific hide
+        #~ if name == 'earth' :
+            #~ self.earthShadow.detachNode()
+        #~ elif name == 'moon' :
+            #~ self.moonShadow.detachNode()
+
+    #~ def shadowTask(self, task) :
+        #~ '''shadow should be hidden when on followed object'''
+        #~ 
+        #~ return Task.cont
+    

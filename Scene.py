@@ -75,7 +75,7 @@ class Planetoid(object) :
         self.mod.setScale(self.radius)
         #put marker in place
         self.marker.setPos(nodeCoordIn2d(self.mod))
-        self.axis.setScale(4*self.radius) #TOCHECK!!!
+        self.axis.setScale(4*self.radius)
 
 
 class Orbital(Planetoid) :
@@ -128,7 +128,7 @@ class Orbital(Planetoid) :
         self.orbit_line.node().setBounds(OmniBoundingVolume())
         self.orbit_line.node().setFinal(True)
         # orbits are not affected by sunlight
-        #~ self.orbit_line.hide(BitMask32.bit(0)) !!!!!!!!
+        self.orbit_line.hide(BitMask32.bit(0))
     
     def showOrbit(self) :
         self.orbit_line.reparentTo(self.root)
@@ -145,8 +145,8 @@ class System(object) :
         self.loadLight()
         self.system = [self.sun, self.earth, self.moon]
         # Add Tasks procedures to the task manager.
-        #low priority to prevent jitter of camera
-        taskMgr.add(self.lockTask, "lockTask", priority=25)
+        #lower priority to prevent jitter of objects
+        taskMgr.add(self.lockTask, "lockTask", priority=26)
     
     def initAstrofacts(self) :
         '''variables to control the relative speeds of spinning and orbits in the
@@ -166,6 +166,7 @@ class System(object) :
         
     def loadPlanets(self):
         #Create the dummy nodes
+        #the skeleton of the system
         self.dummy_root_earth = render.attachNewNode('dummy_root_earth')
         self.root_earth = self.dummy_root_earth.attachNewNode('root_earth')
         
@@ -235,6 +236,7 @@ class System(object) :
         self.ambientMark.node().setColor(Vec4(0.8, 0.4, 0, 1))
         for obj in [self.sun, self.earth, self.moon] :
             obj.marker.setLight(self.ambientMark)
+            obj.axis.setLight(self.ambientMark)
         for obj in [self.earth, self.moon] :
             obj.orbit_line.setLight(self.ambientMark)
 
@@ -272,10 +274,10 @@ class Scene(object) :
         
         for obj in self.sys.system :
             obj.showMarker()
-            obj.showAxis()
         
         self.sys.earth.showShadow()
         self.sys.earth.showOrbit()
+        self.sys.earth.showAxis()
         self.sys.moon.showShadow()
         self.sys.moon.showOrbit()
 

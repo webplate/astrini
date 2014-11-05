@@ -175,7 +175,8 @@ class Camera(DirectObject):
         self.mm.showMouse()
         self.setUtilsActive()
         self.placeCameraHome()
-        taskMgr.add(self.lockCameraTask, "lockCameraTask")
+        #low priority to prevent jitter of camera
+        taskMgr.add(self.lockCameraTask, "lockCameraTask", priority=25)
         
         self.setNearFar(0.1,10000 * UA)
         self.setFov(45)

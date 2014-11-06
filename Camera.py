@@ -2,8 +2,8 @@
 from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
 from pandac.PandaModules import *
-
-from math import tan, radians
+#Sequence and parallel for intervals
+from direct.interval.IntervalGlobal import *
 
 #My Global config variables
 from config import *
@@ -106,7 +106,7 @@ class KeyboardMover(DirectObject):   #TRY REMOVE DIRECTOBJECT HERITAGE
 
 class MouseMover(DirectObject):
     '''
-This class is use to move mouse when in FPS (fly) mode
+This class is used to move mouse when in FPS (fly) mode
 setActive() -> used to activate FPS mouse slide
 setUnactive() -> inactivate FPS behaviour
 '''
@@ -160,30 +160,159 @@ setUnactive() -> inactivate FPS behaviour
         #then removing task and resetting pointer to previous position
         taskMgr.remove("mouseMoverTask")
         base.win.movePointer(0,self.lastCoo[0],self.lastCoo[1])
+
+class HunterMover(DirectObject):
+    '''
+This class is used to hunt planetoids
+(look and follow them softly)
+'''
+    def __init__(self, scene):
+        self.scene = scene
+        #Prepare locks (following procedures etc...)
+        self.cameraTravel = False
+        self.focusTravel = False
+        self.timeTravel = False
+        self.speed = self.scene.simulSpeed
+        self.sequences = []
+        self.looking = None
+        self.following = None
+    
+    def setActive(self):
+        #low priority to prevent jitter of camera
+        taskMgr.add(self.moveCameraTask, "hunterMoverTask", priority=25)
+    
+    def setUnactive(self):
+        #then removing task and resetting pointer to previous position
+        taskMgr.remove("hunterMoverTask")
+        taskMgr.remove("lockHomeTask")
+    
+    def softMove(self, nod, posFunc) :
+        #select correct speed of reference
+        if not self.timeTravel :
+            self.speed = self.scene.simulSpeed
+            self.timeTravel = True
+        #stop flow of time while traveling
+        slow, fast = self.scene.generate_speed_fade(self.speed)
         
+        travel = nod.posInterval(TRAVELLEN,
+            posFunc(), blendType='easeInOut')
+        
+        check = Func(self.checkTimeTravel)
+        return slow, fast, travel, check
+    
+    def checkTimeTravel(self) :
+        for s in self.sequences :
+            if s.isPlaying() :
+                self.timeTravel = True
+                return
+        self.sequences = []
+        self.timeTravel = False
+
+    def moveCameraTask(self, task) :
+        """alignment contraints""" 
+        #align if necessary
+        if self.looking != None :
+            camera.lookAt(self.scene.focus)
+        return Task.cont
+        
+    def get_curr_look_rel_pos(self) :
+        return self.looking.getPos(render)
+        
+    def get_curr_follow_rel_pos(self) :
+        return self.following.getPos(render)
+
+    def stop_follow(self) :
+        self.following = None
+
+    def lock_camera(self) :
+        self.cameraTravel = False
+        camera.reparentTo(self.following)
+        camera.setPos(0, 0, 0)
+
+    def unlock_camera(self) :
+        camera.wrtReparentTo(render)
+
+    def follow(self, identity):
+        #if new destination and not already trying to reach another
+        if self.following != identity and not self.cameraTravel :
+            self.following = identity
+            self.cameraTravel = True
+            #hide tubular shadow of followed object
+            self.scene.updateShadows()
+            
+            #select correct speed of reference
+            if not self.timeTravel :
+                self.speed = self.scene.simulSpeed
+                self.timeTravel = True
+            #stop flow of time while traveling
+            slow, fast = self.scene.generate_speed_fade(self.speed)
+            
+            travel = camera.posInterval(TRAVELLEN,
+            self.get_curr_follow_rel_pos, blendType='easeInOut')
+            
+            check = Func(self.checkTimeTravel)
+            
+            #slow sim, release, travel, lock, resume speed, stop time warp
+            sequence = Sequence(slow, Func(self.unlock_camera),
+            travel, Func(self.lock_camera), fast, check)
+            self.sequences.append(sequence)
+            sequence.start()
+
+    def stop_look(self) :
+        self.looking = None
+
+    def lock_focus(self) :
+        self.focusTravel = False
+        self.scene.focus.reparentTo(self.looking)
+        self.scene.focus.setPos(0, 0, 0)
+
+    def unlock_focus(self) :
+        self.scene.focus.wrtReparentTo(render)
+
+    def look(self, identity) :
+        #if new target
+        if self.looking != identity and not self.focusTravel :
+            self.looking = identity
+            self.focusTravel = True
+            
+            #select correct speed of reference
+            if not self.timeTravel :
+                self.speed = self.scene.simulSpeed
+                self.timeTravel = True
+            #stop flow of time while traveling
+            slow, fast = self.scene.generate_speed_fade(self.speed)
+            
+            travel = self.scene.focus.posInterval(TRAVELLEN,
+                self.get_curr_look_rel_pos, blendType='easeInOut')
+            
+            check = Func(self.checkTimeTravel)
+                
+            sequence = Sequence(slow, Func(self.unlock_focus),
+                travel, Func(self.lock_focus), fast, check)
+            self.sequences.append(sequence)
+            sequence.start()
+
+
 class Camera(DirectObject):
     def __init__(self, world):
         self.world = world
         #keyboard/mouse mover
         self.km = KeyboardMover()
         self.mm = MouseMover()
+        #interface mover
+        self.hm = HunterMover(self.world.scene)
         #disabling mouse by default
         base.disableMouse()
         #setting status
         self.state = "static"
         #default config when just opened
         self.mm.showMouse()
+        self.hm.setActive()
         self.setUtilsActive()
-        self.placeCameraHome()
-        #low priority to prevent jitter of camera
-        taskMgr.add(self.lockCameraTask, "lockCameraTask", priority=25)
-        taskMgr.add(self.lockHomeTask, "lockHomeTask", priority=3)
         
         self.setNearFar(0.1,CAMERAFAR)
         self.setFov(45)
-    
-    def getFov(self):
-        return base.camLens.getFov()
+
     
     def setNearFar(self,v1,v2):
         base.camLens.setNearFar(v1,v2)
@@ -204,9 +333,15 @@ class Camera(DirectObject):
                 #re-enabling all gui elements
                 self.mm.setActive()
                 self.km.setActive()
+                self.hm.setUnactive()
             if s == "static":
                 self.mm.setUnactive()
                 self.km.setUnactive()
+                self.hm.setUnactive()
+            if s == "hunter":
+                self.mm.setUnactive()
+                self.km.setUnactive()
+                self.hm.setActive()
             #changing state variable at the end of method execution
             self.state = s
     
@@ -231,25 +366,3 @@ class Camera(DirectObject):
             self.world.InputHandler.setInactive()
         #switching camera in any case
         self.toggleState()
-
-    def placeCameraHome(self) :
-        #Compute camera-sun distance from fov
-        fov = self.getFov()[0]
-        ua = self.world.scene.sys.earth.distance
-        margin = ua / 3
-        c_s_dist = (ua + margin) / tan(radians(fov/2))
-        self.world.home.setPos(0, -c_s_dist,ua/3)
-
-    def lockCameraTask(self, task) :
-        """alignment contraints""" 
-        #align if necessary
-        if self.world.following != None :
-            camera.setPos(self.world.following.getPos(render))
-        if self.world.looking != None :
-            camera.lookAt(self.world.focus)
-        return Task.cont
-        
-    def lockHomeTask(self, task) :
-        '''keep home in place'''
-        self.placeCameraHome()
-        return Task.cont

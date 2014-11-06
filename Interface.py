@@ -119,23 +119,25 @@ class Interface(object) :
         
         #Buttons to follow
         j = 1
+        follow = self.world.Camera.hm.follow
         add_label('Go to : ', 1, j, b_cont)
-        self.earth_b = add_button('Earth', 0, j+1, self.world.follow,
+        self.earth_b = add_button('Earth', 0, j+1, follow,
         [self.world.earth], b_cont)
-        self.moon_b = add_button('Moon', 1, j+1, self.world.follow,
+        self.moon_b = add_button('Moon', 1, j+1, follow,
         [self.world.moon], b_cont)
-        self.sun_b = add_button('Sun', 2, j+1, self.world.follow,
+        self.sun_b = add_button('Sun', 2, j+1, follow,
         [self.world.sun], b_cont)
-        self.ext_b = add_button('Ext', 2, j+2, self.world.follow,
+        self.ext_b = add_button('Ext', 2, j+2, follow,
         [self.world.home], b_cont)
         #and to look at
         j += 4
+        look = self.world.Camera.hm.look
         add_label('Look at : ', 1, j, b_cont)
-        self.earth_lb = add_button('Earth', 0, j+1, self.world.look,
+        self.earth_lb = add_button('Earth', 0, j+1, look,
         [self.world.earth], b_cont)
-        self.moon_lb = add_button('Moon', 1, j+1, self.world.look,
+        self.moon_lb = add_button('Moon', 1, j+1, look,
         [self.world.moon], b_cont)
-        self.sun_lb = add_button('Sun', 2, j+1, self.world.look,
+        self.sun_lb = add_button('Sun', 2, j+1, look,
         [self.world.sun], b_cont)
         #and to change speed
         j += 3
@@ -195,77 +197,48 @@ class Interface(object) :
     def update_buttons(self) :
         """set buttons states and appearances according to user input
         buttons should reflect what you're looking at and what you're following"""
-        if self.world.following == self.world.earth :
-            #disable buttons to prevent looking at own position
-            self.earth_lb['state'] = DGG.DISABLED
-            self.moon_lb['state'] = DGG.NORMAL
-            self.sun_lb['state'] = DGG.NORMAL
+        if self.world.Camera.hm.following == self.world.earth :
             #show activated button for followed object
             self.earth_b['geom'] = self.b_map_acti
             self.moon_b['geom'] = self.b_map
             self.sun_b['geom'] = self.b_map
             self.ext_b['geom'] = self.b_map
-        elif self.world.following == self.world.moon :
-            self.earth_lb['state'] = DGG.NORMAL
-            self.moon_lb['state'] = DGG.DISABLED
-            self.sun_lb['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.following == self.world.moon :
             self.earth_b['geom'] = self.b_map
             self.moon_b['geom'] = self.b_map_acti
             self.sun_b['geom'] = self.b_map
             self.ext_b['geom'] = self.b_map
-        elif self.world.following == self.world.sun :
-            self.earth_lb['state'] = DGG.NORMAL
-            self.moon_lb['state'] = DGG.NORMAL
-            self.sun_lb['state'] = DGG.DISABLED
+        elif self.world.Camera.hm.following == self.world.sun :
             self.earth_b['geom'] = self.b_map
             self.moon_b['geom'] = self.b_map
             self.sun_b['geom'] = self.b_map_acti
             self.ext_b['geom'] = self.b_map
-        elif self.world.following == self.world.home :
-            self.earth_lb['state'] = DGG.NORMAL
-            self.moon_lb['state'] = DGG.NORMAL
-            self.sun_lb['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.following == self.world.home :
             self.earth_b['geom'] = self.b_map
             self.moon_b['geom'] = self.b_map
             self.sun_b['geom'] = self.b_map
             self.ext_b['geom'] = self.b_map_acti
-        elif self.world.following == None :
-            self.earth_lb['state'] = DGG.NORMAL
-            self.moon_lb['state'] = DGG.NORMAL
-            self.sun_lb['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.following == None :
             self.earth_b['geom'] = self.b_map
             self.moon_b['geom'] = self.b_map
             self.sun_b['geom'] = self.b_map
             self.ext_b['geom'] = self.b_map
         
         
-        if self.world.looking == self.world.earth :
-            #disable buttons to prevent going at looked object
-            self.earth_b['state'] = DGG.DISABLED
-            self.moon_b['state'] = DGG.NORMAL
-            self.sun_b['state'] = DGG.NORMAL
+        if self.world.Camera.hm.looking == self.world.earth :
             #show activated button for looked object
             self.earth_lb['geom'] = self.b_map_acti
             self.moon_lb['geom'] = self.b_map
             self.sun_lb['geom'] = self.b_map
-        elif self.world.looking == self.world.moon :
-            self.earth_b['state'] = DGG.NORMAL
-            self.moon_b['state'] = DGG.DISABLED
-            self.sun_b['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.looking == self.world.moon :
             self.earth_lb['geom'] = self.b_map
             self.moon_lb['geom'] = self.b_map_acti
             self.sun_lb['geom'] = self.b_map
-        elif self.world.looking == self.world.sun :
-            self.earth_b['state'] = DGG.NORMAL
-            self.moon_b['state'] = DGG.NORMAL
-            self.sun_b['state'] = DGG.DISABLED
+        elif self.world.Camera.hm.looking == self.world.sun :
             self.earth_lb['geom'] = self.b_map
             self.moon_lb['geom'] = self.b_map
             self.sun_lb['geom'] = self.b_map_acti
-        elif self.world.looking == None :
-            self.earth_b['state'] = DGG.NORMAL
-            self.moon_b['state'] = DGG.NORMAL
-            self.sun_b['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.looking == None :
             self.earth_lb['geom'] = self.b_map
             self.moon_lb['geom'] = self.b_map
             self.sun_lb['geom'] = self.b_map
@@ -332,4 +305,4 @@ class Interface(object) :
         #buttons should reflect what camera is following or looking at
         self.update_buttons()
         #show task timing for debug
-        return Task.again
+        return Task.cont

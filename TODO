@@ -1,3 +1,12 @@
+BUG : objects not rendered when insisting alternating goto moon goto ext !!!!
+
+clean imports from *
+
+follow with lockcamera (parenting to followed)
+follow and lookat without slowdowns (predictive movement)
+and this camera mover class should be aware of running intervals
+Camera INputHd and Interface should have scene as paramteter (not world)
+
 look and follow instructions should be added to a list and then done sequentially
 OR BETTER
 done in parallel conserving speed
@@ -14,13 +23,6 @@ show correct moon face when realist
 
 go forward 1 day, 1 month, 1season, 1year (soft date change)
 
-class for spheroids, markers, orbits
-
 INTERFACE !!
 when go somewhere look at previous location
 check "maychange" option on text
-
-def is_hidden(self, node) :
-    '''check if a panda node is shown as it has a non empty parent'''
-    return node.getParent() == Node()
-        

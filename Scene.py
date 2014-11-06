@@ -8,6 +8,9 @@ from direct.interval.LerpInterval import LerpFunc
 #Work with time
 from datetime import datetime, timedelta
 import astronomia.calendar
+
+from math import tan, radians
+
 #Drawing functions
 import graphics
 #My Global config variables
@@ -372,7 +375,8 @@ class Scene(object) :
         # Add Tasks procedures to the task managers.
         taskMgr.add(self.timeTask, "timeTask", priority = 1)
         taskMgr.add(self.placeTask, "placeTask", priority = 2)
-        
+        taskMgr.add(self.lockHomeTask, "lockHomeTask", priority=3)
+
 
     def loadEmpty(self) :
         #Create the dummy nodes
@@ -380,6 +384,19 @@ class Scene(object) :
         self.home.setName('home')
         self.focus = render.attachNewNode('focus')
         self.focus.setName('focus')
+    
+    def placeCameraHome(self) :
+        #Compute camera-sun distance from fov
+        fov = base.camLens.getFov()[0]
+        ua = self.sys.earth.distance
+        margin = ua / 3
+        c_s_dist = (ua + margin) / tan(radians(fov/2))
+        self.world.home.setPos(0, -c_s_dist,ua/3)
+
+    def lockHomeTask(self, task) :
+        '''keep home in place'''
+        self.placeCameraHome()
+        return Task.cont
     
     #Timing control :
     #
@@ -428,13 +445,12 @@ class Scene(object) :
         else :
             self.reverse = False
 
-    def generate_speed_fade(self) :
+    def generate_speed_fade(self, speed) :
         #generate intervals to fade in and out from previous speed
-        prev_speed = self.simulSpeed
         slow = LerpFunc(self.setSpeed, FREEZELEN,
-        prev_speed, 0.)
+        self.simulSpeed, 0.)
         fast = LerpFunc(self.setSpeed, FREEZELEN,
-        0., prev_speed)
+        0., speed)
         return slow, fast
         
     def time(self) :
@@ -531,11 +547,12 @@ class Scene(object) :
             self.sys.earth.showShadow()
         #we shouldn't hide the same shadow if we are going to follow or 
         #already following
-        if self.world.travelling :
-            name = self.world.to_follow.getName()
+        if self.world.Camera.hm.cameraTravel :
+            name = self.world.Camera.hm.following.getName()
         #shouldn't bug if we aren't following any
-        elif not self.world.travelling and self.world.following != None :
-            name = self.world.following.getName()
+        elif (not self.world.Camera.hm.cameraTravel 
+        and self.world.Camera.hm.following != None) :
+            name = self.world.Camera.hm.following.getName()
         else :
             name = None
         #specific hide

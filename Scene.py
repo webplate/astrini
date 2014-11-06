@@ -32,13 +32,14 @@ def nodeCoordIn2d(nodePath):
 
 class Planetoid(object) :
     '''rotating spherical model with markers'''
-    def __init__(self, name, tex, radius, period = 1, offset = 0) :
+    def __init__(self, name, root, tex, radius, period = 1, offset = 0) :
         self.name = name
+        self.root = root
         self.radius = radius
         self.period = period
         self.offset = offset
         self.load(tex)
-        self.mod.reparentTo(render)
+        self.mod.reparentTo(self.root)
         #the model gets the same name as the planetoid
         self.mod.setName(self.name)
         
@@ -90,9 +91,9 @@ class Planetoid(object) :
 class Orbital(Planetoid) :
     '''planetoid with an orbit, shadow
     distance from orbit root'''
-    def __init__(self, name, tex, radius, period, offset,
+    def __init__(self, name, root, tex, radius, period, offset,
     root_system, orbit_period, orbit_offset, distance) :
-        Planetoid.__init__(self, name, tex, radius, period , offset)
+        Planetoid.__init__(self, name, root, tex, radius, period , offset)
         self.root_system = root_system
         self.orbit_period = orbit_period
         self.orbit_offset = orbit_offset
@@ -105,17 +106,17 @@ class Orbital(Planetoid) :
     def loadDummy(self) :
         '''Create the dummy nodes, the skeleton of the system'''
         self.dummy_root = self.root_system.attachNewNode('dummy_root')
-        self.dummy_root.setEffect(CompassEffect.make(render))
+        self.dummy_root.setEffect(CompassEffect.make(self.root))
 
         self.dummy_root = self.root_system.attachNewNode('dummy_root')
-        self.dummy_root.setEffect(CompassEffect.make(render))
+        self.dummy_root.setEffect(CompassEffect.make(self.root))
 
         self.root = self.dummy_root.attachNewNode('root')
 
         self.system = self.root.attachNewNode('system')
         
         self.dummy = self.system.attachNewNode('dummy')
-        self.dummy.setEffect(CompassEffect.make(render))
+        self.dummy.setEffect(CompassEffect.make(self.root))
         
         #parent to get relative positionning
         self.mod.reparentTo(self.dummy)
@@ -169,7 +170,8 @@ class System(object) :
     '''sun earth and moon
     plus sky and lights
     methods to do factual changes'''
-    def __init__(self):
+    def __init__(self, root):
+        self.root = root
         self.initAstrofacts()
         self.loadPlanets()
         self.system = [self.sun, self.earth, self.moon]
@@ -199,48 +201,48 @@ class System(object) :
         self.moonIncliHard = MOONINCL_F
 
     def loadPlanets(self):
-        self.sun = Planetoid('sun', 'sun_1k_tex.jpg',
+        self.sun = Planetoid('sun', self.root, 'sun_1k_tex.jpg',
         SUNRADIUS_F, SUNROT, 0)
 
-        self.earth = Orbital('earth', 'earth_1k_tex.jpg',
-        EARTHRADIUS_F, 1, 0, render,
+        self.earth = Orbital('earth', self.root, 'earth_1k_tex.jpg',
+        EARTHRADIUS_F, 1, 0, self.root,
         EARTHREVO, -EPHEMSIMPLESET, self.ua)
 
-        self.moon = Orbital('moon', 'moon_1k_tex.jpg',
+        self.moon = Orbital('moon', self.root, 'moon_1k_tex.jpg',
         MOONRADIUS_F, MOONROT, -25, self.earth.system,
         MOONREVO, 0, self.moonax)
     
     def loadLight(self):
         #invisible spotlight to activate shadow casting (bypass bug)
-        self.unspot = render.attachNewNode(Spotlight("Invisible spot"))
+        self.unspot = self.root.attachNewNode(Spotlight("Invisible spot"))
         self.unspot.setPos(0,0,self.ua)
         self.unspot.setHpr(0,90,0)
         self.unspot.node().getLens().setNearFar(0,0)
-        render.setLight(self.unspot)
+        self.root.setLight(self.unspot)
         
         #the light on the earth system
-        self.light = render.attachNewNode(DirectionalLight("SunLight"))
+        self.light = self.root.attachNewNode(DirectionalLight("SunLight"))
         self.light.setPos(0,0,0)
-        self.light.node().setScene(render)
+        self.light.node().setScene(self.root)
         self.light.node().setShadowCaster(True, 2048, 2048)
         if SHOWFRUSTRUM :
             self.light.node().showFrustum()
         # a mask to define objects unaffected by light
         self.light.node().setCameraMask(BitMask32.bit(0)) 
-        render.setLight(self.light)
+        self.root.setLight(self.light)
 
-        self.alight = render.attachNewNode(AmbientLight("Ambient"))
+        self.alight = self.root.attachNewNode(AmbientLight("Ambient"))
         p = 0.15
         self.alight.node().setColor(Vec4(p, p, p, 1))
-        render.setLight(self.alight)
+        self.root.setLight(self.alight)
 
         # Create a special ambient light specially for the sun
         # so that it appears bright
-        self.ambientLava = render.attachNewNode(AmbientLight("AmbientForLava"))
+        self.ambientLava = self.root.attachNewNode(AmbientLight("AmbientForLava"))
         self.sun.mod.setLight(self.ambientLava)
         self.sky.setLight(self.ambientLava)
         #Special light fo markers
-        self.ambientMark = render.attachNewNode(AmbientLight("AmbientMark"))
+        self.ambientMark = self.root.attachNewNode(AmbientLight("AmbientMark"))
         self.ambientMark.node().setColor(Vec4(0.8, 0.4, 0, 1))
         for obj in self.system :
             obj.marker.setLight(self.ambientMark)
@@ -249,7 +251,7 @@ class System(object) :
             obj.orbit_line.setLight(self.ambientMark)
 
         # Important! Enable the shader generator.
-        render.setShaderAuto()
+        self.root.setShaderAuto()
 
     def placeLight(self) :
         self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
@@ -262,7 +264,7 @@ class System(object) :
         self.sky.setTexture(self.sky_tex, 1)
     
     def showSky(self) :
-        self.sky.reparentTo(render)
+        self.sky.reparentTo(self.root)
     
     def hideSky(self) :
         self.sky.detachNode()
@@ -358,7 +360,7 @@ class Scene(object) :
         self.world = world
         self.loadEmpty()
         base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
-        self.sys = System()
+        self.sys = System(self.root)
         #Time Control
         self.paused = False
         self.reverse = False
@@ -380,9 +382,10 @@ class Scene(object) :
 
     def loadEmpty(self) :
         #Create the dummy nodes
-        self.home = render.attachNewNode('home')
+        self.root = render.attachNewNode('root')
+        self.home = self.root.attachNewNode('home')
         self.home.setName('home')
-        self.focus = render.attachNewNode('focus')
+        self.focus = self.root.attachNewNode('focus')
         self.focus.setName('focus')
     
     def placeCameraHome(self) :

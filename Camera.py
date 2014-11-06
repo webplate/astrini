@@ -224,7 +224,7 @@ This class is used to hunt planetoids
         self.timeTravel = False
 
     def get_curr_follow_rel_pos(self) :
-        return self.following.getPos(render)
+        return self.following.getPos(self.scene.root)
 
     def stop_follow(self) :
         self.following = None
@@ -235,7 +235,7 @@ This class is used to hunt planetoids
         camera.setPos(0, 0, 0)
 
     def unlock_camera(self) :
-        camera.wrtReparentTo(render)
+        camera.wrtReparentTo(self.scene.root)
 
     def follow(self, identity):
         #if new destination and not already trying to reach another
@@ -253,7 +253,7 @@ This class is used to hunt planetoids
             self.lock_camera, self.unlock_camera)
 
     def get_curr_look_rel_pos(self) :
-        return self.looking.getPos(render)
+        return self.looking.getPos(self.scene.root)
         
     def stop_look(self) :
         self.looking = None
@@ -264,7 +264,7 @@ This class is used to hunt planetoids
         self.scene.focus.setPos(0, 0, 0)
 
     def unlock_focus(self) :
-        self.scene.focus.wrtReparentTo(render)
+        self.scene.focus.wrtReparentTo(self.scene.root)
 
     def look(self, identity) :
         if self.looking != identity and not self.focusTravel :

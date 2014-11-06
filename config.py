@@ -14,6 +14,7 @@ show-frame-rate-meter 1
 audio-library-name null
 sync-video 1
 task-timer-verbose #t
+fake-view-frustum-cull 1
 """)
 
 # PANDA DEBUGTOOLS

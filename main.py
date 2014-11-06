@@ -63,7 +63,7 @@ class World(ShowBase):
         taskMgr.add(self.printTask, "printTask")
     
     def printTask(self, task) :
-        print base.camLens.getFar(), self.scene.home.getPos()
+        #~ print base.camLens.getFar(), self.scene.home.getPos()
         return Task.cont
 
     def initScene(self) :

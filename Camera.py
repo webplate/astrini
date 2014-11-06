@@ -324,15 +324,9 @@ class Camera(DirectObject):
                 #re-enabling all gui elements
                 self.mm.setActive()
                 self.km.setActive()
-                self.hm.setUnactive()
             if s == "static":
                 self.mm.setUnactive()
                 self.km.setUnactive()
-                self.hm.setUnactive()
-            if s == "hunter":
-                self.mm.setUnactive()
-                self.km.setUnactive()
-                self.hm.setActive()
             #changing state variable at the end of method execution
             self.state = s
     

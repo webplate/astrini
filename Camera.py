@@ -185,8 +185,17 @@ This class is used to hunt planetoids
         #then removing task and resetting pointer to previous position
         taskMgr.remove("hunterMoverTask")
         taskMgr.remove("lockHomeTask")
-    
-    def softMove(self, nod, posFunc) :
+
+    def moveCameraTask(self, task) :
+        """alignment contraints""" 
+        #align if necessary
+        if self.looking != None :
+            camera.lookAt(self.scene.focus)
+        #bug with nearFar unsettingitself
+        base.camLens.setNearFar(0.1,CAMERAFAR)
+        return Task.cont
+        
+    def softMove(self, nod, posFunc, lockFunc, unlockFunc) :
         #select correct speed of reference
         if not self.timeTravel :
             self.speed = self.scene.simulSpeed
@@ -195,10 +204,16 @@ This class is used to hunt planetoids
         slow, fast = self.scene.generate_speed_fade(self.speed)
         
         travel = nod.posInterval(TRAVELLEN,
-            posFunc(), blendType='easeInOut')
+            posFunc, blendType='easeInOut')
         
         check = Func(self.checkTimeTravel)
-        return slow, fast, travel, check
+        
+        #slow sim, release, travel, lock, resume speed, stop time warp
+        sequence = Sequence(slow, Func(unlockFunc),
+        travel, Func(lockFunc), fast, check)
+        
+        self.sequences.append(sequence)
+        sequence.start()
     
     def checkTimeTravel(self) :
         for s in self.sequences :
@@ -208,16 +223,6 @@ This class is used to hunt planetoids
         self.sequences = []
         self.timeTravel = False
 
-    def moveCameraTask(self, task) :
-        """alignment contraints""" 
-        #align if necessary
-        if self.looking != None :
-            camera.lookAt(self.scene.focus)
-        return Task.cont
-        
-    def get_curr_look_rel_pos(self) :
-        return self.looking.getPos(render)
-        
     def get_curr_follow_rel_pos(self) :
         return self.following.getPos(render)
 
@@ -235,29 +240,21 @@ This class is used to hunt planetoids
     def follow(self, identity):
         #if new destination and not already trying to reach another
         if self.following != identity and not self.cameraTravel :
+            previous = self.following
             self.following = identity
             self.cameraTravel = True
             #hide tubular shadow of followed object
             self.scene.updateShadows()
-            
-            #select correct speed of reference
-            if not self.timeTravel :
-                self.speed = self.scene.simulSpeed
-                self.timeTravel = True
-            #stop flow of time while traveling
-            slow, fast = self.scene.generate_speed_fade(self.speed)
-            
-            travel = camera.posInterval(TRAVELLEN,
-            self.get_curr_follow_rel_pos, blendType='easeInOut')
-            
-            check = Func(self.checkTimeTravel)
-            
-            #slow sim, release, travel, lock, resume speed, stop time warp
-            sequence = Sequence(slow, Func(self.unlock_camera),
-            travel, Func(self.lock_camera), fast, check)
-            self.sequences.append(sequence)
-            sequence.start()
+            #prevent looking and following the same
+            if self.looking == self.following :
+                self.look(self.getNewTarget(identity, previous))
 
+            self.softMove(camera, self.get_curr_follow_rel_pos,
+            self.lock_camera, self.unlock_camera)
+
+    def get_curr_look_rel_pos(self) :
+        return self.looking.getPos(render)
+        
     def stop_look(self) :
         self.looking = None
 
@@ -270,28 +267,22 @@ This class is used to hunt planetoids
         self.scene.focus.wrtReparentTo(render)
 
     def look(self, identity) :
-        #if new target
         if self.looking != identity and not self.focusTravel :
+            previous = self.looking
             self.looking = identity
             self.focusTravel = True
+            if self.looking == self.following :
+                self.follow(self.getNewTarget(identity, previous))
             
-            #select correct speed of reference
-            if not self.timeTravel :
-                self.speed = self.scene.simulSpeed
-                self.timeTravel = True
-            #stop flow of time while traveling
-            slow, fast = self.scene.generate_speed_fade(self.speed)
-            
-            travel = self.scene.focus.posInterval(TRAVELLEN,
-                self.get_curr_look_rel_pos, blendType='easeInOut')
-            
-            check = Func(self.checkTimeTravel)
-                
-            sequence = Sequence(slow, Func(self.unlock_focus),
-                travel, Func(self.lock_focus), fast, check)
-            self.sequences.append(sequence)
-            sequence.start()
-
+            self.softMove(self.scene.focus, self.get_curr_look_rel_pos,
+            self.lock_focus, self.unlock_focus)
+    
+    def getNewTarget(self, identity, previous) :
+        if previous.getName() != 'home' :
+            return previous
+        for o in self.scene.sys.orbitals :
+            if o.mod.getName() != identity.getName() :
+                return o.mod
 
 class Camera(DirectObject):
     def __init__(self, world):

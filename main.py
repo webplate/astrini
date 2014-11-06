@@ -36,6 +36,8 @@ from config import *
 # Import stuff in order to have a derived ShowBase extension running
 # Remember to use every extension as a DirectObject inheriting class
 from direct.showbase.ShowBase import ShowBase
+from direct.task import Task
+
 from panda3d.core import *
 # Default classes
 from Camera import Camera
@@ -57,6 +59,12 @@ class World(ShowBase):
         #InitialSettings
         self.Camera.hm.look(self.sun)
         self.Camera.hm.follow(self.home)
+        
+        taskMgr.add(self.printTask, "printTask")
+    
+    def printTask(self, task) :
+        print base.camLens.getFar(), self.scene.home.getPos()
+        return Task.cont
 
     def initScene(self) :
         #Scene initialization

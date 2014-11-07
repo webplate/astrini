@@ -387,6 +387,8 @@ class Scene(object) :
         self.home.setName('home')
         self.focus = self.root.attachNewNode('focus')
         self.focus.setName('focus')
+        self.hook = self.root.attachNewNode('hook')
+        self.hook.setName('hook')
     
     def placeCameraHome(self) :
         #Compute camera-sun distance from fov

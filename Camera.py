@@ -189,10 +189,10 @@ This class is used to hunt planetoids
     def moveCameraTask(self, task) :
         """alignment contraints""" 
         #align if necessary
+        if self.following != None :
+            camera.setPos(self.scene.hook.getPos(self.scene.root))
         if self.looking != None :
             camera.lookAt(self.scene.focus)
-        #bug with nearFar unsettingitself
-        base.camLens.setNearFar(0.1,CAMERAFAR)
         return Task.cont
         
     def softMove(self, nod, posFunc, lockFunc, unlockFunc) :
@@ -231,11 +231,11 @@ This class is used to hunt planetoids
 
     def lock_camera(self) :
         self.cameraTravel = False
-        camera.reparentTo(self.following)
-        camera.setPos(0, 0, 0)
+        self.scene.hook.reparentTo(self.following)
+        self.scene.hook.setPos(0, 0, 0)
 
     def unlock_camera(self) :
-        camera.wrtReparentTo(self.scene.root)
+        self.scene.hook.wrtReparentTo(self.scene.root)
 
     def follow(self, identity):
         #if new destination and not already trying to reach another
@@ -249,7 +249,7 @@ This class is used to hunt planetoids
             if self.looking == self.following :
                 self.look(self.getNewTarget(identity, previous))
 
-            self.softMove(camera, self.get_curr_follow_rel_pos,
+            self.softMove(self.scene.hook, self.get_curr_follow_rel_pos,
             self.lock_camera, self.unlock_camera)
 
     def get_curr_look_rel_pos(self) :

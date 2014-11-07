@@ -124,7 +124,6 @@ class Orbital(Planetoid) :
     def orbit(self, julian_time) :
         coord = (((360 / self.orbit_period) * julian_time % 360)
          + self.orbit_offset)
-        print coord
         self.root.setHpr(coord , 0, 0)
     
     def rotate(self, time) :

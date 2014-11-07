@@ -169,8 +169,6 @@ This class is used to hunt planetoids
     def __init__(self, scene):
         self.scene = scene
         #Prepare locks (following procedures etc...)
-        self.cameraTravel = False
-        self.focusTravel = False
         self.timeTravel = False
         self.speed = self.scene.simulSpeed
         self.sequences = []

@@ -557,11 +557,8 @@ class Scene(object) :
             self.sys.earth.showShadow()
         #we shouldn't hide the same shadow if we are going to follow or 
         #already following
-        if self.world.Camera.hm.cameraTravel :
-            name = self.world.Camera.hm.following.getName()
         #shouldn't bug if we aren't following any
-        elif (not self.world.Camera.hm.cameraTravel 
-        and self.world.Camera.hm.following != None) :
+        if self.world.Camera.hm.following != None :
             name = self.world.Camera.hm.following.getName()
         else :
             name = None

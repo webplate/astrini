@@ -37,6 +37,7 @@ from config import *
 # Remember to use every extension as a DirectObject inheriting class
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import WindowProperties
+from datetime import datetime
 # Default classes
 from Camera import Camera
 from InputHandler import InputHandler
@@ -55,6 +56,7 @@ class World(ShowBase):
         
         self.initScene()
         #InitialSettings
+        self.scene.simulTime = datetime(2001,9,22)
         self.Camera.hm.look(self.sun)
         self.Camera.hm.follow(self.home)
 

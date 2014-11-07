@@ -1,6 +1,6 @@
 tune multiplier  and fantasist values for not changing scene size too much
+check ephemeris
 
-clean imports from *
 
 Camera INputHd and Interface should have scene as paramteter (not world)
 
@@ -15,8 +15,6 @@ tubular shadow should be set on a sun at infinite (to be aligned with shadow cas
 
 support years before 1 and 9999
 support dates defore christ (datautil.date)
-
-show correct moon face when realist
 
 
 go forward 1 day, 1 month, 1season, 1year (soft date change)

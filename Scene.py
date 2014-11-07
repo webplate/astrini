@@ -122,9 +122,10 @@ class Orbital(Planetoid) :
         self.mod.reparentTo(self.dummy)
     
     def orbit(self, julian_time) :
-        self.root.setHpr(
-    ((360 / self.orbit_period) * julian_time % 360) - self.orbit_offset,
-        0, 0)
+        coord = (((360 / self.orbit_period) * julian_time % 360)
+         + self.orbit_offset)
+        print coord
+        self.root.setHpr(coord , 0, 0)
     
     def rotate(self, time) :
         '''rotate on itself and around gravity center'''

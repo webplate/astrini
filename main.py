@@ -56,7 +56,7 @@ class World(ShowBase):
         
         self.initScene()
         #InitialSettings
-        self.scene.simulTime = datetime(2001,9,22)
+        self.scene.simulTime = datetime(2024,11,15)
         self.Camera.hm.look(self.sun)
         self.Camera.hm.follow(self.home)
 

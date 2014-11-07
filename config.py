@@ -23,7 +23,8 @@ fake-view-frustum-cull 1
 
 #use slow realistic ephemeris for positionning planetoids
 USEEPHEM = False
-EPHEMSIMPLESET = 18.7399468035 #correction to align equinox in simple model
+EPHEMSIMPLESET = -18.7399468035 #correction to align equinox in simple model
+MOONEPHEMSET = -44 #correction to align moon phases
 
 #Interface settings
 PRINTTIMING = False #show Task manager statistics

@@ -10,7 +10,7 @@
 #~ Code: Glen Lomax
 #~ Engine: Panda3D (https://www.panda3d.org)
 #~ Licence: GPL v3
-#~ Contact: glenlomax@gmail.com
+#~ Contact: glenlomax ---at--- gmail.com
 #~ 
 #~ 
 #~ The source code is available at: https://github.com/webplate/astrini

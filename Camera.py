@@ -209,7 +209,7 @@ This class is used to hunt planetoids
         
         check = Func(self.checkTimeTravel)
         
-        #slow sim, release, travel, lock, resume speed, stop time warp
+        #slow sim, release, travel, lock, resume speed, check for concurrents
         sequence = Sequence(slow, Func(unlockFunc),
         travel, Func(lockFunc), fast, check)
         
@@ -232,7 +232,6 @@ This class is used to hunt planetoids
         self.scene.updateShadows()
 
     def lock_camera(self) :
-        self.cameraTravel = False
         self.scene.hook.reparentTo(self.following)
         self.scene.hook.setPos(0, 0, 0)
 
@@ -240,11 +239,11 @@ This class is used to hunt planetoids
         self.scene.hook.wrtReparentTo(self.scene.root)
 
     def follow(self, identity):
+        '''move camera hook to follow an object'''
         #if new destination and not already trying to reach another
-        if self.following != identity and not self.cameraTravel :
+        if self.following != identity :
             previous = self.following
             self.following = identity
-            self.cameraTravel = True
             #hide tubular shadow of followed object
             self.scene.updateShadows()
             #prevent looking and following the same
@@ -261,7 +260,6 @@ This class is used to hunt planetoids
         self.looking = None
 
     def lock_focus(self) :
-        self.focusTravel = False
         self.scene.focus.reparentTo(self.looking)
         self.scene.focus.setPos(0, 0, 0)
 
@@ -269,10 +267,10 @@ This class is used to hunt planetoids
         self.scene.focus.wrtReparentTo(self.scene.root)
 
     def look(self, identity) :
-        if self.looking != identity and not self.focusTravel :
+        '''move camera focus to an object'''
+        if self.looking != identity :
             previous = self.looking
             self.looking = identity
-            self.focusTravel = True
             if self.looking == self.following :
                 self.follow(self.getNewTarget(identity, previous))
             
@@ -280,6 +278,7 @@ This class is used to hunt planetoids
             self.lock_focus, self.unlock_focus)
     
     def getNewTarget(self, identity, previous) :
+        '''select new target to avoid looking and following the same'''
         if previous != None and previous.getName() != 'home' :
             return previous
         for o in self.scene.sys.orbitals :

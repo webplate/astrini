@@ -36,7 +36,7 @@ from config import *
 # Import stuff in order to have a derived ShowBase extension running
 # Remember to use every extension as a DirectObject inheriting class
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import *
+from panda3d.core import WindowProperties
 # Default classes
 from Camera import Camera
 from InputHandler import InputHandler

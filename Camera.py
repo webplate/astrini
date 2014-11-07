@@ -1,9 +1,9 @@
 # -*- coding: utf-8-*- 
 from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
-from pandac.PandaModules import *
+from panda3d.core import WindowProperties
 #Sequence and parallel for intervals
-from direct.interval.IntervalGlobal import *
+from direct.interval.IntervalGlobal import Sequence, Func
 
 #My Global config variables
 from config import *
@@ -182,9 +182,10 @@ This class is used to hunt planetoids
         taskMgr.add(self.moveCameraTask, "hunterMoverTask", priority=25)
     
     def setUnactive(self):
-        #then removing task and resetting pointer to previous position
         taskMgr.remove("hunterMoverTask")
-        taskMgr.remove("lockHomeTask")
+        #Stop looking and following
+        self.stop_follow()
+        self.stop_look()
 
     def moveCameraTask(self, task) :
         """alignment contraints""" 
@@ -228,6 +229,7 @@ This class is used to hunt planetoids
 
     def stop_follow(self) :
         self.following = None
+        self.scene.updateShadows()
 
     def lock_camera(self) :
         self.cameraTravel = False
@@ -278,7 +280,7 @@ This class is used to hunt planetoids
             self.lock_focus, self.unlock_focus)
     
     def getNewTarget(self, identity, previous) :
-        if previous.getName() != 'home' :
+        if previous != None and previous.getName() != 'home' :
             return previous
         for o in self.scene.sys.orbitals :
             if o.mod.getName() != identity.getName() :
@@ -324,9 +326,11 @@ class Camera(DirectObject):
                 #re-enabling all gui elements
                 self.mm.setActive()
                 self.km.setActive()
+                self.hm.setUnactive()
             if s == "static":
                 self.mm.setUnactive()
                 self.km.setUnactive()
+                self.hm.setActive()
             #changing state variable at the end of method execution
             self.state = s
     

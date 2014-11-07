@@ -1,6 +1,6 @@
 # -*- coding: utf-8-*- 
 #Core functions of PandaEngine
-from panda3d.core import *
+import panda3d.core
 # Task declaration import 
 from direct.task import Task
 #interpolate function parameter
@@ -22,10 +22,10 @@ def nodeCoordIn2d(nodePath):
     coord3d = nodePath.getPos(base.cam)
     #elude objects behind camera
     if coord3d[1] < 0 :
-        return Point3()
-    coord2d = Point2()
+        return panda3d.core.Point3()
+    coord2d = panda3d.core.Point2()
     base.camLens.project(coord3d, coord2d)
-    coordInRender2d = Point3(coord2d[0], 0, coord2d[1])
+    coordInRender2d = panda3d.core.Point3(coord2d[0], 0, coord2d[1])
     coordInAspect2d = aspect2d.getRelativePoint(render2d,
                         coordInRender2d)
     return coordInAspect2d
@@ -52,7 +52,7 @@ class Planetoid(object) :
         self.mod.setTexture(mod_tex, 1)
         
         #Camera position shouldn't make actors disappear
-        self.mod.node().setBounds(OmniBoundingVolume())
+        self.mod.node().setBounds(panda3d.core.OmniBoundingVolume())
         self.mod.node().setFinal(True)
         
         #Create always visible marker
@@ -106,17 +106,17 @@ class Orbital(Planetoid) :
     def loadDummy(self) :
         '''Create the dummy nodes, the skeleton of the system'''
         self.dummy_root = self.root_system.attachNewNode('dummy_root')
-        self.dummy_root.setEffect(CompassEffect.make(self.root))
+        self.dummy_root.setEffect(panda3d.core.CompassEffect.make(self.root))
 
         self.dummy_root = self.root_system.attachNewNode('dummy_root')
-        self.dummy_root.setEffect(CompassEffect.make(self.root))
+        self.dummy_root.setEffect(panda3d.core.CompassEffect.make(self.root))
 
         self.root = self.dummy_root.attachNewNode('root')
 
         self.system = self.root.attachNewNode('system')
         
         self.dummy = self.system.attachNewNode('dummy')
-        self.dummy.setEffect(CompassEffect.make(self.root))
+        self.dummy.setEffect(panda3d.core.CompassEffect.make(self.root))
         
         #parent to get relative positionning
         self.mod.reparentTo(self.dummy)
@@ -139,7 +139,7 @@ class Orbital(Planetoid) :
     def loadShadow(self) :
         '''black areas to show the casted sadows'''
         self.shadow = loader.loadModel("models/tube")
-        self.shadow.setTransparency(TransparencyAttrib.MAlpha)
+        self.shadow.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
         self.shadow.setColor(0,0,0,0.5)
         self.shadow.setSy(1000)
     
@@ -154,10 +154,10 @@ class Orbital(Planetoid) :
         self.orbit_line = graphics.makeArc(360, ORBITRESOLUTION)
         self.orbit_line.setHpr( 0, 90,0)
         #Camera position shouldn't make these actors disappear
-        self.orbit_line.node().setBounds(OmniBoundingVolume())
+        self.orbit_line.node().setBounds(panda3d.core.OmniBoundingVolume())
         self.orbit_line.node().setFinal(True)
         # orbits are not affected by sunlight
-        self.orbit_line.hide(BitMask32.bit(0))
+        self.orbit_line.hide(panda3d.core.BitMask32.bit(0))
     
     def showOrbit(self) :
         self.orbit_line.reparentTo(self.root)
@@ -214,36 +214,41 @@ class System(object) :
     
     def loadLight(self):
         #invisible spotlight to activate shadow casting (bypass bug)
-        self.unspot = self.root.attachNewNode(Spotlight("Invisible spot"))
+        self.unspot = self.root.attachNewNode(
+        panda3d.core.Spotlight("Invisible spot"))
         self.unspot.setPos(0,0,self.ua)
         self.unspot.setHpr(0,90,0)
         self.unspot.node().getLens().setNearFar(0,0)
         self.root.setLight(self.unspot)
         
         #the light on the earth system
-        self.light = self.root.attachNewNode(DirectionalLight("SunLight"))
+        self.light = self.root.attachNewNode(
+        panda3d.core.DirectionalLight("SunLight"))
         self.light.setPos(0,0,0)
         self.light.node().setScene(self.root)
         self.light.node().setShadowCaster(True, 2048, 2048)
         if SHOWFRUSTRUM :
             self.light.node().showFrustum()
         # a mask to define objects unaffected by light
-        self.light.node().setCameraMask(BitMask32.bit(0)) 
+        self.light.node().setCameraMask(panda3d.core.BitMask32.bit(0)) 
         self.root.setLight(self.light)
 
-        self.alight = self.root.attachNewNode(AmbientLight("Ambient"))
+        self.alight = self.root.attachNewNode(
+        panda3d.core.AmbientLight("Ambient"))
         p = 0.15
-        self.alight.node().setColor(Vec4(p, p, p, 1))
+        self.alight.node().setColor(panda3d.core.Vec4(p, p, p, 1))
         self.root.setLight(self.alight)
 
         # Create a special ambient light specially for the sun
         # so that it appears bright
-        self.ambientLava = self.root.attachNewNode(AmbientLight("AmbientForLava"))
+        self.ambientLava = self.root.attachNewNode(
+        panda3d.core.AmbientLight("AmbientForLava"))
         self.sun.mod.setLight(self.ambientLava)
         self.sky.setLight(self.ambientLava)
         #Special light fo markers
-        self.ambientMark = self.root.attachNewNode(AmbientLight("AmbientMark"))
-        self.ambientMark.node().setColor(Vec4(0.8, 0.4, 0, 1))
+        self.ambientMark = self.root.attachNewNode(
+        panda3d.core.AmbientLight("AmbientMark"))
+        self.ambientMark.node().setColor(panda3d.core.Vec4(0.8, 0.4, 0, 1))
         for obj in self.system :
             obj.marker.setLight(self.ambientMark)
             obj.axis.setLight(self.ambientMark)

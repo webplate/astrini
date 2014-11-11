@@ -1,10 +1,8 @@
-bug when going looking the same
-
-tune multiplier  and fantasist values for not changing scene size too much
-check ephemeris
+EARTH SHOULD NOT ALWAYS SHOW BOTH POLES
+MOON SHOULD SHOW SAME FACE
 
 
-Camera INputHd and Interface should have scene as paramteter (not world)
+NOTSURE??Camera INputHd and Interface should have scene as paramteter (not world)
 
 follow and lookat without slowdowns (predictive movement)
 look and follow instructions should be added to a list and then done sequentially

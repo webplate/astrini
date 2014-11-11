@@ -30,7 +30,7 @@ MOONEPHEMSET = -44 #correction to align moon phases
 PRINTTIMING = False #show Task manager statistics
 SHOWFRUSTRUM = False
 CAMERAFAR = 10.**4
-INTERFACEDELAY = 0.1
+INTERFACEDELAY = 0.5
 BUTTONSIZE = 48, 16
 
 #duration in sec of soft transitions

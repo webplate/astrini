@@ -104,9 +104,6 @@ class Orbital(Planetoid) :
         self.dummy_root = self.root_system.attachNewNode('dummy_root')
         self.dummy_root.setEffect(CompassEffect.make(render))
 
-        self.dummy_root = self.root_system.attachNewNode('dummy_root')
-        self.dummy_root.setEffect(CompassEffect.make(render))
-
         self.root = self.dummy_root.attachNewNode('root')
 
         self.system = self.root.attachNewNode('system')

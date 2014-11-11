@@ -61,6 +61,7 @@ class Planetoid(object) :
     
         #marker of orientation
         self.axis = graphics.makeCross()
+        self.axis.setScale(AXSCALE * self.radius)
         
     def showMarker(self) :
         '''always visible spot on target'''
@@ -85,7 +86,6 @@ class Planetoid(object) :
         self.mod.setScale(self.radius)
         #put marker in place
         self.marker.setPos(nodeCoordIn2d(self.mod))
-        self.axis.setScale(4*self.radius)
 
 
 class Orbital(Planetoid) :
@@ -295,7 +295,7 @@ class System(object) :
         self.earth.hideAxis()
 
     def place(self) :
-        for obj in [self.sun, self.earth, self.moon] :
+        for obj in self.system :
             obj.place()
         self.placeLight()
         self.sky.setScale(10*self.earth.distance)

@@ -42,6 +42,7 @@ MAXSPEED = 70000000.
 #Marker and orbitlines settings
 ORBITRESOLUTION = 256
 MARKERSCALE = 0.02
+AXSCALE = 0.6
 SKYRADIUS = 1000.
 
 #multiplier to avoid working with very high numbers
@@ -66,11 +67,11 @@ MOONREVO = MOONROT
 EARTHREVO = 365.25696
 
 #fantasist values
-UA_F = 30.
-EARTHRADIUS_F = 1.
-SUNRADIUS_F = 1.5
-MOONRADIUS_F = 0.2
-MOONAX_F = 8.
+UA_F = UA
+EARTHRADIUS_F = 5.
+SUNRADIUS_F = 10.
+MOONRADIUS_F = 1.
+MOONAX_F = 40.
 MOONINCL_F = 15. #an exagerated inclination to avoid moon eclipses in fantasist scale
 
 ABOUTTEXT = [

@@ -25,6 +25,8 @@ fake-view-frustum-cull 1
 USEEPHEM = False
 EPHEMSIMPLESET = -18.7399468035 #correction to align equinox in simple model
 MOONEPHEMSET = -44 #correction to align moon phases
+MOONROTSET = -55
+EARTHROTSET = -160
 
 #Interface settings
 PRINTTIMING = False #show Task manager statistics

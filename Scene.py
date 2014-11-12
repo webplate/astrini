@@ -205,11 +205,11 @@ class System(object) :
         SUNRADIUS_F, SUNROT, 0)
 
         self.earth = Orbital('earth', self.root, 'earth_1k_tex.jpg',
-        EARTHRADIUS_F, 1, 0, self.root,
+        EARTHRADIUS_F, 1, EARTHROTSET, self.root,
         EARTHREVO, EPHEMSIMPLESET, self.ua)
 
         self.moon = Orbital('moon', self.root, 'moon_1k_tex.jpg',
-        MOONRADIUS_F, MOONROT, -25, self.earth.system,
+        MOONRADIUS_F, MOONROT, MOONROTSET, self.earth.system,
         MOONREVO, MOONEPHEMSET, self.moonax)
     
     def loadLight(self):

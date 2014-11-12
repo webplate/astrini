@@ -106,17 +106,17 @@ class Orbital(Planetoid) :
     def loadDummy(self) :
         '''Create the dummy nodes, the skeleton of the system'''
         self.dummy_root = self.root_system.attachNewNode('dummy_root')
-        self.dummy_root.setEffect(panda3d.core.CompassEffect.make(self.root))
+        self.dummy_root.setCompass()
 
         self.dummy_root = self.root_system.attachNewNode('dummy_root')
-        self.dummy_root.setEffect(panda3d.core.CompassEffect.make(self.root))
+        self.dummy_root.setCompass()
 
         self.root = self.dummy_root.attachNewNode('root')
 
         self.system = self.root.attachNewNode('system')
         
         self.dummy = self.system.attachNewNode('dummy')
-        self.dummy.setEffect(panda3d.core.CompassEffect.make(self.root))
+        self.dummy.setCompass()
         
         #parent to get relative positionning
         self.mod.reparentTo(self.dummy)

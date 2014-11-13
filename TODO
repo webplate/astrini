@@ -14,6 +14,3 @@ support dates defore christ (datautil.date)
 
 
 go forward 1 day, 1 month, 1season, 1year (soft date change)
-
-INTERFACE !!
-check "maychange" option on text

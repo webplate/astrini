@@ -1,10 +1,10 @@
 # -*- coding: utf-8-*- 
-from panda3d.core import *
+import panda3d.core
 from math import ceil, log, sin, cos
 
 
 #importation and conversion of textures (power of 2 problem)
-cardMaker = CardMaker('CardMaker')
+cardMaker = panda3d.core.CardMaker('CardMaker')
 
 def nextPowOf2(n):
     return 2**int(ceil(log(n, 2)))
@@ -13,19 +13,19 @@ def nextPowOf2(n):
 def makeGeom(filename):
     """create geom from png and take care of power of two
     texture issues to permit pixel perfect blitting"""
-    origImage = PNMImage()
+    origImage = panda3d.core.PNMImage()
     origImage.read(filename)
     oldWidth = origImage.getXSize()
     oldHeight = origImage.getYSize()
     newWidth = nextPowOf2(oldWidth)
     newHeight = nextPowOf2(oldHeight)
 
-    newImage = PNMImage(newWidth, newHeight)
+    newImage = panda3d.core.PNMImage(newWidth, newHeight)
     if origImage.hasAlpha():
         newImage.addAlpha()
     newImage.copySubImage(origImage, 0, 0, 0, 0)
    
-    tex = Texture()
+    tex = panda3d.core.Texture()
     tex.load(newImage)
    
     cardMaker.setFrame(0, oldWidth, 0, oldHeight)
@@ -34,21 +34,22 @@ def makeGeom(filename):
     fV = float(oldHeight)/newHeight
 
     # cardMaker.setHasUvs(True)
-    cardMaker.setUvRange(Point2(0, 0), Point2(fU, fV))
+    cardMaker.setUvRange(panda3d.core.Point2(0, 0),
+    panda3d.core.Point2(fU, fV))
 
-    npCard = NodePath(cardMaker.generate())
+    npCard = panda3d.core.NodePath(cardMaker.generate())
     npCard.setTexture(tex)
-    npCard.setTexOffset(TextureStage.getDefault(), 0, 1-fV)
+    npCard.setTexOffset(panda3d.core.TextureStage.getDefault(), 0, 1-fV)
     if origImage.hasAlpha():
-        npCard.setTransparency(TransparencyAttrib.MAlpha)
+        npCard.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
    
     return npCard
 
 
 def makeArc(angleDegrees = 360, numSteps = 32):
-    ls = LineSegs()
+    ls = panda3d.core.LineSegs()
 
-    angleRadians = deg2Rad(angleDegrees)
+    angleRadians = panda3d.core.deg2Rad(angleDegrees)
 
     for i in range(numSteps + 1):
         a = angleRadians * i / numSteps
@@ -58,17 +59,17 @@ def makeArc(angleDegrees = 360, numSteps = 32):
         ls.drawTo(x, 0, y)
 
     node = ls.create()
-    return NodePath(node)
+    return panda3d.core.NodePath(node)
 
 def makeLine(length):
-    ls = LineSegs()
+    ls = panda3d.core.LineSegs()
     ls.drawTo(0, 0, -length/2.)
     ls.drawTo(0, 0, length/2.)
     node = ls.create()
-    return NodePath(node)
+    return panda3d.core.NodePath(node)
 
 def makeCross(length = 1):
-    ls = LineSegs()
+    ls = panda3d.core.LineSegs()
     ls.drawTo(0, 0, -length/2.)
     ls.drawTo(0, 0, length/2.)
     ls.drawTo(0, 0, 0)
@@ -78,5 +79,5 @@ def makeCross(length = 1):
     ls.drawTo(-length/2., 0, 0)
     ls.drawTo(length/2., 0, 0)
     node = ls.create()
-    return NodePath(node)
+    return panda3d.core.NodePath(node)
     

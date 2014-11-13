@@ -14,6 +14,7 @@ show-frame-rate-meter 1
 audio-library-name null
 sync-video 1
 task-timer-verbose #t
+fake-view-frustum-cull 1
 """)
 
 # PANDA DEBUGTOOLS
@@ -22,25 +23,29 @@ task-timer-verbose #t
 
 #use slow realistic ephemeris for positionning planetoids
 USEEPHEM = False
-EPHEMSIMPLESET = 18.7399468035 #correction to align equinox in simple model
+EPHEMSIMPLESET = -18.7399468035 #correction to align equinox in simple model
+MOONEPHEMSET = -44 #correction to align moon phases
+MOONROTSET = -55
+EARTHROTSET = -160
 
 #Interface settings
 PRINTTIMING = False #show Task manager statistics
 SHOWFRUSTRUM = False
-CAMERAFAR = 10**5
-INTERFACEDELAY = 0.5
+CAMERAFAR = 10.**4
+INTERFACEDELAY = 0.1
 BUTTONSIZE = 48, 16
 
 #duration in sec of soft transitions
 FREEZELEN = 0.2
 TRAVELLEN = 1.0
 SCALELEN = 2.0
-MAXSPEED = 70000000
+MAXSPEED = 70000000.
 
 #Marker and orbitlines settings
 ORBITRESOLUTION = 256
 MARKERSCALE = 0.02
-SKYRADIUS = 1000
+AXSCALE = 0.6
+SKYRADIUS = 1000.
 
 #multiplier to avoid working with very high numbers
 multiplier = 1 / 1000000.
@@ -64,29 +69,68 @@ MOONREVO = MOONROT
 EARTHREVO = 365.25696
 
 #fantasist values
-UA_F = 30.
-EARTHRADIUS_F = 1.
-SUNRADIUS_F = 1.5
-MOONRADIUS_F = 0.2
-MOONAX_F = 8.
+UA_F = UA
+EARTHRADIUS_F = 5.
+SUNRADIUS_F = 10.
+MOONRADIUS_F = 1.
+MOONAX_F = 40.
 MOONINCL_F = 15. #an exagerated inclination to avoid moon eclipses in fantasist scale
 
 ABOUTTEXT = [
-        '',
-        '',
-        'Astrini',
-        '',
-        'An Open source project for educational astronomy',
-        'Version 0.1',
-        '',
-        'Design : Roberto Casati and Glen Lomax.',
-        'Based on ideas from Roberto Casati,',
-        'Dov\'è il Sole di notte, Milano : Raffaello Cortina 2013,',
-        'partly developed during Glen Lomax CogMaster internship,',
-        'École des Hautes Études en Sciences Sociales, 2011-2012.',
-        '',
-        'Code : Glen Lomax',
-        'Engine : Panda3D (https://www.panda3d.org)',
-        'Licence : GPL v3',
-        'Contact : glenlomax@gmail.com',
-        'The source code is available at : https://github.com/webplate/astrini']
+'',
+'',
+'Astrini',
+'',
+'An Open source project for educational astronomy',
+'Version 0.1',
+'',
+'Design : Roberto Casati and Glen Lomax.',
+'Based on ideas from Roberto Casati,',
+'Dov\'è il Sole di notte, Milano : Raffaello Cortina 2013,',
+'partly developed during Glen Lomax CogMaster internship,',
+'École des Hautes Études en Sciences Sociales, 2011-2012.',
+'',
+'Code : Glen Lomax',
+'Engine : Panda3D (https://www.panda3d.org)',
+'Licence : GPL v3',
+'Contact : glenlomax@gmail.com',
+'The source code is available at : https://github.com/webplate/astrini']
+
+
+'''idea :
+a descrition of system should be enough??
+System = {'planetoids' :[
+        {'name' : 'sun',
+        'root' : self.root,
+        'tex' : 'sun_1k_tex.jpg',
+        'radius': SUNRADIUS_F,
+        'period' : SUNROT,
+        'offset' : 0,
+        'root_system',
+        'orbit_period',
+        'orbit_offset',
+        'orbit_radius'
+        }],
+    'orbitals' : [
+        {'name' : 'earth',
+        'root' : self.root,
+        'tex' : 'earth_1k_tex.jpg',
+        'radius': EARTHRADIUS_F,
+        'period' : 1,
+        'offset' : EARTHROTSET,
+        'root_system' : self.root,
+        'orbit_period' : EARTHREVO,
+        'orbit_offset' : EPHEMSIMPLESET,
+        'orbit_radius' : UA_F
+        },
+        {'name' : 'moon',
+        'root' : self.root,
+        'tex' : 'moon_1k_tex.jpg',
+        'radius': MOONRADIUS_F,
+        'period' : MOONROT,
+        'offset' : MOONROTSET,
+        'root_system' : self.earth.system,
+        'orbit_period' : MOONREVO,
+        'orbit_offset' : MOONEPHEMSET,
+        'orbit_radius' : MOONAX_F
+    }]'''

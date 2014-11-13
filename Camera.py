@@ -1,9 +1,9 @@
 # -*- coding: utf-8-*- 
 from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
-from pandac.PandaModules import *
-
-from math import tan, radians
+from panda3d.core import WindowProperties
+#Sequence and parallel for intervals
+from direct.interval.IntervalGlobal import Sequence, Func
 
 #My Global config variables
 from config import *
@@ -106,7 +106,7 @@ class KeyboardMover(DirectObject):   #TRY REMOVE DIRECTOBJECT HERITAGE
 
 class MouseMover(DirectObject):
     '''
-This class is use to move mouse when in FPS (fly) mode
+This class is used to move mouse when in FPS (fly) mode
 setActive() -> used to activate FPS mouse slide
 setUnactive() -> inactivate FPS behaviour
 '''
@@ -160,30 +160,149 @@ setUnactive() -> inactivate FPS behaviour
         #then removing task and resetting pointer to previous position
         taskMgr.remove("mouseMoverTask")
         base.win.movePointer(0,self.lastCoo[0],self.lastCoo[1])
+
+class HunterMover(DirectObject):
+    '''
+This class is used to hunt planetoids
+(look and follow them softly)
+'''
+    def __init__(self, scene):
+        self.scene = scene
+        #Prepare locks (following procedures etc...)
+        self.timeTravel = False
+        self.speed = self.scene.simulSpeed
+        self.sequences = []
+        self.looking = None
+        self.following = None
+    
+    def setActive(self):
+        #low priority to prevent jitter of camera
+        taskMgr.add(self.moveCameraTask, "hunterMoverTask", priority=25)
+    
+    def setUnactive(self):
+        taskMgr.remove("hunterMoverTask")
+        #Stop looking and following
+        self.stop_follow()
+        self.stop_look()
+
+    def moveCameraTask(self, task) :
+        """alignment contraints""" 
+        #align if necessary
+        if self.following != None :
+            camera.setPos(self.scene.hook.getPos(self.scene.root))
+        if self.looking != None :
+            camera.lookAt(self.scene.focus)
+        return Task.cont
         
+    def softMove(self, nod, posFunc, lockFunc, unlockFunc) :
+        #select correct speed of reference
+        if not self.timeTravel :
+            self.speed = self.scene.simulSpeed
+            self.timeTravel = True
+        #stop flow of time while traveling
+        slow, fast = self.scene.generate_speed_fade(self.speed)
+        
+        travel = nod.posInterval(TRAVELLEN,
+            posFunc, blendType='easeInOut')
+        
+        check = Func(self.checkTimeTravel)
+        
+        #slow sim, release, travel, lock, resume speed, check for concurrents
+        sequence = Sequence(slow, Func(unlockFunc),
+        travel, Func(lockFunc), fast, check)
+        
+        self.sequences.append(sequence)
+        sequence.start()
+    
+    def checkTimeTravel(self) :
+        for s in self.sequences :
+            if s.isPlaying() :
+                self.timeTravel = True
+                return
+        self.sequences = []
+        self.timeTravel = False
+
+    def get_curr_follow_rel_pos(self) :
+        return self.following.getPos(self.scene.root)
+
+    def stop_follow(self) :
+        self.following = None
+        self.scene.updateShadows()
+
+    def lock_camera(self) :
+        self.scene.hook.reparentTo(self.following)
+        self.scene.hook.setPos(0, 0, 0)
+
+    def unlock_camera(self) :
+        self.scene.hook.wrtReparentTo(self.scene.root)
+
+    def follow(self, identity):
+        '''move camera hook to follow an object'''
+        #if new destination and not already trying to reach another
+        if self.following != identity :
+            previous = self.following
+            self.following = identity
+            #hide tubular shadow of followed object
+            self.scene.updateShadows()
+            #prevent looking and following the same
+            if self.looking == self.following :
+                self.look(self.getNewTarget(identity, previous))
+
+            self.softMove(self.scene.hook, self.get_curr_follow_rel_pos,
+            self.lock_camera, self.unlock_camera)
+
+    def get_curr_look_rel_pos(self) :
+        return self.looking.getPos(self.scene.root)
+        
+    def stop_look(self) :
+        self.looking = None
+
+    def lock_focus(self) :
+        self.scene.focus.reparentTo(self.looking)
+        self.scene.focus.setPos(0, 0, 0)
+
+    def unlock_focus(self) :
+        self.scene.focus.wrtReparentTo(self.scene.root)
+
+    def look(self, identity) :
+        '''move camera focus to an object'''
+        if self.looking != identity :
+            previous = self.looking
+            self.looking = identity
+            if self.looking == self.following :
+                self.follow(self.getNewTarget(identity, previous))
+            
+            self.softMove(self.scene.focus, self.get_curr_look_rel_pos,
+            self.lock_focus, self.unlock_focus)
+    
+    def getNewTarget(self, identity, previous) :
+        '''select new target to avoid looking and following the same'''
+        if previous != None and previous.getName() != 'home' :
+            return previous
+        for o in self.scene.sys.orbitals :
+            if o.mod.getName() != identity.getName() :
+                return o.mod
+
 class Camera(DirectObject):
     def __init__(self, world):
         self.world = world
         #keyboard/mouse mover
         self.km = KeyboardMover()
         self.mm = MouseMover()
+        #interface mover
+        self.hm = HunterMover(self.world.scene)
         #disabling mouse by default
         base.disableMouse()
         #setting status
         self.state = "static"
         #default config when just opened
         self.mm.showMouse()
+        self.hm.setActive()
         self.setUtilsActive()
-        self.placeCameraHome()
-        #low priority to prevent jitter of camera
-        taskMgr.add(self.lockCameraTask, "lockCameraTask", priority=25)
-        taskMgr.add(self.lockHomeTask, "lockHomeTask", priority=3)
         
         self.setNearFar(0.1,CAMERAFAR)
         self.setFov(45)
-    
-    def getFov(self):
-        return base.camLens.getFov()
+
     
     def setNearFar(self,v1,v2):
         base.camLens.setNearFar(v1,v2)
@@ -204,9 +323,11 @@ class Camera(DirectObject):
                 #re-enabling all gui elements
                 self.mm.setActive()
                 self.km.setActive()
+                self.hm.setUnactive()
             if s == "static":
                 self.mm.setUnactive()
                 self.km.setUnactive()
+                self.hm.setActive()
             #changing state variable at the end of method execution
             self.state = s
     
@@ -231,25 +352,3 @@ class Camera(DirectObject):
             self.world.InputHandler.setInactive()
         #switching camera in any case
         self.toggleState()
-
-    def placeCameraHome(self) :
-        #Compute camera-sun distance from fov
-        fov = self.getFov()[0]
-        ua = self.world.scene.sys.earth.distance
-        margin = ua / 3
-        c_s_dist = (ua + margin) / tan(radians(fov/2))
-        self.world.home.setPos(0, -c_s_dist,ua/3)
-
-    def lockCameraTask(self, task) :
-        """alignment contraints""" 
-        #align if necessary
-        if self.world.following != None :
-            camera.setPos(self.world.following.getPos(render))
-        if self.world.looking != None :
-            camera.lookAt(self.world.focus)
-        return Task.cont
-        
-    def lockHomeTask(self, task) :
-        '''keep home in place'''
-        self.placeCameraHome()
-        return Task.cont

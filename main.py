@@ -10,7 +10,7 @@
 #~ Code: Glen Lomax
 #~ Engine: Panda3D (https://www.panda3d.org)
 #~ Licence: GPL v3
-#~ Contact: glenlomax@gmail.com
+#~ Contact: glenlomax ---at--- gmail.com
 #~ 
 #~ 
 #~ The source code is available at: https://github.com/webplate/astrini
@@ -36,9 +36,8 @@ from config import *
 # Import stuff in order to have a derived ShowBase extension running
 # Remember to use every extension as a DirectObject inheriting class
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import *
-#Sequence and parallel for intervals
-from direct.interval.IntervalGlobal import *
+from panda3d.core import WindowProperties
+from datetime import datetime
 # Default classes
 from Camera import Camera
 from InputHandler import InputHandler
@@ -54,9 +53,18 @@ class World(ShowBase):
         WindowProperties.setDefault(wp)
 
         ShowBase.__init__(self)
+        
+        self.initScene()
+        #InitialSettings
+        #~ self.scene.simulTime = datetime(2024,12,31, 8, 44)#sun rise
+        self.Camera.hm.look(self.sun)
+        self.Camera.hm.follow(self.home)
 
+    def initScene(self) :
         #Scene initialization
         self.scene = Scene(self)
+        
+        
         self.earth = self.scene.sys.earth.mod
         self.moon = self.scene.sys.moon.mod
         self.sun = self.scene.sys.sun.mod
@@ -69,76 +77,7 @@ class World(ShowBase):
         self.InputHandler = InputHandler(self)
         #Interface
         self.Interface = Interface(self)
-        
-        #Prepare locks (following procedures etc...)
-        self.travelling = False
-        self.looking = None
-        self.following = None
-        
-        #InitialSettings
-        self.look(self.sun)
-        self.follow(self.home)
 
-    def get_curr_look_rel_pos(self) :
-        return self.to_look.getPos(render)
-        
-    def get_curr_follow_rel_pos(self) :
-        return self.to_follow.getPos(render)
-
-    def stop_follow(self) :
-        self.following = None
-
-    def start_follow(self, new) :
-        self.travelling = False
-        self.following = new
-
-    def follow(self, identity):
-        #if new destination and not already trying to reach another
-        if self.following != identity and not self.travelling :
-            self.travelling = True
-            #to be able to capture its position during sequence
-            #and make updates before we actually follow it
-            self.to_follow = identity
-            #hide tubular shadow of followed object
-            self.scene.updateShadows()
-            #stop flow of time while traveling
-            slow, fast = self.scene.generate_speed_fade()
-            travel = self.camera.posInterval(TRAVELLEN,
-            self.get_curr_follow_rel_pos,
-            blendType='easeInOut')
-            #slow sim, release, travel, lock and resume speed
-            sequence = Sequence(slow, Func(self.stop_follow),
-            travel, Func(self.start_follow, identity), fast)
-            sequence.start()
-
-    def stop_look(self) :
-        self.looking = None
-
-    def start_look(self, new) :
-        self.looking = new
-
-    def lock_focus(self) :
-        self.looking = self.to_look
-        self.focus.reparentTo(self.looking)
-        self.focus.setPos(0, 0, 0)
-
-    def unlock_focus(self) :
-        self.focus.wrtReparentTo(render)
-
-    def look(self, identity) :
-        #if new target
-        if self.looking != identity :
-            #store new to get actual position and update interface
-            self.to_look = identity
-            #stop flow of time while changing focus
-            slow, fast = self.scene.generate_speed_fade()
-            
-            travel = self.focus.posInterval(FREEZELEN,
-            self.get_curr_look_rel_pos,
-            blendType='easeInOut')
-            sequence = Sequence(slow, Func(self.unlock_focus),
-                travel, Func(self.lock_focus), fast)
-            sequence.start()
 
 #a virtual argument to bypass packing bug
 def main(arg=None):

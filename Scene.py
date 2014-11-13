@@ -1,6 +1,6 @@
 # -*- coding: utf-8-*- 
 #Core functions of PandaEngine
-from panda3d.core import *
+import panda3d.core
 # Task declaration import 
 from direct.task import Task
 #interpolate function parameter
@@ -8,6 +8,9 @@ from direct.interval.LerpInterval import LerpFunc
 #Work with time
 from datetime import datetime, timedelta
 import astronomia.calendar
+
+from math import tan, radians
+
 #Drawing functions
 import graphics
 #My Global config variables
@@ -19,23 +22,24 @@ def nodeCoordIn2d(nodePath):
     coord3d = nodePath.getPos(base.cam)
     #elude objects behind camera
     if coord3d[1] < 0 :
-        return Point3()
-    coord2d = Point2()
+        return panda3d.core.Point3()
+    coord2d = panda3d.core.Point2()
     base.camLens.project(coord3d, coord2d)
-    coordInRender2d = Point3(coord2d[0], 0, coord2d[1])
+    coordInRender2d = panda3d.core.Point3(coord2d[0], 0, coord2d[1])
     coordInAspect2d = aspect2d.getRelativePoint(render2d,
                         coordInRender2d)
     return coordInAspect2d
 
 class Planetoid(object) :
     '''rotating spherical model with markers'''
-    def __init__(self, name, tex, radius, period = 1, offset = 0) :
+    def __init__(self, name, root, tex, radius, period = 1, offset = 0) :
         self.name = name
+        self.root = root
         self.radius = radius
         self.period = period
         self.offset = offset
         self.load(tex)
-        self.mod.reparentTo(render)
+        self.mod.reparentTo(self.root)
         #the model gets the same name as the planetoid
         self.mod.setName(self.name)
         
@@ -48,7 +52,7 @@ class Planetoid(object) :
         self.mod.setTexture(mod_tex, 1)
         
         #Camera position shouldn't make actors disappear
-        self.mod.node().setBounds(OmniBoundingVolume())
+        self.mod.node().setBounds(panda3d.core.OmniBoundingVolume())
         self.mod.node().setFinal(True)
         
         #Create always visible marker
@@ -57,6 +61,7 @@ class Planetoid(object) :
     
         #marker of orientation
         self.axis = graphics.makeCross()
+        self.axis.setScale(AXSCALE * self.radius)
         
     def showMarker(self) :
         '''always visible spot on target'''
@@ -81,15 +86,14 @@ class Planetoid(object) :
         self.mod.setScale(self.radius)
         #put marker in place
         self.marker.setPos(nodeCoordIn2d(self.mod))
-        self.axis.setScale(4*self.radius)
 
 
 class Orbital(Planetoid) :
     '''planetoid with an orbit, shadow
     distance from orbit root'''
-    def __init__(self, name, tex, radius, period, offset,
+    def __init__(self, name, root, tex, radius, period, offset,
     root_system, orbit_period, orbit_offset, distance) :
-        Planetoid.__init__(self, name, tex, radius, period , offset)
+        Planetoid.__init__(self, name, root, tex, radius, period , offset)
         self.root_system = root_system
         self.orbit_period = orbit_period
         self.orbit_offset = orbit_offset
@@ -102,22 +106,22 @@ class Orbital(Planetoid) :
     def loadDummy(self) :
         '''Create the dummy nodes, the skeleton of the system'''
         self.dummy_root = self.root_system.attachNewNode('dummy_root')
-        self.dummy_root.setEffect(CompassEffect.make(render))
+        self.dummy_root.setCompass()
 
         self.root = self.dummy_root.attachNewNode('root')
 
         self.system = self.root.attachNewNode('system')
         
         self.dummy = self.system.attachNewNode('dummy')
-        self.dummy.setEffect(CompassEffect.make(render))
+        self.dummy.setCompass()
         
         #parent to get relative positionning
         self.mod.reparentTo(self.dummy)
     
     def orbit(self, julian_time) :
-        self.root.setHpr(
-    ((360 / self.orbit_period) * julian_time % 360) - self.orbit_offset,
-        0, 0)
+        coord = (((360 / self.orbit_period) * julian_time % 360)
+         + self.orbit_offset)
+        self.root.setHpr(coord , 0, 0)
     
     def rotate(self, time) :
         '''rotate on itself and around gravity center'''
@@ -132,7 +136,7 @@ class Orbital(Planetoid) :
     def loadShadow(self) :
         '''black areas to show the casted sadows'''
         self.shadow = loader.loadModel("models/tube")
-        self.shadow.setTransparency(TransparencyAttrib.MAlpha)
+        self.shadow.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
         self.shadow.setColor(0,0,0,0.5)
         self.shadow.setSy(1000)
     
@@ -147,10 +151,10 @@ class Orbital(Planetoid) :
         self.orbit_line = graphics.makeArc(360, ORBITRESOLUTION)
         self.orbit_line.setHpr( 0, 90,0)
         #Camera position shouldn't make these actors disappear
-        self.orbit_line.node().setBounds(OmniBoundingVolume())
+        self.orbit_line.node().setBounds(panda3d.core.OmniBoundingVolume())
         self.orbit_line.node().setFinal(True)
         # orbits are not affected by sunlight
-        self.orbit_line.hide(BitMask32.bit(0))
+        self.orbit_line.hide(panda3d.core.BitMask32.bit(0))
     
     def showOrbit(self) :
         self.orbit_line.reparentTo(self.root)
@@ -163,7 +167,8 @@ class System(object) :
     '''sun earth and moon
     plus sky and lights
     methods to do factual changes'''
-    def __init__(self):
+    def __init__(self, root):
+        self.root = root
         self.initAstrofacts()
         self.loadPlanets()
         self.system = [self.sun, self.earth, self.moon]
@@ -193,49 +198,54 @@ class System(object) :
         self.moonIncliHard = MOONINCL_F
 
     def loadPlanets(self):
-        self.sun = Planetoid('sun', 'sun_1k_tex.jpg',
+        self.sun = Planetoid('sun', self.root, 'sun_1k_tex.jpg',
         SUNRADIUS_F, SUNROT, 0)
 
-        self.earth = Orbital('earth', 'earth_1k_tex.jpg',
-        EARTHRADIUS_F, 1, 0, render,
-        EARTHREVO, -EPHEMSIMPLESET, self.ua)
+        self.earth = Orbital('earth', self.root, 'earth_1k_tex.jpg',
+        EARTHRADIUS_F, 1, EARTHROTSET, self.root,
+        EARTHREVO, EPHEMSIMPLESET, self.ua)
 
-        self.moon = Orbital('moon', 'moon_1k_tex.jpg',
-        MOONRADIUS_F, MOONROT, -25, self.earth.system,
-        MOONREVO, 0, self.moonax)
+        self.moon = Orbital('moon', self.root, 'moon_1k_tex.jpg',
+        MOONRADIUS_F, MOONROT, MOONROTSET, self.earth.system,
+        MOONREVO, MOONEPHEMSET, self.moonax)
     
     def loadLight(self):
         #invisible spotlight to activate shadow casting (bypass bug)
-        self.unspot = render.attachNewNode(Spotlight("Invisible spot"))
+        self.unspot = self.root.attachNewNode(
+        panda3d.core.Spotlight("Invisible spot"))
         self.unspot.setPos(0,0,self.ua)
         self.unspot.setHpr(0,90,0)
         self.unspot.node().getLens().setNearFar(0,0)
-        render.setLight(self.unspot)
+        self.root.setLight(self.unspot)
         
         #the light on the earth system
-        self.light = render.attachNewNode(DirectionalLight("SunLight"))
+        self.light = self.root.attachNewNode(
+        panda3d.core.DirectionalLight("SunLight"))
         self.light.setPos(0,0,0)
-        self.light.node().setScene(render)
+        self.light.node().setScene(self.root)
         self.light.node().setShadowCaster(True, 2048, 2048)
         if SHOWFRUSTRUM :
             self.light.node().showFrustum()
         # a mask to define objects unaffected by light
-        self.light.node().setCameraMask(BitMask32.bit(0)) 
-        render.setLight(self.light)
+        self.light.node().setCameraMask(panda3d.core.BitMask32.bit(0)) 
+        self.root.setLight(self.light)
 
-        self.alight = render.attachNewNode(AmbientLight("Ambient"))
+        self.alight = self.root.attachNewNode(
+        panda3d.core.AmbientLight("Ambient"))
         p = 0.15
-        self.alight.node().setColor(Vec4(p, p, p, 1))
-        render.setLight(self.alight)
+        self.alight.node().setColor(panda3d.core.Vec4(p, p, p, 1))
+        self.root.setLight(self.alight)
 
         # Create a special ambient light specially for the sun
         # so that it appears bright
-        self.ambientLava = render.attachNewNode(AmbientLight("AmbientForLava"))
+        self.ambientLava = self.root.attachNewNode(
+        panda3d.core.AmbientLight("AmbientForLava"))
         self.sun.mod.setLight(self.ambientLava)
         self.sky.setLight(self.ambientLava)
         #Special light fo markers
-        self.ambientMark = render.attachNewNode(AmbientLight("AmbientMark"))
-        self.ambientMark.node().setColor(Vec4(0.8, 0.4, 0, 1))
+        self.ambientMark = self.root.attachNewNode(
+        panda3d.core.AmbientLight("AmbientMark"))
+        self.ambientMark.node().setColor(panda3d.core.Vec4(0.8, 0.4, 0, 1))
         for obj in self.system :
             obj.marker.setLight(self.ambientMark)
             obj.axis.setLight(self.ambientMark)
@@ -243,7 +253,7 @@ class System(object) :
             obj.orbit_line.setLight(self.ambientMark)
 
         # Important! Enable the shader generator.
-        render.setShaderAuto()
+        self.root.setShaderAuto()
 
     def placeLight(self) :
         self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
@@ -256,7 +266,7 @@ class System(object) :
         self.sky.setTexture(self.sky_tex, 1)
     
     def showSky(self) :
-        self.sky.reparentTo(render)
+        self.sky.reparentTo(self.root)
     
     def hideSky(self) :
         self.sky.detachNode()
@@ -282,7 +292,7 @@ class System(object) :
         self.earth.hideAxis()
 
     def place(self) :
-        for obj in [self.sun, self.earth, self.moon] :
+        for obj in self.system :
             obj.place()
         self.placeLight()
         self.sky.setScale(10*self.earth.distance)
@@ -352,7 +362,7 @@ class Scene(object) :
         self.world = world
         self.loadEmpty()
         base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
-        self.sys = System()
+        self.sys = System(self.root)
         #Time Control
         self.paused = False
         self.reverse = False
@@ -369,14 +379,31 @@ class Scene(object) :
         # Add Tasks procedures to the task managers.
         taskMgr.add(self.timeTask, "timeTask", priority = 1)
         taskMgr.add(self.placeTask, "placeTask", priority = 2)
-        
+        taskMgr.add(self.lockHomeTask, "lockHomeTask", priority=3)
+
 
     def loadEmpty(self) :
         #Create the dummy nodes
-        self.home = render.attachNewNode('home')
+        self.root = render.attachNewNode('root')
+        self.home = self.root.attachNewNode('home')
         self.home.setName('home')
-        self.focus = render.attachNewNode('focus')
+        self.focus = self.root.attachNewNode('focus')
         self.focus.setName('focus')
+        self.hook = self.root.attachNewNode('hook')
+        self.hook.setName('hook')
+    
+    def placeCameraHome(self) :
+        #Compute camera-sun distance from fov
+        fov = base.camLens.getFov()[0]
+        ua = self.sys.earth.distance
+        margin = ua / 3
+        c_s_dist = (ua + margin) / tan(radians(fov/2))
+        self.world.home.setPos(0, -c_s_dist,ua/3)
+
+    def lockHomeTask(self, task) :
+        '''keep home in place'''
+        self.placeCameraHome()
+        return Task.cont
     
     #Timing control :
     #
@@ -425,13 +452,12 @@ class Scene(object) :
         else :
             self.reverse = False
 
-    def generate_speed_fade(self) :
+    def generate_speed_fade(self, speed) :
         #generate intervals to fade in and out from previous speed
-        prev_speed = self.simulSpeed
         slow = LerpFunc(self.setSpeed, FREEZELEN,
-        prev_speed, 0.)
+        self.simulSpeed, 0.)
         fast = LerpFunc(self.setSpeed, FREEZELEN,
-        0., prev_speed)
+        0., speed)
         return slow, fast
         
     def time(self) :
@@ -528,11 +554,9 @@ class Scene(object) :
             self.sys.earth.showShadow()
         #we shouldn't hide the same shadow if we are going to follow or 
         #already following
-        if self.world.travelling :
-            name = self.world.to_follow.getName()
         #shouldn't bug if we aren't following any
-        elif not self.world.travelling and self.world.following != None :
-            name = self.world.following.getName()
+        if self.world.Camera.hm.following != None :
+            name = self.world.Camera.hm.following.getName()
         else :
             name = None
         #specific hide

@@ -18,14 +18,14 @@ class InputHandler(DirectObject):
         base.accept("escape", sys.exit)
         #My shortcuts
         
-        self.accept("a",self.world.stop_follow)
-        self.accept("w",self.world.stop_look)
+        self.accept("a",self.world.Camera.hm.stop_follow)
+        self.accept("w",self.world.Camera.hm.stop_look)
         
-        self.accept("e",self.world.follow,[self.world.earth])
-        self.accept("control-e",self.world.look,[self.world.earth])
+        self.accept("e",self.world.Camera.hm.follow,[self.world.earth])
+        self.accept("control-e",self.world.Camera.hm.look,[self.world.earth])
         
-        self.accept("r",self.world.follow,[self.world.moon])
-        self.accept("control-r",self.world.look,[self.world.moon])
+        self.accept("r",self.world.Camera.hm.follow,[self.world.moon])
+        self.accept("control-r",self.world.Camera.hm.look,[self.world.moon])
         
-        self.accept("f",self.world.follow,[self.world.sun])
-        self.accept("control-f",self.world.look,[self.world.sun])
+        self.accept("f",self.world.Camera.hm.follow,[self.world.sun])
+        self.accept("control-f",self.world.Camera.hm.look,[self.world.sun])

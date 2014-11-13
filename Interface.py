@@ -40,10 +40,10 @@ class Interface(object) :
         #Container for main interface
         w, h = base.win.getXSize(), base.win.getYSize()
         bw, bh = BUTTONSIZE
-        b_cont = DirectFrame(frameSize=(-(bw+bw/2), bw+bw/2, -h/2, h/2),
+        self.b_cont = DirectFrame(frameSize=(-(bw+bw/2), bw+bw/2, -h/2, h/2),
             frameColor=(1,1,1,0.3),
             pos=(bw+bw/2, -1, -h/2))
-        b_cont.reparentTo(pixel2d)
+        self.b_cont.reparentTo(pixel2d)
 
         def add_button(name, i, j, command, args, parent) :
             """add button as on a button grid on parent"""
@@ -119,70 +119,78 @@ class Interface(object) :
         
         #Buttons to follow
         j = 1
-        add_label('Go to : ', 1, j, b_cont)
-        self.earth_b = add_button('Earth', 0, j+1, self.world.follow,
-        [self.world.earth], b_cont)
-        self.moon_b = add_button('Moon', 1, j+1, self.world.follow,
-        [self.world.moon], b_cont)
-        self.sun_b = add_button('Sun', 2, j+1, self.world.follow,
-        [self.world.sun], b_cont)
-        self.ext_b = add_button('Ext', 2, j+2, self.world.follow,
-        [self.world.home], b_cont)
+        follow = self.world.Camera.hm.follow
+        add_label('Go to : ', 1, j, self.b_cont)
+        self.earth_b = add_button('Earth', 0, j+1, follow,
+        [self.world.earth], self.b_cont)
+        self.moon_b = add_button('Moon', 1, j+1, follow,
+        [self.world.moon], self.b_cont)
+        self.sun_b = add_button('Sun', 2, j+1, follow,
+        [self.world.sun], self.b_cont)
+        self.ext_b = add_button('Ext', 2, j+2, follow,
+        [self.world.home], self.b_cont)
         #and to look at
         j += 4
-        add_label('Look at : ', 1, j, b_cont)
-        self.earth_lb = add_button('Earth', 0, j+1, self.world.look,
-        [self.world.earth], b_cont)
-        self.moon_lb = add_button('Moon', 1, j+1, self.world.look,
-        [self.world.moon], b_cont)
-        self.sun_lb = add_button('Sun', 2, j+1, self.world.look,
-        [self.world.sun], b_cont)
+        look = self.world.Camera.hm.look
+        add_label('Look at : ', 1, j, self.b_cont)
+        self.earth_lb = add_button('Earth', 0, j+1, look,
+        [self.world.earth], self.b_cont)
+        self.moon_lb = add_button('Moon', 1, j+1, look,
+        [self.world.moon], self.b_cont)
+        self.sun_lb = add_button('Sun', 2, j+1, look,
+        [self.world.sun], self.b_cont)
         #and to change speed
         j += 3
-        add_label('Speed : ', 0, j, b_cont)
-        self.speedlabel = add_label('Speed', 1, j, b_cont)
-        add_button('-', 0, j+1, self.world.scene.changeSpeed, [1./2], b_cont)
-        add_button('+', 1, j+1, self.world.scene.changeSpeed, [2], b_cont)
-        add_button('++', 2, j+1, self.world.scene.changeSpeed, [100], b_cont)
+        add_label('Speed : ', 0, j, self.b_cont)
+        self.speedlabel = add_label('Speed', 1, j, self.b_cont)
+        #may change optimization 
+        self.speedlabel['textMayChange'] = True
+        add_button('-', 0, j+1, self.world.scene.changeSpeed, [1./2], self.b_cont)
+        add_button('+', 1, j+1, self.world.scene.changeSpeed, [2], self.b_cont)
+        add_button('++', 2, j+1, self.world.scene.changeSpeed, [100], self.b_cont)
         self.reverse_b = add_button('-1', 0, j+2, self.world.scene.reverseSpeed,
-        [], b_cont)
+        [], self.b_cont)
         self.pause_b = add_button('Pause', 1, j+2, self.world.scene.toggleSpeed,
-        [], b_cont)
-        add_button('Now', 2, j+2, self.world.scene.time_is_now, [], b_cont)
+        [], self.b_cont)
+        add_button('Now', 2, j+2, self.world.scene.time_is_now, [], self.b_cont)
 
         #date time display
         j += 4
-        self.datelabel = add_label('UTC Time', 1, j, b_cont)
+        self.datelabel = add_label('UTC Time', 1, j, self.b_cont)
+        #a monospae font for counter
         self.datelabel['text_font'] = self.mono_font
-        self.timelabel = add_label('UTC Time', 1, j+1, b_cont)
+        #may change optimization 
+        self.datelabel['textMayChange'] = True
+        self.timelabel = add_label('UTC Time', 1, j+1, self.b_cont)
         self.timelabel['text_font'] = self.mono_font
+        self.timelabel['textMayChange'] = True
         
         #factual changes
         j += 3
-        add_label('Factual changes : ', 1, j, b_cont)
+        add_label('Factual changes : ', 1, j, self.b_cont)
         self.fact_moon_b = add_button('Moon', 0, j+1, self.world.scene.sys.toggleIncl,
-        [], b_cont)
+        [], self.b_cont)
         self.fact_moon2_b = add_button('Moon+', 1, j+1, self.world.scene.sys.toggleIncl,
-        [True], b_cont)
+        [True], self.b_cont)
         self.fact_earth_b = add_button('Earth', 2, j+1, self.world.scene.sys.toggleTilt,
-        [], b_cont)
+        [], self.b_cont)
         self.fact_scale_b = add_button('Scale', 0, j+2, self.world.scene.toggleScale,
-        [], b_cont)
+        [], self.b_cont)
         
         #Visualization changes
         j += 4
-        add_label('Display : ', 1, j, b_cont)
+        add_label('Display : ', 1, j, self.b_cont)
         self.shadow_b = add_button('Shadow', 0, j+1, self.world.scene.toggleShadows,
-        [], b_cont)
+        [], self.b_cont)
         self.mark_b = add_button('Mark', 1, j+1, self.world.scene.toggleMarks,
-        [], b_cont)
+        [], self.b_cont)
         self.star_b = add_button('Stars', 2, j+1, self.world.scene.toggleSky,
-        [], b_cont)
+        [], self.b_cont)
         
         #hidden dialogs
-        j += 20
-        add_button('Info', 0, j, self.show_dialog, [self.info_dialog], b_cont)
-        add_button('About', 2, j, self.show_dialog, [self.about_dialog], b_cont)
+        j += 3
+        add_button('Info', 0, j, self.show_dialog, [self.info_dialog], self.b_cont)
+        add_button('About', 2, j, self.show_dialog, [self.about_dialog], self.b_cont)
         
 
     def show_dialog(self, frame) :
@@ -195,77 +203,48 @@ class Interface(object) :
     def update_buttons(self) :
         """set buttons states and appearances according to user input
         buttons should reflect what you're looking at and what you're following"""
-        if self.world.following == self.world.earth :
-            #disable buttons to prevent looking at own position
-            self.earth_lb['state'] = DGG.DISABLED
-            self.moon_lb['state'] = DGG.NORMAL
-            self.sun_lb['state'] = DGG.NORMAL
+        if self.world.Camera.hm.following == self.world.earth :
             #show activated button for followed object
             self.earth_b['geom'] = self.b_map_acti
             self.moon_b['geom'] = self.b_map
             self.sun_b['geom'] = self.b_map
             self.ext_b['geom'] = self.b_map
-        elif self.world.following == self.world.moon :
-            self.earth_lb['state'] = DGG.NORMAL
-            self.moon_lb['state'] = DGG.DISABLED
-            self.sun_lb['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.following == self.world.moon :
             self.earth_b['geom'] = self.b_map
             self.moon_b['geom'] = self.b_map_acti
             self.sun_b['geom'] = self.b_map
             self.ext_b['geom'] = self.b_map
-        elif self.world.following == self.world.sun :
-            self.earth_lb['state'] = DGG.NORMAL
-            self.moon_lb['state'] = DGG.NORMAL
-            self.sun_lb['state'] = DGG.DISABLED
+        elif self.world.Camera.hm.following == self.world.sun :
             self.earth_b['geom'] = self.b_map
             self.moon_b['geom'] = self.b_map
             self.sun_b['geom'] = self.b_map_acti
             self.ext_b['geom'] = self.b_map
-        elif self.world.following == self.world.home :
-            self.earth_lb['state'] = DGG.NORMAL
-            self.moon_lb['state'] = DGG.NORMAL
-            self.sun_lb['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.following == self.world.home :
             self.earth_b['geom'] = self.b_map
             self.moon_b['geom'] = self.b_map
             self.sun_b['geom'] = self.b_map
             self.ext_b['geom'] = self.b_map_acti
-        elif self.world.following == None :
-            self.earth_lb['state'] = DGG.NORMAL
-            self.moon_lb['state'] = DGG.NORMAL
-            self.sun_lb['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.following == None :
             self.earth_b['geom'] = self.b_map
             self.moon_b['geom'] = self.b_map
             self.sun_b['geom'] = self.b_map
             self.ext_b['geom'] = self.b_map
         
         
-        if self.world.looking == self.world.earth :
-            #disable buttons to prevent going at looked object
-            self.earth_b['state'] = DGG.DISABLED
-            self.moon_b['state'] = DGG.NORMAL
-            self.sun_b['state'] = DGG.NORMAL
+        if self.world.Camera.hm.looking == self.world.earth :
             #show activated button for looked object
             self.earth_lb['geom'] = self.b_map_acti
             self.moon_lb['geom'] = self.b_map
             self.sun_lb['geom'] = self.b_map
-        elif self.world.looking == self.world.moon :
-            self.earth_b['state'] = DGG.NORMAL
-            self.moon_b['state'] = DGG.DISABLED
-            self.sun_b['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.looking == self.world.moon :
             self.earth_lb['geom'] = self.b_map
             self.moon_lb['geom'] = self.b_map_acti
             self.sun_lb['geom'] = self.b_map
-        elif self.world.looking == self.world.sun :
-            self.earth_b['state'] = DGG.NORMAL
-            self.moon_b['state'] = DGG.NORMAL
-            self.sun_b['state'] = DGG.DISABLED
+        elif self.world.Camera.hm.looking == self.world.sun :
             self.earth_lb['geom'] = self.b_map
             self.moon_lb['geom'] = self.b_map
             self.sun_lb['geom'] = self.b_map_acti
-        elif self.world.looking == None :
-            self.earth_b['state'] = DGG.NORMAL
-            self.moon_b['state'] = DGG.NORMAL
-            self.sun_b['state'] = DGG.NORMAL
+        elif self.world.Camera.hm.looking == None :
             self.earth_lb['geom'] = self.b_map
             self.moon_lb['geom'] = self.b_map
             self.sun_lb['geom'] = self.b_map
@@ -323,6 +302,13 @@ class Interface(object) :
         new_time = self.world.scene.simulTime.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]
+        #follow window resize
+        w, h = base.win.getXSize(), base.win.getYSize()
+        bw, bh = BUTTONSIZE
+        self.about_dialog.setPos((w/2, -1, -h/2))
+        self.info_dialog.setPos((w/2, -1, -h/2))
+        #~ self.b_cont['frameSize'] = (-(bw+bw/2), bw+bw/2, -h/2, h/2) #DOESN4T WORK!!!
+        #~ self.b_cont.setPos((bw+bw/2, -1, -h/2))
         #show task timing for debug
         if PRINTTIMING :
             print taskMgr
@@ -332,4 +318,4 @@ class Interface(object) :
         #buttons should reflect what camera is following or looking at
         self.update_buttons()
         #show task timing for debug
-        return Task.again
+        return Task.cont

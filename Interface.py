@@ -10,7 +10,8 @@ from direct.task import Task
 import graphics
 #My Global config variables
 from config import *
-
+#Interface content
+import content
 
 class Interface(object) :
     '''the gui of astrini'''
@@ -108,7 +109,7 @@ class Interface(object) :
             return cont
             
         #about dialog
-        text = ABOUTTEXT
+        text = content.about
         
         self.about_dialog = add_dialog((-5*bw, 5*bw, -10*bh, 10*bh))
         add_textarea(text, self.about_dialog)

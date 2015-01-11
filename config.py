@@ -30,7 +30,7 @@ EARTHROTSET = -160
 
 #Interface settings
 PRINTTIMING = False #show Task manager statistics
-SHOWFRUSTRUM = False
+SHOWFRUSTRUM = True
 CAMERAFAR = 10.**4
 INTERFACEDELAY = 0.1
 BUTTONSIZE = 48, 16

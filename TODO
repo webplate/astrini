@@ -1,3 +1,6 @@
+scale frustrum
+scale free move speed
+
 show shadows on models congruent with tubular shadows
 --> tubular shadow should be set on a sun at infinite (to be aligned with shadow caster)
 (new shadow object and change their appearances according to position)

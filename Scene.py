@@ -137,14 +137,16 @@ class Orbital(Planetoid) :
         '''black areas to show the casted sadows'''
         self.shadow = loader.loadModel("models/tube")
         self.shadow.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
-        self.shadow.setColor(0,0,0,0.5)
+        self.shadow.reparentTo(self.mod)
+        # hidden by default
+        self.hideShadow()
         self.shadow.setSy(1000)
     
     def showShadow(self) :
-        self.shadow.reparentTo(self.mod)
+        self.shadow.setColor(0,0,0,0.5)
     
     def hideShadow(self) :
-        self.shadow.detachNode()
+        self.shadow.setColor(0,0,0,0)
 
     def loadOrbit(self) :
         #Draw orbits
@@ -307,7 +309,7 @@ class System(object) :
         self.light.lookAt(self.earth.mod)
         #casted shadows should remain aligned with sun
         self.earth.shadow.lookAt(self.sun.mod)
-        self.moon.shadow.lookAt(self.sun.mod)
+        self.moon.shadow.setHpr(self.earth.shadow, 0, 0, 0)
         self.place()
         return Task.cont
     

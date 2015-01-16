@@ -218,7 +218,7 @@ class System(object) :
         self.unspot.node().getLens().setNearFar(0,0)
         self.root.setLight(self.unspot)
         
-        #the light on the earth system
+        #the light on the earth system which casts shadows on planetoids
         self.light = self.root.attachNewNode(
         panda3d.core.DirectionalLight("SunLight"))
         self.light.setPos(0,0,0)

@@ -64,7 +64,6 @@ class World(ShowBase):
         #Scene initialization
         self.scene = Scene(self)
         
-        
         self.earth = self.scene.sys.earth.mod
         self.moon = self.scene.sys.moon.mod
         self.sun = self.scene.sys.sun.mod

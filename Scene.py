@@ -184,7 +184,7 @@ class System(object) :
         self.inclinedHard = False
         
         # Add Tasks procedures to the task manager.
-        #lower priority to prevent jitter of objects
+        #lower priority to prevent jitter of objelf.moonaxects
         taskMgr.add(self.lockTask, "lockTask", priority=26)
 
     def initAstrofacts(self) :
@@ -258,9 +258,9 @@ class System(object) :
         self.root.setShaderAuto()
 
     def placeLight(self) :
-        self.light.node().getLens().setFilmSize((2*self.moonax,self.moonax/2))
-        self.light.node().getLens().setNearFar(self.earth.distance - self.moonax,
-        self.earth.distance + self.moonax)
+        self.light.node().getLens().setFilmSize((2*self.moon.distance,self.moon.distance/2))
+        self.light.node().getLens().setNearFar(self.earth.distance - self.moon.distance,
+        self.earth.distance + self.moon.distance)
     
     def loadSky(self) :
         self.sky = loader.loadModel("models/solar_sky_sphere")
@@ -359,7 +359,7 @@ def linInt(level, v1, v2) :
 
 
 class Scene(object) :
-    '''system with time'''
+    '''system with time and scale'''
     def __init__(self, world) :
         self.world = world
         self.loadEmpty()

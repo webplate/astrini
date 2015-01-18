@@ -366,6 +366,8 @@ class Scene(object) :
         base.setBackgroundColor(0.2, 0.2, 0.2)    #Set the background to grey
         self.sys = System(self.root)
         #Time Control
+        self.timeTravel = False # lock when changing speed
+        self.sequences = [] # sequences to play when timeTraveling
         self.paused = False
         self.reverse = False
         
@@ -410,6 +412,14 @@ class Scene(object) :
     #Timing control :
     #
     #
+    def checkTimeTravel(self) :
+        for s in self.sequences :
+            if s.isPlaying() :
+                self.timeTravel = True
+                return
+        self.sequences = []
+        self.timeTravel = False
+
     def time_is_now(self) :
         self.simulSpeed = 1
         self.simulTime = datetime.utcnow()
@@ -440,7 +450,7 @@ class Scene(object) :
     def toggleSpeed(self):
         if not self.paused :
             self.previousSpeed = self.simulSpeed
-            self.simulSpeed = 0.            
+            self.simulSpeed = 0.
             self.paused = True
         else:
             self.simulSpeed = self.previousSpeed
@@ -483,7 +493,7 @@ class Scene(object) :
                 self.simulTime = datetime.max
             self.simulSpeed = 0.
         return Task.cont
-    
+
     #Scaling control :
     #
     #

@@ -169,9 +169,7 @@ This class is used to hunt planetoids
     def __init__(self, scene):
         self.scene = scene
         #Prepare locks (following procedures etc...)
-        self.timeTravel = False
         self.speed = self.scene.simulSpeed
-        self.sequences = []
         self.looking = None
         self.following = None
     
@@ -196,31 +194,23 @@ This class is used to hunt planetoids
         
     def softMove(self, nod, posFunc, lockFunc, unlockFunc) :
         #select correct speed of reference
-        if not self.timeTravel :
+        if not self.scene.timeTravel :
             self.speed = self.scene.simulSpeed
-            self.timeTravel = True
+            self.scene.timeTravel = True
         #stop flow of time while traveling
         slow, fast = self.scene.generate_speed_fade(self.speed)
         
         travel = nod.posInterval(TRAVELLEN,
             posFunc, blendType='easeInOut')
         
-        check = Func(self.checkTimeTravel)
+        check = Func(self.scene.checkTimeTravel)
         
         #slow sim, release, travel, lock, resume speed, check for concurrents
         sequence = Sequence(slow, Func(unlockFunc),
         travel, Func(lockFunc), fast, check)
         
-        self.sequences.append(sequence)
+        self.scene.sequences.append(sequence)
         sequence.start()
-    
-    def checkTimeTravel(self) :
-        for s in self.sequences :
-            if s.isPlaying() :
-                self.timeTravel = True
-                return
-        self.sequences = []
-        self.timeTravel = False
 
     def get_curr_follow_rel_pos(self) :
         return self.following.getPos(self.scene.root)

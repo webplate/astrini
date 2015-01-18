@@ -1,16 +1,9 @@
 
-show shadows on models congruent with tubular shadows
---> tubular shadow should be set on a sun at infinite (to be aligned with shadow caster)
-(new shadow object and change their appearances according to position)
-or multiple shadow casters and model lighters
-
-non realist scale should permit full sun eclipse (not annular)
-
 put the docs in the software !! 
 make small website
 a donation platform ? (bitcoin, flattr, paypal account)
 
-
+labels
 markers for days, seasons, months...(maybe on the orbit)
 go forward 1 day, 1 month, 1season, 1year (soft date change)
 

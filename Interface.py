@@ -298,9 +298,9 @@ class Interface(object) :
     def interfaceTask(self, task) :
         #update simulation speed indicator 
         #(in scientific notation with limited significant digits)
-        self.speedlabel['text'] = '%.1e' % self.world.scene.simulSpeed, 2
+        self.speedlabel['text'] = '%.1e' % self.world.scene.simul_speed, 2
         #update clock display
-        new_time = self.world.scene.simulTime.isoformat().split("T")
+        new_time = self.world.scene.simul_time.isoformat().split("T")
         self.datelabel['text'] = new_time[0]
         self.timelabel['text'] = new_time[1].split(".")[0]
         #follow window resize

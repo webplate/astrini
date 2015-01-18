@@ -37,6 +37,7 @@ from config import *
 # Remember to use every extension as a DirectObject inheriting class
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import WindowProperties
+# Standard library
 from datetime import datetime
 # Default classes
 from Camera import Camera

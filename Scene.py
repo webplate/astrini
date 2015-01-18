@@ -371,7 +371,9 @@ class Scene(object) :
         self.paused = False
         self.reverse = False
         
-        self.simulSpeed = 1
+        self.simul_speed = 1
+        self.ref_speed = self.simul_speed
+        
         self.time_is_now()
         
         self.realist_scale = False
@@ -412,28 +414,22 @@ class Scene(object) :
     #Timing control :
     #
     #
-    def checkTimeTravel(self) :
-        for s in self.sequences :
-            if s.isPlaying() :
-                self.timeTravel = True
-                return
-        self.sequences = []
-        self.timeTravel = False
 
     def time_is_now(self) :
-        self.simulSpeed = 1
-        self.simulTime = datetime.utcnow()
+        self.simul_speed = 1
+        self.simul_time = datetime.utcnow()
+        self.scene_time = datetime.utcnow()
     
     def changeSpeed(self, factor):
         #if simulation is paused change previous speed
         if not self.paused :
-            speed = self.simulSpeed * factor
+            speed = self.simul_speed * factor
             if speed > MAXSPEED :
-                self.simulSpeed = MAXSPEED
+                self.simul_speed = MAXSPEED
             elif speed < -MAXSPEED :
-                self.simulSpeed = -MAXSPEED
+                self.simul_speed = -MAXSPEED
             else :
-                self.simulSpeed = speed
+                self.simul_speed = speed
         else :
             speed = self.previousSpeed * factor
             if speed > MAXSPEED :
@@ -445,15 +441,15 @@ class Scene(object) :
 
     def setSpeed(self, speed) :
         if speed <= MAXSPEED :
-            self.simulSpeed = speed
+            self.simul_speed = speed
 
     def toggleSpeed(self):
         if not self.paused :
-            self.previousSpeed = self.simulSpeed
-            self.simulSpeed = 0.
+            self.previousSpeed = self.simul_speed
+            self.simul_speed = 0.
             self.paused = True
         else:
-            self.simulSpeed = self.previousSpeed
+            self.simul_speed = self.previousSpeed
             self.paused = False
 
     def reverseSpeed(self) :
@@ -463,35 +459,68 @@ class Scene(object) :
             self.reverse = True
         else :
             self.reverse = False
-
+            
+    def checkTimeTravel(self) :
+        for s in self.sequences :
+            if s.isPlaying() :
+                self.timeTravel = True
+                return
+        self.sequences = []
+        self.timeTravel = False
+        
     def generate_speed_fade(self, speed) :
-        #generate intervals to fade in and out from previous speed
+        '''generate intervals to fade in and out from previous speed'''
+        #select correct speed of reference
+        if not self.timeTravel :
+            speed = self.simul_speed
+            self.timeTravel = True
+
         slow = LerpFunc(self.setSpeed, FREEZELEN,
-        self.simulSpeed, 0.)
+        self.simul_speed, 0.)
         fast = LerpFunc(self.setSpeed, FREEZELEN,
         0., speed)
         return slow, fast
         
     def time(self) :
-        #time in days
-        now = self.simulTime
+        '''time in days'''
+        now = self.simul_time
         julian_time = astronomia.calendar.cal_to_jde(now.year,
         now.month, now.day, now.hour, now.minute, now.second,
         gregorian=True)
         return julian_time
     
+    def gaussian_warp(self, t):
+        pass
+    
+    def time_jump(self, jump_len):
+        '''jump softly in time'''
+        if not self.timeTravel :
+            self.timeTravel = True
+
+        self.ref_speed = self.simul_speed
+
+        warp = LerpFunc(self.gaussian_warp,
+             fromData=self.time,
+             toData=self.time + SCALELEN,
+             duration=SCALELEN)
+             
+    
     def timeTask(self, task) :
-        #keep simulation time updated each frame
-        dt = globalClock.getDt() * self.simulSpeed
+        # get passed time
+        dt = globalClock.getDt()
+        # update scene time
+        self.scene_time += timedelta(seconds=dt)
         #datetime object is limited between year 1 and year 9999
         try :
-            self.simulTime +=  timedelta(seconds=dt)
+            #keep simulation time updated each frame
+            self.simul_time +=  timedelta(seconds=dt * self.simul_speed)
         except OverflowError :
-            if self.simulSpeed < 0 :
-                self.simulTime =  datetime.min
+            if self.simul_speed < 0 :
+                self.simul_time =  datetime.min
             else :
-                self.simulTime = datetime.max
-            self.simulSpeed = 0.
+                self.simul_time = datetime.max
+            self.simul_speed = 0.
+        
         return Task.cont
 
     #Scaling control :

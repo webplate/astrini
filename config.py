@@ -30,8 +30,8 @@ EARTHROTSET = -160
 
 #Interface settings
 PRINTTIMING = False #show Task manager statistics
-SHOWFRUSTRUM = True
-SHADOWRES = 2048 # resolution of shadow caster
+SHOWFRUSTRUM = False
+SHADOWRES = 1024 # resolution of shadow caster
 CAMERAFAR = 10.**4
 INTERFACEDELAY = 0.1
 BUTTONSIZE = 48, 16
@@ -56,7 +56,7 @@ multiplier = 1 / 1000000.
 #space
 UA = 149597887 * multiplier
 EARTHRADIUS = 6371 * multiplier
-SUNRADIUS = 1392000 * multiplier
+SUNRADIUS = 696342 * multiplier
 MOONRADIUS = 1737 * multiplier
 MOONAX = 384399 * multiplier
 EARTHTILT = 23.44
@@ -70,9 +70,9 @@ MOONREVO = MOONROT
 EARTHREVO = 365.25696
 
 #fantasist values
-UA_F = UA
 EARTHRADIUS_F = 5.
-SUNRADIUS_F = 10.
-MOONRADIUS_F = 1.
+SUNRADIUS_F = 7.
+MOONRADIUS_F = 2.
 MOONAX_F = 40.
+UA_F = (MOONAX_F * SUNRADIUS_F) / MOONRADIUS_F # computed for full eclipses
 MOONINCL_F = 15. #an exagerated inclination to avoid moon eclipses in fantasist scale

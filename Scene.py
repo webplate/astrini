@@ -258,7 +258,7 @@ class System(object) :
         self.root.setShaderAuto()
 
     def placeLight(self) :
-        self.light.node().getLens().setFilmSize((2*self.earth.radius, 2*self.earth.radius))
+        self.light.node().getLens().setFilmSize((2.1*self.earth.radius, 2.1*self.earth.radius))
         self.light.node().getLens().setNearFar(self.earth.distance - self.moon.distance,
         self.earth.distance + self.moon.distance)
     

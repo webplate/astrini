@@ -225,7 +225,7 @@ class System(object) :
         panda3d.core.DirectionalLight("SunLight"))
         self.light.setPos(0,0,0)
         self.light.node().setScene(self.root)
-        self.light.node().setShadowCaster(True, 2048, 2048)
+        self.light.node().setShadowCaster(True, SHADOWRES, SHADOWRES)
         if SHOWFRUSTRUM :
             self.light.node().showFrustum()
         # a mask to define objects unaffected by light
@@ -258,7 +258,7 @@ class System(object) :
         self.root.setShaderAuto()
 
     def placeLight(self) :
-        self.light.node().getLens().setFilmSize((2*self.moon.distance,self.moon.distance/2))
+        self.light.node().getLens().setFilmSize((2*self.earth.radius, 2*self.earth.radius))
         self.light.node().getLens().setNearFar(self.earth.distance - self.moon.distance,
         self.earth.distance + self.moon.distance)
     

@@ -1,5 +1,3 @@
-scale frustrum
-scale free move speed
 
 show shadows on models congruent with tubular shadows
 --> tubular shadow should be set on a sun at infinite (to be aligned with shadow caster)
@@ -15,6 +13,8 @@ a donation platform ? (bitcoin, flattr, paypal account)
 
 markers for days, seasons, months...(maybe on the orbit)
 go forward 1 day, 1 month, 1season, 1year (soft date change)
+
+scale free move speed
 
 NOTSURE??Camera INputHd and Interface should have scene as paramteter (not world)
 

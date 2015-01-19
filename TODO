@@ -1,3 +1,11 @@
+markers shouldn't cast shadows
+
+utctimestamps for time representation (no astronomia?)
+calendar.timegm
+
+for shadows visibility update:
+fadeIn = s.colorScaleInterval(3, Vec4(1,1,1,1), Vec4(1,1,1,0))
+fadeOut = s.colorScaleInterval(3, Vec4(1,1,1,0))
 
 put the docs in the software !! 
 make small website

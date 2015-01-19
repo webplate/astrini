@@ -31,7 +31,7 @@ EARTHROTSET = -160
 #Interface settings
 PRINTTIMING = False #show Task manager statistics
 SHOWFRUSTRUM = False
-SHADOWRES = 1024 # resolution of shadow caster
+SHADOWRES = 512 # resolution of shadow caster
 CAMERAFAR = 10.**4
 INTERFACEDELAY = 0.1
 BUTTONSIZE = 48, 16

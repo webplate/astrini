@@ -5,8 +5,12 @@ import panda3d.core
 from direct.task import Task
 #interpolate function parameter
 from direct.interval.LerpInterval import LerpFunc
+from direct.interval.IntervalGlobal import Sequence, Func
 #Work with time
 from datetime import datetime, timedelta
+import calendar
+
+import math
 import astronomia.calendar
 
 from math import tan, radians
@@ -355,6 +359,13 @@ def linInt(level, v1, v2) :
     according to 0<level<1 '''
     return v1 * level + v2 * (1 - level)
 
+def stamp_to_time(t) :
+    '''posix timestamp to datetime object'''
+    return datetime.utcfromtimestamp(int(t))
+    
+def time_to_stamp(t):
+    '''time object converted in timestamp'''
+    return calendar.timegm(t.timetuple())
 
 
 
@@ -367,6 +378,7 @@ class Scene(object) :
         self.sys = System(self.root)
         #Time Control
         self.timeTravel = False # lock when changing speed
+        self.scene_time = 0 #TOREMOVE??
         self.sequences = [] # sequences to play when timeTraveling
         self.paused = False
         self.reverse = False
@@ -418,7 +430,6 @@ class Scene(object) :
     def time_is_now(self) :
         self.simul_speed = 1
         self.simul_time = datetime.utcnow()
-        self.scene_time = datetime.utcnow()
     
     def changeSpeed(self, factor):
         #if simulation is paused change previous speed
@@ -481,35 +492,51 @@ class Scene(object) :
         0., speed)
         return slow, fast
         
-    def time(self) :
-        '''time in days'''
-        now = self.simul_time
-        julian_time = astronomia.calendar.cal_to_jde(now.year,
-        now.month, now.day, now.hour, now.minute, now.second,
+    def time_to_julian(self, t) :
+        '''time object converted in days as float'''
+        julian_time = astronomia.calendar.cal_to_jde(t.year,
+        t.month, t.day, t.hour, t.minute, t.second,
         gregorian=True)
         return julian_time
     
-    def gaussian_warp(self, t):
-        pass
+    def set_time(self, new):
+        self.simul_time = new
+    
+    def warp_time(self, value):
+        '''interpolate simul_time between self.warp_init and self.warp_end
+        '''
+        init = time_to_stamp(self.warp_init)
+        end = time_to_stamp(self.warp_end)
+        t = linInt(value, init, end)
+        self.simul_time = stamp_to_time(t)
     
     def time_jump(self, jump_len):
         '''jump softly in time'''
-        if not self.timeTravel :
+        if not self.timeTravel:
             self.timeTravel = True
-
-        self.ref_speed = self.simul_speed
-
-        warp = LerpFunc(self.gaussian_warp,
-             fromData=self.time,
-             toData=self.time + SCALELEN,
-             duration=SCALELEN)
+        
+        self.jump_len = timedelta(days=jump_len)
+        self.warp_init = self.simul_time
+        self.warp_end = self.simul_time + self.jump_len
+        
+        warp = LerpFunc(self.warp_time,
+             fromData=1,
+             toData=0,
+             duration=SCALELEN,
+             blendType='easeInOut')
+        
+        check = Func(self.checkTimeTravel)
+        
+        sequence = Sequence(warp, check)
+        # add seq to scene so that we can check if still running
+        self.sequences.append(sequence)
+        sequence.start()
              
-    
     def timeTask(self, task) :
         # get passed time
         dt = globalClock.getDt()
         # update scene time
-        self.scene_time += timedelta(seconds=dt)
+        self.scene_time += dt
         #datetime object is limited between year 1 and year 9999
         try :
             #keep simulation time updated each frame
@@ -558,7 +585,7 @@ class Scene(object) :
     
     def placeTask(self, task) :
         self.sys.place()
-        self.sys.rotate(self.time())
+        self.sys.rotate(self.time_to_julian(self.simul_time))
         return Task.cont
     
     #Vizualisation control

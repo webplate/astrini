@@ -166,8 +166,16 @@ class Interface(object) :
         self.timelabel['text_font'] = self.mono_font
         self.timelabel['textMayChange'] = True
         
-        #factual changes
+        # time jumps in seconds
         j += 3
+        add_label('Jump forward : ', 1, j, self.b_cont)
+        add_button('day', 0, j+1, self.world.scene.time_jump, [1], self.b_cont)
+        add_button('month', 1, j+1, self.world.scene.time_jump, [30], self.b_cont)
+        add_button('season', 2, j+1, self.world.scene.time_jump, [91], self.b_cont)
+        add_button('year', 0, j+2, self.world.scene.time_jump, [365], self.b_cont)
+        
+        #factual changes
+        j += 4
         add_label('Factual changes : ', 1, j, self.b_cont)
         self.fact_moon_b = add_button('Moon', 0, j+1, self.world.scene.sys.toggleIncl,
         [], self.b_cont)

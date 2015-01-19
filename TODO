@@ -1,7 +1,7 @@
 markers shouldn't cast shadows
 
 utctimestamps for time representation (no astronomia?)
-calendar.timegm
+BUG speed change when lot of synchronous hunting
 
 for shadows visibility update:
 fadeIn = s.colorScaleInterval(3, Vec4(1,1,1,1), Vec4(1,1,1,0))

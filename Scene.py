@@ -367,6 +367,12 @@ def time_to_stamp(t):
     '''time object converted in timestamp'''
     return calendar.timegm(t.timetuple())
 
+def time_to_julian(t) :
+    '''time object converted in days as float'''
+    julian_time = astronomia.calendar.cal_to_jde(t.year,
+    t.month, t.day, t.hour, t.minute, t.second,
+    gregorian=True)
+    return julian_time
 
 
 class Scene(object) :
@@ -378,7 +384,6 @@ class Scene(object) :
         self.sys = System(self.root)
         #Time Control
         self.timeTravel = False # lock when changing speed
-        self.scene_time = 0 #TOREMOVE??
         self.sequences = [] # sequences to play when timeTraveling
         self.paused = False
         self.reverse = False
@@ -476,32 +481,21 @@ class Scene(object) :
             if s.isPlaying() :
                 self.timeTravel = True
                 return
+        print 'clear', self.sequences
         self.sequences = []
         self.timeTravel = False
         
     def generate_speed_fade(self, speed) :
         '''generate intervals to fade in and out from previous speed'''
         #select correct speed of reference
-        if not self.timeTravel :
-            speed = self.simul_speed
-            self.timeTravel = True
+        #~ if not self.timeTravel :
+            #~ speed = self.simul_speed
+            #~ self.timeTravel = True
 
-        slow = LerpFunc(self.setSpeed, FREEZELEN,
-        self.simul_speed, 0.)
-        fast = LerpFunc(self.setSpeed, FREEZELEN,
-        0., speed)
+        slow = LerpFunc(self.setSpeed, FREEZELEN, self.simul_speed, 0.)
+        fast = LerpFunc(self.setSpeed, FREEZELEN, 0., speed)
         return slow, fast
-        
-    def time_to_julian(self, t) :
-        '''time object converted in days as float'''
-        julian_time = astronomia.calendar.cal_to_jde(t.year,
-        t.month, t.day, t.hour, t.minute, t.second,
-        gregorian=True)
-        return julian_time
-    
-    def set_time(self, new):
-        self.simul_time = new
-    
+
     def warp_time(self, value):
         '''interpolate simul_time between self.warp_init and self.warp_end
         '''
@@ -512,9 +506,6 @@ class Scene(object) :
     
     def time_jump(self, jump_len):
         '''jump softly in time'''
-        if not self.timeTravel:
-            self.timeTravel = True
-        
         self.jump_len = timedelta(days=jump_len)
         self.warp_init = self.simul_time
         self.warp_end = self.simul_time + self.jump_len
@@ -525,18 +516,12 @@ class Scene(object) :
              duration=SCALELEN,
              blendType='easeInOut')
         
-        check = Func(self.checkTimeTravel)
-        
-        sequence = Sequence(warp, check)
-        # add seq to scene so that we can check if still running
-        self.sequences.append(sequence)
+        sequence = Sequence(warp, name='time_jump')
         sequence.start()
-             
+
     def timeTask(self, task) :
         # get passed time
         dt = globalClock.getDt()
-        # update scene time
-        self.scene_time += dt
         #datetime object is limited between year 1 and year 9999
         try :
             #keep simulation time updated each frame
@@ -553,30 +538,34 @@ class Scene(object) :
     #Scaling control :
     #
     #
-     
+    
     def toggleScale(self) :
-        '''a realistic scaling modifying :
+        '''a realistic scaling toggle :
         '''
         if not self.realist_scale :
-            LerpFunc(self.scaleSystem,
-             fromData=0,
-             toData=1,
-             duration=SCALELEN,
-             blendType='easeIn').start()
-
-            self.realist_scale = True
-        else :
-            LerpFunc(self.scaleSystem,
-             fromData=1,
-             toData=0,
-             duration=SCALELEN,
-             blendType='easeOut').start()
-            
-            self.realist_scale = False
+            #~ self.realist_scale = True
+            init = 0
+            end = 1
+        else:
+            #~ self.realist_scale = False
+            init = 1
+            end = 0
+        scale = LerpFunc(self.scaleSystem,
+            fromData=init,
+            toData=end,
+            duration=SCALELEN,
+            blendType='easeIn',
+            name='scaling')
+        
+        scale.start()
     
     def scaleSystem(self, value) :
         '''scale the whole system from fantasist to realistic according
         to value (between 0. and 1.0)'''
+        if value == 0:
+            self.realist_scale = False
+        elif value == 1:
+            self.realist_scale = True
         self.sys.earth.distance = linInt(value, UA, UA_F)
         self.sys.earth.radius = linInt(value, EARTHRADIUS, EARTHRADIUS_F)
         self.sys.moon.radius = linInt(value, MOONRADIUS, MOONRADIUS_F)
@@ -585,7 +574,7 @@ class Scene(object) :
     
     def placeTask(self, task) :
         self.sys.place()
-        self.sys.rotate(self.time_to_julian(self.simul_time))
+        self.sys.rotate(time_to_julian(self.simul_time))
         return Task.cont
     
     #Vizualisation control

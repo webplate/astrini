@@ -192,20 +192,18 @@ This class is used to hunt planetoids
             camera.lookAt(self.scene.focus)
         return Task.cont
         
-    def softMove(self, nod, posFunc, lockFunc, unlockFunc) :
+    def softMove(self, nod, posFunc, lockFunc, unlockFunc, name) :
         #stop flow of time while traveling
         slow, fast = self.scene.generate_speed_fade(self.speed)
         
         travel = nod.posInterval(TRAVELLEN,
             posFunc, blendType='easeInOut')
-        
-        check = Func(self.scene.checkTimeTravel)
-        
-        #slow sim, release, travel, lock, resume speed
+
+        # slow sim, release, travel, lock, resume speed
+        # give a name for one interval of this type at once
         sequence = Sequence(slow, Func(unlockFunc),
-        travel, Func(lockFunc), fast, check)
-        # add seq to scene so that we can check if still running
-        self.scene.sequences.append(sequence)
+        travel, Func(lockFunc), fast, name=name)
+
         sequence.start()
 
     def get_curr_follow_rel_pos(self) :
@@ -235,7 +233,7 @@ This class is used to hunt planetoids
                 self.look(self.getNewTarget(identity, previous))
 
             self.softMove(self.scene.hook, self.get_curr_follow_rel_pos,
-            self.lock_camera, self.unlock_camera)
+            self.lock_camera, self.unlock_camera, 'camera_move')
 
     def get_curr_look_rel_pos(self) :
         return self.looking.getPos(self.scene.root)
@@ -259,7 +257,7 @@ This class is used to hunt planetoids
                 self.follow(self.getNewTarget(identity, previous))
             
             self.softMove(self.scene.focus, self.get_curr_look_rel_pos,
-            self.lock_focus, self.unlock_focus)
+            self.lock_focus, self.unlock_focus, 'focus_move')
     
     def getNewTarget(self, identity, previous) :
         '''select new target to avoid looking and following the same'''

@@ -198,19 +198,15 @@ This class is used to hunt planetoids
         if self.timetravel:
             for s in self.travels:
                 if s.isPlaying():
-                    print 'no stop', self.speed, self.scene.simul_speed
                     return
             self.travels = []
             self.timetravel = False
-            print 'stop', self.speed, self.scene.simul_speed
     
     def softMove(self, nod, posFunc, lockFunc, unlockFunc, name) :
         #select correct speed of reference
         if not self.timetravel:
             self.speed = self.scene.simul_speed
             self.timetravel = True
-            print 'start', self.speed, self.scene.simul_speed
-        print self.speed
         #stop flow of time while traveling
         slow, fast = self.scene.generate_speed_fade(self.speed)
         

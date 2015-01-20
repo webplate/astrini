@@ -62,10 +62,14 @@ class Planetoid(object) :
         #Create always visible marker
         self.marker = graphics.makeArc()
         self.marker.setScale(MARKERSCALE)
+        # not affected by sunlight
+        self.marker.hide(panda3d.core.BitMask32.bit(0))
     
         #marker of orientation
         self.axis = graphics.makeCross()
         self.axis.setScale(AXSCALE * self.radius)
+        # not affected by sunlight
+        self.axis.hide(panda3d.core.BitMask32.bit(0))
         
     def showMarker(self) :
         '''always visible spot on target'''
@@ -232,9 +236,11 @@ class System(object) :
         self.light.node().setShadowCaster(True, SHADOWRES, SHADOWRES)
         if SHOWFRUSTRUM :
             self.light.node().showFrustum()
-        # a mask to define objects unaffected by light
-        self.light.node().setCameraMask(panda3d.core.BitMask32.bit(0)) 
-        self.root.setLight(self.light)
+        # a mask to define objects that shouldn't cast shadows
+        self.light.node().setCameraMask(panda3d.core.BitMask32.bit(0))
+        # illuminate objects
+        self.earth.mod.setLight(self.light)
+        self.moon.mod.setLight(self.light)
 
         self.alight = self.root.attachNewNode(
         panda3d.core.AmbientLight("Ambient"))

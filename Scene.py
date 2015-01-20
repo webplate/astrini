@@ -146,15 +146,27 @@ class Orbital(Planetoid) :
         self.shadow = loader.loadModel("models/tube")
         self.shadow.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
         self.shadow.reparentTo(self.mod)
+        self.has_shadow = True
         # hidden by default
         self.hideShadow()
         self.shadow.setSy(1000)
     
     def showShadow(self) :
-        self.shadow.setColor(0,0,0,0.5)
+        if not self.has_shadow:
+            fade = self.shadow.colorScaleInterval(FREEZELEN,
+            panda3d.core.Vec4(0,0,0,0.5), panda3d.core.Vec4(0,0,0,0))
+            self.has_shadow = True
+            fade.start()
+        
+        #~ self.shadow.setColor(0,0,0,0.5)
     
     def hideShadow(self) :
-        self.shadow.setColor(0,0,0,0)
+        if self.has_shadow:
+            fade = self.shadow.colorScaleInterval(FREEZELEN,
+            panda3d.core.Vec4(0,0,0,0), panda3d.core.Vec4(0,0,0,0.5))
+            self.has_shadow = False
+            fade.start()
+        #~ self.shadow.setColor(0,0,0,0)
 
     def loadOrbit(self) :
         #Draw orbits

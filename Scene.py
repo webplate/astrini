@@ -387,6 +387,7 @@ class Scene(object) :
         self.sequences = [] # sequences to play when timeTraveling
         self.paused = False
         self.reverse = False
+        self.jumping = False
         
         self.simul_speed = 1
         
@@ -493,6 +494,10 @@ class Scene(object) :
     def warp_time(self, value):
         '''interpolate simul_time between self.warp_init and self.warp_end
         '''
+        if value == 0:
+            self.jumping = False
+        elif value == 1:
+            self.jumping = True
         init = time_to_stamp(self.warp_init)
         end = time_to_stamp(self.warp_end)
         t = linInt(value, init, end)
@@ -502,7 +507,11 @@ class Scene(object) :
         '''jump softly in time'''
         self.jump_len = timedelta(days=jump_len)
         self.warp_init = self.simul_time
-        self.warp_end = self.simul_time + self.jump_len
+        #datetime object is limited between year 1 and year 9999
+        try :
+            self.warp_end = self.simul_time + self.jump_len
+        except OverflowError :
+            self.warp_end = self.warp_init
         
         warp = LerpFunc(self.warp_time,
              fromData=1,
@@ -516,22 +525,36 @@ class Scene(object) :
     def timeTask(self, task) :
         # get passed time
         dt = globalClock.getDt()
-        #datetime object is limited between year 1 and year 9999
-        try :
-            #keep simulation time updated each frame
-            self.simul_time +=  timedelta(seconds=dt * self.simul_speed)
-        except OverflowError :
-            if self.simul_speed < 0 :
-                self.simul_time =  datetime.min
-            else :
-                self.simul_time = datetime.max
-            self.simul_speed = 0.
+        if not self.jumping:
+            #datetime object is limited between year 1 and year 9999
+            try :
+                #keep simulation time updated each frame
+                self.simul_time +=  timedelta(seconds=dt * self.simul_speed)
+            except OverflowError :
+                if self.simul_speed < 0 :
+                    self.simul_time =  datetime.min
+                else :
+                    self.simul_time = datetime.max
+                self.simul_speed = 0.
         
         return Task.cont
 
     #Scaling control :
     #
     #
+
+    def scaleSystem(self, value) :
+        '''scale the whole system from fantasist to realistic according
+        to value (between 0. and 1.0)'''
+        if value == 0:
+            self.realist_scale = False
+        elif value == 1:
+            self.realist_scale = True
+        self.sys.earth.distance = linInt(value, UA, UA_F)
+        self.sys.earth.radius = linInt(value, EARTHRADIUS, EARTHRADIUS_F)
+        self.sys.moon.radius = linInt(value, MOONRADIUS, MOONRADIUS_F)
+        self.sys.sun.radius = linInt(value, SUNRADIUS, SUNRADIUS_F)
+        self.sys.moon.distance = linInt(value, MOONAX, MOONAX_F)
     
     def toggleScale(self) :
         '''a realistic scaling toggle :
@@ -550,19 +573,6 @@ class Scene(object) :
             name='scaling')
         
         scale.start()
-    
-    def scaleSystem(self, value) :
-        '''scale the whole system from fantasist to realistic according
-        to value (between 0. and 1.0)'''
-        if value == 0:
-            self.realist_scale = False
-        elif value == 1:
-            self.realist_scale = True
-        self.sys.earth.distance = linInt(value, UA, UA_F)
-        self.sys.earth.radius = linInt(value, EARTHRADIUS, EARTHRADIUS_F)
-        self.sys.moon.radius = linInt(value, MOONRADIUS, MOONRADIUS_F)
-        self.sys.sun.radius = linInt(value, SUNRADIUS, SUNRADIUS_F)
-        self.sys.moon.distance = linInt(value, MOONAX, MOONAX_F)
     
     def placeTask(self, task) :
         self.sys.place()

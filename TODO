@@ -3,7 +3,6 @@ markers shouldn't cast shadows
 at noon earth should always show england to sun
 
 utctimestamps for time representation (no astronomia?)
-BUG speed change when lot of synchronous hunting
 
 for shadows visibility update:
 fadeIn = s.colorScaleInterval(3, Vec4(1,1,1,1), Vec4(1,1,1,0))

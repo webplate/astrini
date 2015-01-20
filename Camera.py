@@ -196,12 +196,17 @@ This class is used to hunt planetoids
     
     def stop_timetravel(self):
         if self.timetravel:
+            for s in self.travels:
+                if s.isPlaying():
+                    print 'no stop', self.speed, self.scene.simul_speed
+                    return
+            self.travels = []
             self.timetravel = False
             print 'stop', self.speed, self.scene.simul_speed
     
     def softMove(self, nod, posFunc, lockFunc, unlockFunc, name) :
         #select correct speed of reference
-        if not self.timetravel :
+        if not self.timetravel:
             self.speed = self.scene.simul_speed
             self.timetravel = True
             print 'start', self.speed, self.scene.simul_speed
@@ -216,7 +221,9 @@ This class is used to hunt planetoids
         # give a name for one interval of this type at once
         sequence = Sequence(slow, Func(unlockFunc),
         travel, Func(lockFunc), fast, Func(self.stop_timetravel), name=name)
-
+        
+        # keep ref
+        self.travels.append(sequence)
         sequence.start()
 
     def get_curr_follow_rel_pos(self) :

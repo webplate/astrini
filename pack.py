@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+#Use panda3d packing tools to generate p3d file
+#according to packagedef.py
+#and bundle it in auto panda installer
 import subprocess
 
 imdir = 'images/'

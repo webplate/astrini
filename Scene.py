@@ -62,29 +62,53 @@ class Planetoid(object) :
         #Create always visible marker
         self.marker = graphics.makeArc()
         self.marker.setScale(MARKERSCALE)
+        self.marker.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
+        self.marker.reparentTo(aspect2d)
+        self.has_marker = True
         # not affected by sunlight
         self.marker.hide(panda3d.core.BitMask32.bit(0))
+        # not visible by default
+        self.hideMarker()
     
         #marker of orientation
         self.axis = graphics.makeCross()
         self.axis.setScale(AXSCALE * self.radius)
+        self.axis.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
+        self.axis.reparentTo(self.mod)
+        self.has_axis = True
         # not affected by sunlight
         self.axis.hide(panda3d.core.BitMask32.bit(0))
+        # not visible by default
+        self.hideAxis()
         
     def showMarker(self) :
-        '''always visible spot on target'''
-        self.marker.reparentTo(aspect2d)
-    
+        if not self.has_marker:
+            fade = self.marker.colorScaleInterval(FREEZELEN,
+            panda3d.core.Vec4(1,1,1,0.5), panda3d.core.Vec4(1,1,1,0))
+            self.has_marker = True
+            fade.start()
+        
     def hideMarker(self) :
-        self.marker.detachNode()
+        if self.has_marker:
+            fade = self.marker.colorScaleInterval(FREEZELEN,
+            panda3d.core.Vec4(1,1,1,0), panda3d.core.Vec4(1,1,1,0.5))
+            self.has_marker = False
+            fade.start()
     
     def showAxis(self) :
-        '''to see orientation'''
-        self.axis.reparentTo(self.mod)
-    
-    def hideAxis(self) :
-        self.axis.detachNode()
+        if not self.has_axis:
+            fade = self.axis.colorScaleInterval(FREEZELEN,
+            panda3d.core.Vec4(1,1,1,0.5), panda3d.core.Vec4(1,1,1,0))
+            self.has_axis = True
+            fade.start()
         
+    def hideAxis(self) :
+        if self.has_axis:
+            fade = self.axis.colorScaleInterval(FREEZELEN,
+            panda3d.core.Vec4(1,1,1,0), panda3d.core.Vec4(1,1,1,0.5))
+            self.has_axis = False
+            fade.start()
+
     def rotate(self, julian_time) :
         '''rotate on itself according to time'''
         self.mod.setHpr((360 / self.period) * julian_time % 360 + self.offset, 0, 0)
@@ -147,9 +171,9 @@ class Orbital(Planetoid) :
         self.shadow.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
         self.shadow.reparentTo(self.mod)
         self.has_shadow = True
+        self.shadow.setSy(1000)
         # hidden by default
         self.hideShadow()
-        self.shadow.setSy(1000)
     
     def showShadow(self) :
         if not self.has_shadow:
@@ -157,32 +181,42 @@ class Orbital(Planetoid) :
             panda3d.core.Vec4(0,0,0,0.5), panda3d.core.Vec4(0,0,0,0))
             self.has_shadow = True
             fade.start()
-        
-        #~ self.shadow.setColor(0,0,0,0.5)
-    
+
     def hideShadow(self) :
         if self.has_shadow:
             fade = self.shadow.colorScaleInterval(FREEZELEN,
             panda3d.core.Vec4(0,0,0,0), panda3d.core.Vec4(0,0,0,0.5))
             self.has_shadow = False
             fade.start()
-        #~ self.shadow.setColor(0,0,0,0)
 
     def loadOrbit(self) :
         #Draw orbits
         self.orbit_line = graphics.makeArc(360, ORBITRESOLUTION)
+        self.orbit_line.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
         self.orbit_line.setHpr( 0, 90,0)
         #Camera position shouldn't make these actors disappear
         self.orbit_line.node().setBounds(panda3d.core.OmniBoundingVolume())
         self.orbit_line.node().setFinal(True)
         # orbits are not affected by sunlight
         self.orbit_line.hide(panda3d.core.BitMask32.bit(0))
+        self.orbit_line.reparentTo(self.root)
+        self.has_orbit = True
+        self.hideOrbit()
     
     def showOrbit(self) :
-        self.orbit_line.reparentTo(self.root)
-    
+        if not self.has_orbit:
+            fade = self.orbit_line.colorScaleInterval(FREEZELEN,
+            panda3d.core.Vec4(1,1,1,0.5), panda3d.core.Vec4(1,1,1,0))
+            self.has_orbit = True
+            fade.start()
+        
+       
     def hideOrbit(self) :
-        self.orbit_line.detachNode()
+        if self.has_orbit:
+            fade = self.orbit_line.colorScaleInterval(FREEZELEN,
+            panda3d.core.Vec4(1,1,1,0), panda3d.core.Vec4(1,1,1,0.5))
+            self.has_orbit = False
+            fade.start()
 
 
 class System(object) :

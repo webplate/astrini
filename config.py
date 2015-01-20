@@ -29,6 +29,7 @@ MOONROTSET = -55
 EARTHROTSET = -160
 
 #Interface settings
+DEBUG = False
 PRINTTIMING = False #show Task manager statistics
 SHOWFRUSTRUM = False
 SHADOWRES = 512 # resolution of shadow caster

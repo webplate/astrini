@@ -47,6 +47,11 @@ from Interface import Interface
 
 class World(ShowBase):  
     def __init__(self):
+        
+        if DEBUG:
+            from pandac.PandaModules import ConfigPageManager
+            print ConfigPageManager.getGlobalPtr()
+
         #Set application properties
         wp = WindowProperties.getDefault()
         wp.setTitle(APPNAME)

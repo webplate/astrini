@@ -170,6 +170,8 @@ This class is used to hunt planetoids
         self.scene = scene
         #Prepare locks (following procedures etc...)
         self.speed = self.scene.simul_speed
+        self.timetravel = False
+        self.travels = []
         self.looking = None
         self.following = None
     
@@ -191,8 +193,19 @@ This class is used to hunt planetoids
         if self.looking != None :
             camera.lookAt(self.scene.focus)
         return Task.cont
-        
+    
+    def stop_timetravel(self):
+        if self.timetravel:
+            self.timetravel = False
+            print 'stop', self.speed, self.scene.simul_speed
+    
     def softMove(self, nod, posFunc, lockFunc, unlockFunc, name) :
+        #select correct speed of reference
+        if not self.timetravel :
+            self.speed = self.scene.simul_speed
+            self.timetravel = True
+            print 'start', self.speed, self.scene.simul_speed
+        print self.speed
         #stop flow of time while traveling
         slow, fast = self.scene.generate_speed_fade(self.speed)
         
@@ -202,7 +215,7 @@ This class is used to hunt planetoids
         # slow sim, release, travel, lock, resume speed
         # give a name for one interval of this type at once
         sequence = Sequence(slow, Func(unlockFunc),
-        travel, Func(lockFunc), fast, name=name)
+        travel, Func(lockFunc), fast, Func(self.stop_timetravel), name=name)
 
         sequence.start()
 

@@ -389,7 +389,6 @@ class Scene(object) :
         self.reverse = False
         
         self.simul_speed = 1
-        self.ref_speed = self.simul_speed
         
         self.time_is_now()
         
@@ -487,12 +486,7 @@ class Scene(object) :
         
     def generate_speed_fade(self, speed) :
         '''generate intervals to fade in and out from previous speed'''
-        #select correct speed of reference
-        #~ if not self.timeTravel :
-            #~ speed = self.simul_speed
-            #~ self.timeTravel = True
-
-        slow = LerpFunc(self.setSpeed, FREEZELEN, self.simul_speed, 0.)
+        slow = LerpFunc(self.setSpeed, FREEZELEN, speed, 0.)
         fast = LerpFunc(self.setSpeed, FREEZELEN, 0., speed)
         return slow, fast
 
@@ -543,11 +537,9 @@ class Scene(object) :
         '''a realistic scaling toggle :
         '''
         if not self.realist_scale :
-            #~ self.realist_scale = True
             init = 0
             end = 1
         else:
-            #~ self.realist_scale = False
             init = 1
             end = 0
         scale = LerpFunc(self.scaleSystem,

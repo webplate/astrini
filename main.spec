@@ -30,6 +30,8 @@ pyz = PYZ(a.pure)
 exe = EXE(pyz,
           Tree(os.path.join(PANDA_DIR, 'etc'), prefix='etc'),
           Tree(os.path.join('models'), prefix='models'),
+          Tree(os.path.join('fonts'), prefix='fonts'),
+          Tree(os.path.join('images'), prefix='images'),
           a.scripts,
           a.binaries+P3DmissingDLLs,
           name='main.exe',

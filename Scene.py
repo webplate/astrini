@@ -634,10 +634,8 @@ class Scene(object) :
     #Vizualisation control
     def toggleShadows(self) :
         if self.show_shadows :
-            self.sys.hideShadows()
             self.show_shadows = False
         else :
-            self.sys.showShadows()
             self.show_shadows = True
         self.updateShadows()
     
@@ -661,8 +659,11 @@ class Scene(object) :
         '''hide/show tubular shadows'''
         #show them all
         if self.show_shadows :
-            self.sys.moon.showShadow()
-            self.sys.earth.showShadow()
+            se = True
+            sm = True
+        else:
+            se = False
+            sm = False
         #we shouldn't hide the same shadow if we are going to follow or 
         #already following
         #shouldn't bug if we aren't following any
@@ -672,8 +673,16 @@ class Scene(object) :
             name = None
         #specific hide
         if name == 'earth' :
-            self.sys.earth.hideShadow()
+            se = False
         elif name == 'moon' :
+            sm = False
+        if se:
+            self.sys.earth.showShadow()
+        else:
+            self.sys.earth.hideShadow()
+        if sm:
+            self.sys.moon.showShadow()
+        else:
             self.sys.moon.hideShadow()
 
     

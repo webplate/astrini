@@ -5,6 +5,7 @@ about = [
 '',
 'Astrini',
 '',
+'Documentation at : http://astrini.science-trotter.com',
 'An Open source project for educational astronomy',
 'Version 0.1',
 '',

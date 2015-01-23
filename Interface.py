@@ -114,10 +114,6 @@ class Interface(object) :
         self.about_dialog = add_dialog((-5*bw, 5*bw, -10*bh, 10*bh))
         add_textarea(text, self.about_dialog)
         
-        #An informational dialog
-        self.info_dialog = add_dialog((-3*bw, 3*bw, -3*bh, 3*bh))
-        add_textarea(['','Here some information'], self.info_dialog)
-        
         #Buttons to follow
         j = 1
         follow = self.world.Camera.hm.follow
@@ -198,7 +194,6 @@ class Interface(object) :
         
         #hidden dialogs
         j += 3
-        add_button('Info', 0, j, self.show_dialog, [self.info_dialog], self.b_cont)
         add_button('About', 2, j, self.show_dialog, [self.about_dialog], self.b_cont)
         
 
@@ -315,9 +310,6 @@ class Interface(object) :
         w, h = base.win.getXSize(), base.win.getYSize()
         bw, bh = BUTTONSIZE
         self.about_dialog.setPos((w/2, -1, -h/2))
-        self.info_dialog.setPos((w/2, -1, -h/2))
-        #~ self.b_cont['frameSize'] = (-(bw+bw/2), bw+bw/2, -h/2, h/2) #DOESN4T WORK!!!
-        #~ self.b_cont.setPos((bw+bw/2, -1, -h/2))
         #show task timing for debug
         if PRINTTIMING :
             print taskMgr

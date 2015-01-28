@@ -31,7 +31,7 @@ def deploy() :
     #some other platforms : linux_amd64  osx_i386
     call('pdeploy -s -n astrini -N "Astrini" -v 0.0.0 -a glen_lomax \
     -A "Glen Lomax" -e glenlomax@gmail.com -l "GNU Public License" \
-    -L gpl.txt -i images/icon.png -P win32 \
+    -L gpl.txt -i images/icon.png -P win32 -P osx_i386 -P linux_amd64\
     Astrini.p3d standalone')
 
 def main():

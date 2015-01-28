@@ -7,8 +7,10 @@ from math import ceil, log, sin, cos
 cardMaker = panda3d.core.CardMaker('CardMaker')
 
 def nextPowOf2(n):
-    return 2**int(ceil(log(n, 2)))
-
+    try:
+        return 2**int(ceil(log(n, 2)))
+    except ValueError:
+        return 1
 
 def makeGeom(filename):
     """create geom from png and take care of power of two
@@ -21,7 +23,12 @@ def makeGeom(filename):
     newHeight = nextPowOf2(oldHeight)
 
     newImage = panda3d.core.PNMImage(newWidth, newHeight)
-    if origImage.hasAlpha():
+    try:
+        has_alpha = origImage.hasAlpha()
+    except AssertionError:
+        has_alpha = False
+    
+    if has_alpha:
         newImage.addAlpha()
     newImage.copySubImage(origImage, 0, 0, 0, 0)
    
@@ -40,7 +47,7 @@ def makeGeom(filename):
     npCard = panda3d.core.NodePath(cardMaker.generate())
     npCard.setTexture(tex)
     npCard.setTexOffset(panda3d.core.TextureStage.getDefault(), 0, 1-fV)
-    if origImage.hasAlpha():
+    if has_alpha:
         npCard.setTransparency(panda3d.core.TransparencyAttrib.MAlpha)
    
     return npCard

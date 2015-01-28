@@ -659,11 +659,11 @@ class Scene(object) :
         '''hide/show tubular shadows'''
         #show them all
         if self.show_shadows :
-            se = True
-            sm = True
+            show_earth = True
+            show_moon = True
         else:
-            se = False
-            sm = False
+            show_earth = False
+            show_moon = False
         #we shouldn't hide the same shadow if we are going to follow or 
         #already following
         #shouldn't bug if we aren't following any
@@ -673,14 +673,18 @@ class Scene(object) :
             name = None
         #specific hide
         if name == 'earth' :
-            se = False
+            show_earth = False
         elif name == 'moon' :
-            sm = False
-        if se:
+            show_moon = False
+        elif name == 'sun':
+            show_earth = False
+            show_moon = False
+        
+        if show_earth:
             self.sys.earth.showShadow()
         else:
             self.sys.earth.hideShadow()
-        if sm:
+        if show_moon:
             self.sys.moon.showShadow()
         else:
             self.sys.moon.hideShadow()

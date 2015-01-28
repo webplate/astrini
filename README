@@ -1,7 +1,4 @@
-WINDOWS COMPILED VERSION (not latest version) :
-https://91.121.141.56/owncloud/public.php?service=files&t=a36b6091a6bc03a65b66835c55f2d84d
-
-DOCUMENTATION in docs/Astrini Booklet
+DOCUMENTATION at http://astrini.science-trotter.com
 
 LAUNCH program with:
 ppython main.py

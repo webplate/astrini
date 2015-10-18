@@ -473,7 +473,7 @@ class Scene(object) :
         ua = self.sys.earth.distance
         margin = ua / 3
         c_s_dist = (ua + margin) / tan(radians(fov/2))
-        self.world.home.setPos(0, -c_s_dist,ua/3)
+        self.world.home.setPos(c_s_dist,0,ua/3)
 
     def lockHomeTask(self, task) :
         '''keep home in place'''

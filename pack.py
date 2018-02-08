@@ -29,10 +29,17 @@ def deploy() :
     call('ppackage packagedef.py')
     #create deployable executables
     #some other platforms : linux_amd64  osx_i386
-    call('pdeploy -s -n astrini -N "Astrini" -v 0.0.0 -a glen_lomax \
+    command = 'pdeploy -s -n astrini -N "Astrini-full" -v 0.0.1 -a glen_lomax \
     -A "Glen Lomax" -e glenlomax@gmail.com -l "GNU Public License" \
-    -L gpl.txt -i images/icon.png -P win32 -P osx_i386 -P linux_amd64\
-    Astrini.p3d standalone')
+    -L license.txt -i images/icon.png'
+    #~ platforms = ['win32', 'osx_i386', 'linux_amd64']
+    platforms = ['win32']
+    package = 'Astrini.p3d'
+    mode = 'installer' #standalone or installer
+    
+    for p in platforms:
+        command = '%s -P %s %s %s'%(command, p, package, mode)
+        call(command)
 
 def main():
     deploy()
